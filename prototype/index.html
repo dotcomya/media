@@ -1,0 +1,1917 @@
+<title>Dérive Paris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Archivo:wdth,wght@75..125,300..900&family=DM+Mono:wght@300;400;500&display=swap">
+
+<style>
+/* ============================================================
+   DÉRIVE — Prototype v1.0
+   Palette : vert Wallace (fontaines, colonnes Morris, bancs Paris)
+             pierre de taille, or de brasserie, zinc de toiture
+   ============================================================ */
+:root{
+  --nuit:#0B1D17;
+  --vert:#123026;
+  --vert-2:#18402F;
+  --vert-3:#1E4E3A;
+  --pierre:#EFE7D6;
+  --pierre-2:#DCD2BC;
+  --or:#E0AC45;
+  --or-fonce:#B4842C;
+  --zinc:#94A49C;
+  --zinc-fonce:#5E6F68;
+  --brique:#D8674A;
+  --sauge:#8FBF9E;
+  --papier:#F2EBDC;
+  --encre:#16261F;
+
+  --ff-display:"Bodoni Moda",'Times New Yorkʼ',Georgia,serif;
+  --ff-ui:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --ff-mono:"DM Mono",ui-monospace,"SF Mono",Menlo,monospace;
+
+  --r-s:6px; --r-m:12px; --r-l:20px;
+  --dev-w:393px; --dev-h:830px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--nuit); color:var(--pierre);
+  font-family:var(--ff-ui); font-size:15px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
+  background:
+    radial-gradient(1100px 600px at 12% -10%, rgba(224,172,69,.10), transparent 60%),
+    radial-gradient(900px 700px at 92% 8%, rgba(30,78,58,.55), transparent 65%);
+}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--or); outline-offset:2px; border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.mono{font-family:var(--ff-mono)}
+.eyebrow{
+  font-family:var(--ff-mono); font-size:10.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--zinc);
+}
+
+/* ---------- STAGE ---------- */
+.stage{position:relative;z-index:1;display:grid;grid-template-columns:288px 1fr;min-height:100vh}
+
+.rail{
+  border-right:1px solid rgba(239,231,214,.10);
+  padding:26px 20px 40px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  background:linear-gradient(180deg,rgba(18,48,38,.72),rgba(11,29,23,.72));
+  backdrop-filter:blur(6px);
+}
+.rail::-webkit-scrollbar{width:5px}
+.rail::-webkit-scrollbar-thumb{background:rgba(239,231,214,.16);border-radius:3px}
+
+.brand{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.brand b{
+  font-family:var(--ff-display); font-weight:600; font-size:31px; letter-spacing:-.015em;
+  line-height:1; font-optical-sizing:auto;
+}
+.brand b i{font-style:italic;color:var(--or)}
+.brand span{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.2em;color:var(--zinc);text-transform:uppercase}
+.brand-note{font-size:12.5px;color:var(--zinc);line-height:1.45;margin:14px 0 22px;max-width:30ch}
+
+.railgroup{margin-bottom:22px}
+.railgroup > .eyebrow{display:block;margin-bottom:9px;color:var(--or-fonce)}
+.navlist{display:flex;flex-direction:column;gap:1px}
+.nav{
+  display:grid;grid-template-columns:26px 1fr;align-items:baseline;gap:9px;
+  padding:7px 9px;border-radius:var(--r-s);text-align:left;width:100%;
+  transition:background .15s ease,color .15s ease;
+}
+.nav em{font-family:var(--ff-mono);font-style:normal;font-size:10.5px;color:var(--zinc-fonce)}
+.nav span{font-size:13.5px;color:var(--pierre-2)}
+.nav:hover{background:rgba(239,231,214,.055)}
+.nav[aria-current="true"]{background:var(--or);}
+.nav[aria-current="true"] em,.nav[aria-current="true"] span{color:#2A1C05}
+.nav[aria-current="true"] span{font-weight:600}
+
+.modes{display:flex;gap:0;border:1px solid rgba(239,231,214,.16);border-radius:var(--r-s);overflow:hidden;margin-bottom:20px}
+.modes button{flex:1;padding:8px 4px;font-size:11.5px;font-family:var(--ff-mono);letter-spacing:.06em;color:var(--zinc)}
+.modes button[aria-pressed="true"]{background:rgba(239,231,214,.10);color:var(--pierre)}
+
+.railfoot{margin-top:26px;padding-top:18px;border-top:1px solid rgba(239,231,214,.10);font-size:11.5px;color:var(--zinc-fonce);line-height:1.5}
+
+/* ---------- VIEWPORT ---------- */
+.viewport{padding:44px 40px 80px;display:flex;flex-direction:column;align-items:center;gap:26px}
+.viewhead{width:100%;max-width:1180px;display:flex;justify-content:space-between;align-items:flex-end;gap:30px;flex-wrap:wrap}
+.viewhead h1{
+  font-family:var(--ff-display);font-weight:500;font-size:clamp(26px,3vw,38px);
+  margin:0;letter-spacing:-.02em;text-wrap:balance;
+}
+.viewhead p{margin:6px 0 0;color:var(--zinc);font-size:13.5px;max-width:56ch;line-height:1.55}
+.demo-flag{
+  font-family:var(--ff-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--or);border:1px solid rgba(224,172,69,.4);padding:5px 10px;border-radius:99px;white-space:nowrap;
+}
+
+/* ---------- DEVICE ---------- */
+.device{
+  width:var(--dev-w);flex:0 0 auto;position:relative;
+  border-radius:46px;padding:11px;background:linear-gradient(160deg,#2C3733,#0E1512 55%,#242E2A);
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.85),0 0 0 1px rgba(239,231,214,.09) inset;
+}
+.device::after{
+  content:"";position:absolute;left:50%;top:22px;transform:translateX(-50%);
+  width:88px;height:24px;border-radius:99px;background:#07100D;z-index:6;pointer-events:none;
+}
+.screen{
+  position:relative;width:100%;height:var(--dev-h);border-radius:36px;overflow:hidden;
+  background:var(--vert);isolation:isolate;
+}
+.planche .device{--dev-w:322px;--dev-h:680px;border-radius:40px}
+.planche .device::after{width:74px;height:20px;top:19px}
+.planche .screen{border-radius:30px}
+
+.grid{
+  display:grid;gap:34px 26px;width:100%;max-width:1400px;
+  grid-template-columns:repeat(auto-fill,minmax(344px,1fr));justify-items:center;
+}
+.cell{display:flex;flex-direction:column;gap:11px;align-items:center}
+.cell figcaption{width:322px;display:flex;gap:9px;align-items:baseline}
+.cell figcaption em{font-family:var(--ff-mono);font-style:normal;font-size:11px;color:var(--or)}
+.cell figcaption b{font-size:13px;font-weight:600}
+.cell figcaption i{font-style:normal;font-size:11.5px;color:var(--zinc);margin-left:auto;text-align:right}
+
+.solo{display:flex;gap:38px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%;max-width:1180px}
+.notes{flex:1;min-width:280px;max-width:400px;padding-top:8px}
+.notes h2{font-family:var(--ff-display);font-weight:500;font-size:24px;margin:0 0 10px;letter-spacing:-.01em}
+.notes p{color:var(--pierre-2);font-size:14px;line-height:1.62;margin:0 0 14px}
+.notes .spec{border-top:1px solid rgba(239,231,214,.13);margin-top:20px;padding-top:16px;display:flex;flex-direction:column;gap:11px}
+.notes .spec div{display:grid;grid-template-columns:104px 1fr;gap:12px;font-size:12.5px;align-items:baseline}
+.notes .spec dt,.notes .spec b{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--or-fonce);font-weight:400}
+.notes .spec span{color:var(--pierre-2);line-height:1.5}
+
+/* ============================================================
+   L'APPLICATION
+   ============================================================ */
+.app{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--vert);color:var(--pierre)}
+.app.paper{background:var(--papier);color:var(--encre)}
+.app.paper .zinc{color:#6E7A6F}
+
+.statusbar{
+  height:50px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:space-between;
+  padding:0 24px 5px;font-family:var(--ff-mono);font-size:12px;letter-spacing:.02em;z-index:5;
+}
+.statusbar .sb-r{display:flex;gap:5px;align-items:center;opacity:.9}
+.sb-bar{width:17px;height:9px;border:1px solid currentColor;border-radius:2.5px;position:relative;opacity:.75}
+.sb-bar::after{content:"";position:absolute;inset:1.5px;right:5px;background:currentColor;border-radius:1px}
+
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 20px}
+.pb{padding-bottom:104px}
+
+.tabbar{
+  position:absolute;left:0;right:0;bottom:0;height:84px;z-index:8;
+  display:grid;grid-template-columns:repeat(5,1fr);align-items:start;padding-top:10px;
+  background:linear-gradient(180deg,rgba(11,29,23,0),rgba(11,29,23,.94) 42%);
+  backdrop-filter:blur(14px);border-top:1px solid rgba(239,231,214,.09);
+}
+.app.paper .tabbar{background:linear-gradient(180deg,rgba(242,235,220,0),rgba(242,235,220,.96) 42%);border-top-color:rgba(22,38,31,.13)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:5px;padding:4px 0;color:var(--zinc)}
+.app.paper .tab{color:#8A9389}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tab b{font-size:9.5px;font-weight:500;letter-spacing:.03em}
+.tab[aria-current="true"]{color:var(--or)}
+.app.paper .tab[aria-current="true"]{color:#0E5138}
+
+/* --- entêtes --- */
+.hd{padding:6px 20px 14px}
+.hd .kicker{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px}
+.hd h1{
+  font-family:var(--ff-display);font-weight:500;font-size:33px;line-height:1.03;
+  margin:0;letter-spacing:-.022em;text-wrap:balance;
+}
+.hd h1 i{font-style:italic;color:var(--or)}
+.hd .sub{margin:9px 0 0;font-size:13px;color:var(--zinc);line-height:1.5}
+
+.meteo{
+  display:flex;align-items:center;gap:8px;font-family:var(--ff-mono);font-size:11px;
+  color:var(--pierre-2);background:rgba(239,231,214,.06);border:1px solid rgba(239,231,214,.09);
+  border-radius:99px;padding:6px 12px;margin:0 20px 16px;
+}
+.meteo b{color:var(--or);font-weight:400}
+.meteo .dot{width:4px;height:4px;border-radius:99px;background:var(--zinc-fonce);flex:0 0 auto}
+
+/* --- chips de contexte --- */
+.chiprow{display:flex;gap:7px;overflow-x:auto;padding:0 20px 3px;scrollbar-width:none}
+.chiprow::-webkit-scrollbar{display:none}
+.chiprow.wrap{flex-wrap:wrap;overflow:visible}
+.chip{
+  flex:0 0 auto;padding:7px 13px;border-radius:99px;font-size:12.5px;white-space:nowrap;
+  border:1px solid rgba(239,231,214,.17);color:var(--pierre-2);transition:.14s;
+}
+.chip:hover{border-color:rgba(239,231,214,.36)}
+.chip[aria-pressed="true"]{background:var(--pierre);color:var(--encre);border-color:var(--pierre);font-weight:600}
+.chip .mini{font-family:var(--ff-mono);font-size:10px;opacity:.6;margin-left:5px}
+
+/* --- proposition (Ce soir) --- */
+.props{display:flex;flex-direction:column;gap:14px;padding:18px 20px 0}
+.prop{
+  position:relative;border-radius:var(--r-l);overflow:hidden;border:1px solid rgba(239,231,214,.12);
+  background:var(--vert-2);text-align:left;width:100%;display:block;
+}
+.prop:hover{border-color:rgba(224,172,69,.42)}
+.prop .ph{position:relative;height:158px;overflow:hidden}
+.prop .ph canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.prop .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,29,23,.05) 30%,rgba(11,29,23,.9))}
+.prop .rank{
+  position:absolute;top:12px;left:12px;z-index:2;display:flex;align-items:center;gap:7px;
+  font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  background:rgba(11,29,23,.72);backdrop-filter:blur(8px);padding:5px 10px;border-radius:99px;
+  border:1px solid rgba(239,231,214,.16);
+}
+.prop .rank.a{color:var(--or);border-color:rgba(224,172,69,.45)}
+.prop .rank.b{color:var(--sauge);border-color:rgba(143,191,158,.42)}
+.prop .rank.c{color:var(--brique);border-color:rgba(216,103,74,.45)}
+.prop .over{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:0 16px 13px}
+.prop .over h3{font-family:var(--ff-display);font-weight:600;font-size:24px;margin:0;letter-spacing:-.015em;line-height:1.08}
+.prop .over .loc{font-family:var(--ff-mono);font-size:10.5px;color:var(--pierre-2);margin-top:5px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.prop .body{padding:13px 16px 15px}
+.prop .body p{margin:0;font-size:13.5px;line-height:1.55;color:var(--pierre-2)}
+.prop .body p .hl{color:var(--pierre);font-weight:600}
+.prop .why{
+  margin-top:11px;padding-top:11px;border-top:1px dashed rgba(239,231,214,.16);
+  display:flex;gap:9px;align-items:flex-start;font-size:12px;color:var(--zinc);line-height:1.45;
+}
+.prop .why svg{width:14px;height:14px;flex:0 0 auto;margin-top:1px;stroke:var(--or);fill:none;stroke-width:1.6}
+.prop .foot{display:flex;gap:8px;align-items:center;padding:0 16px 15px;flex-wrap:wrap}
+
+.badge{
+  font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;padding:4px 8px;border-radius:5px;
+  border:1px solid rgba(239,231,214,.18);color:var(--pierre-2);white-space:nowrap;
+}
+.badge.or{color:var(--or);border-color:rgba(224,172,69,.38);background:rgba(224,172,69,.08)}
+.badge.sauge{color:var(--sauge);border-color:rgba(143,191,158,.34);background:rgba(143,191,158,.08)}
+.badge.brique{color:var(--brique);border-color:rgba(216,103,74,.38);background:rgba(216,103,74,.09)}
+.badge.plein{color:var(--zinc-fonce);border-color:rgba(148,164,156,.22)}
+
+.note{
+  display:flex;align-items:center;gap:3px;font-family:var(--ff-mono);font-size:13px;color:var(--or);
+}
+.note b{font-family:var(--ff-ui);font-size:16px;font-weight:700;letter-spacing:-.02em}
+.note span{font-size:10px;color:var(--zinc)}
+
+/* --- reroll --- */
+.reroll{
+  margin:16px 20px 0;padding:15px 16px;border:1px dashed rgba(239,231,214,.2);border-radius:var(--r-m);
+  display:flex;align-items:center;gap:13px;text-align:left;width:calc(100% - 40px);
+}
+.reroll:hover{border-color:var(--or)}
+.reroll .ic{width:34px;height:34px;border-radius:99px;border:1px solid rgba(224,172,69,.4);display:grid;place-items:center;flex:0 0 auto}
+.reroll .ic svg{width:16px;height:16px;stroke:var(--or);fill:none;stroke-width:1.6;stroke-linecap:round}
+.reroll b{display:block;font-size:13.5px;margin-bottom:2px}
+.reroll span{font-size:11.5px;color:var(--zinc);font-family:var(--ff-mono)}
+
+/* --- mot de l'éclaireur --- */
+.motdujour{
+  margin:22px 20px 0;padding:17px 17px 16px;border-radius:var(--r-m);
+  background:linear-gradient(150deg,rgba(224,172,69,.11),rgba(224,172,69,.03));
+  border:1px solid rgba(224,172,69,.22);
+}
+.motdujour .eyebrow{color:var(--or);margin-bottom:9px;display:block}
+.motdujour p{margin:0;font-family:var(--ff-display);font-size:17px;line-height:1.42;font-weight:400;font-style:italic}
+.sig{display:flex;align-items:center;gap:9px;margin-top:13px}
+.ava{width:28px;height:28px;border-radius:99px;flex:0 0 auto;display:grid;place-items:center;font-family:var(--ff-mono);font-size:10.5px;color:var(--nuit);font-weight:500}
+.sig b{font-size:12.5px;font-weight:600}
+.sig span{font-family:var(--ff-mono);font-size:10.5px;color:var(--zinc)}
+
+/* --- listes --- */
+.sec{padding:26px 20px 0}
+.sec .sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:10px}
+.sec .sh h2{font-family:var(--ff-display);font-weight:500;font-size:21px;margin:0;letter-spacing:-.012em}
+.sec .sh a{font-family:var(--ff-mono);font-size:10.5px;color:var(--or);letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+
+.row{display:flex;gap:13px;padding:12px 0;border-bottom:1px solid rgba(239,231,214,.09);width:100%;text-align:left;align-items:flex-start}
+.app.paper .row{border-bottom-color:rgba(22,38,31,.11)}
+.row:last-child{border-bottom:0}
+.row .thumb{width:58px;height:58px;border-radius:10px;overflow:hidden;flex:0 0 auto;position:relative}
+.row .thumb canvas{width:100%;height:100%;display:block}
+.row .txt{flex:1;min-width:0}
+.row .txt b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.005em;margin-bottom:3px}
+.row .txt p{margin:0;font-size:12.5px;color:var(--zinc);line-height:1.42;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.row .txt .meta{font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);margin-top:5px;display:flex;gap:7px;flex-wrap:wrap}
+.row .rt{flex:0 0 auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+
+/* --- carte dérive --- */
+.dcard{
+  width:100%;text-align:left;border-radius:var(--r-l);overflow:hidden;position:relative;
+  border:1px solid rgba(239,231,214,.13);background:var(--vert-2);display:block;
+}
+.dcard .ph{height:186px;position:relative;overflow:hidden}
+.dcard .ph canvas{position:absolute;inset:0;width:100%;height:100%}
+.dcard .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(175deg,rgba(11,29,23,.1) 20%,rgba(11,29,23,.93))}
+.dcard .in{position:absolute;left:0;right:0;bottom:0;padding:0 17px 15px;z-index:2}
+.dcard .in h3{font-family:var(--ff-display);font-weight:600;font-size:26px;line-height:1.03;margin:0 0 8px;letter-spacing:-.02em;text-wrap:balance}
+.dcard .in .by{display:flex;align-items:center;gap:7px;font-family:var(--ff-mono);font-size:10.5px;color:var(--pierre-2)}
+.dcard .stats{
+  display:flex;gap:0;border-top:1px solid rgba(239,231,214,.11);
+}
+.dcard .stats div{flex:1;padding:10px 6px;text-align:center;border-right:1px solid rgba(239,231,214,.09)}
+.dcard .stats div:last-child{border-right:0}
+.dcard .stats b{display:block;font-family:var(--ff-mono);font-size:12.5px;color:var(--pierre)}
+.dcard .stats span{font-family:var(--ff-mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--zinc-fonce)}
+.dcard .tagline{position:absolute;top:13px;left:13px;z-index:3}
+
+/* --- étapes scellées --- */
+.steps{padding:4px 20px 0;display:flex;flex-direction:column}
+.step{position:relative;padding:0 0 4px 34px}
+.step::before{content:"";position:absolute;left:11px;top:24px;bottom:-4px;width:1px;background:repeating-linear-gradient(180deg,rgba(239,231,214,.28) 0 4px,transparent 4px 9px)}
+.step:last-child::before{display:none}
+.step .pin{
+  position:absolute;left:0;top:5px;width:23px;height:23px;border-radius:99px;
+  display:grid;place-items:center;font-family:var(--ff-mono);font-size:10.5px;
+  border:1px solid rgba(239,231,214,.28);background:var(--vert);color:var(--zinc);
+}
+.step.done .pin{background:var(--or);border-color:var(--or);color:#2A1C05;font-weight:500}
+.step.now .pin{border-color:var(--or);color:var(--or);box-shadow:0 0 0 4px rgba(224,172,69,.15)}
+.step .card{border-radius:var(--r-m);border:1px solid rgba(239,231,214,.13);background:var(--vert-2);overflow:hidden;margin-bottom:14px}
+.step .card .top{padding:13px 15px 0}
+.step .hm{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:5px}
+.step .hm .hr{font-family:var(--ff-mono);font-size:10px;letter-spacing:.11em;color:var(--or);text-transform:uppercase}
+.step h4{font-family:var(--ff-display);font-weight:600;font-size:19px;margin:0 0 3px;letter-spacing:-.012em}
+.step .adr{font-family:var(--ff-mono);font-size:10.5px;color:var(--zinc);margin-bottom:10px}
+.step .prose{font-size:13.5px;line-height:1.62;color:var(--pierre-2);margin:0 0 13px}
+.step .prose em{font-style:italic;color:var(--pierre)}
+.consigne{
+  margin:0 15px 14px;padding:12px 13px;border-radius:8px;
+  background:rgba(224,172,69,.09);border-left:2px solid var(--or);
+}
+.consigne .eyebrow{color:var(--or);display:block;margin-bottom:5px}
+.consigne p{margin:0;font-size:13px;line-height:1.5;color:var(--pierre)}
+
+.sealed{
+  position:relative;border-radius:var(--r-m);border:1px dashed rgba(239,231,214,.22);
+  background:rgba(11,29,23,.5);padding:22px 16px;text-align:center;margin-bottom:14px;overflow:hidden;
+}
+.sealed .blur{filter:blur(7px);opacity:.28;pointer-events:none;user-select:none}
+.sealed .blur h4{font-family:var(--ff-display);font-size:19px;margin:0 0 6px}
+.sealed .blur p{font-size:12.5px;margin:0;line-height:1.5}
+.wax{
+  width:46px;height:46px;border-radius:99px;margin:0 auto 11px;display:grid;place-items:center;
+  background:radial-gradient(circle at 34% 30%,#E8B95C,#B4842C 60%,#8A6420);
+  box-shadow:0 4px 14px -4px rgba(0,0,0,.7);font-family:var(--ff-display);font-weight:700;
+  font-size:19px;color:#3A2807;position:relative;
+}
+.wax::after{content:"";position:absolute;inset:4px;border-radius:99px;border:1px solid rgba(58,40,7,.35)}
+.sealed .lock{position:relative;z-index:2}
+.sealed .lock b{display:block;font-size:13.5px;margin-bottom:4px}
+.sealed .lock span{font-family:var(--ff-mono);font-size:11px;color:var(--zinc);line-height:1.5;display:block;max-width:30ch;margin:0 auto}
+.unsealing .wax{animation:crack .62s cubic-bezier(.36,.07,.19,.97) forwards}
+@keyframes crack{
+  0%{transform:scale(1) rotate(0)}
+  35%{transform:scale(1.14) rotate(-7deg)}
+  55%{transform:scale(1.05) rotate(5deg)}
+  100%{transform:scale(.2) rotate(-24deg);opacity:0}
+}
+
+/* --- boutons --- */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:14px 18px;border-radius:11px;font-size:14.5px;font-weight:600;letter-spacing:-.005em;
+  background:var(--or);color:#2A1C05;transition:.14s;
+}
+.btn:hover{background:#EFBE5D}
+.btn.ghost{background:transparent;border:1px solid rgba(239,231,214,.24);color:var(--pierre)}
+.btn.ghost:hover{border-color:var(--pierre);background:rgba(239,231,214,.05)}
+.btn.dark{background:var(--encre);color:var(--papier)}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn.sm{padding:10px 14px;font-size:13px;width:auto}
+.btnrow{display:flex;gap:9px;padding:16px 20px 0}
+.btnrow .btn{width:auto;flex:1}
+
+/* --- fiche lieu (feuille) --- */
+.sheet{
+  position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;
+  background:var(--vert);animation:up .3s cubic-bezier(.16,1,.3,1);
+}
+@keyframes up{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet .hero{height:250px;position:relative;flex:0 0 auto}
+.sheet .hero canvas{position:absolute;inset:0;width:100%;height:100%}
+.sheet .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,29,23,.5) 0 16%,rgba(11,29,23,.05) 45%,var(--vert))}
+.sheet .close{position:absolute;top:52px;left:16px;z-index:4;width:34px;height:34px;border-radius:99px;background:rgba(11,29,23,.62);backdrop-filter:blur(8px);display:grid;place-items:center;border:1px solid rgba(239,231,214,.16)}
+.sheet .close svg{width:16px;height:16px;stroke:var(--pierre);fill:none;stroke-width:2;stroke-linecap:round}
+.sheet .htitle{position:absolute;left:0;right:0;bottom:0;padding:0 20px 4px;z-index:3}
+.sheet .htitle h2{font-family:var(--ff-display);font-weight:600;font-size:30px;margin:0;letter-spacing:-.022em;line-height:1.04;text-wrap:balance}
+.sheet .htitle .l{font-family:var(--ff-mono);font-size:11px;color:var(--pierre-2);margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+.verdict{margin:14px 20px 0;font-family:var(--ff-display);font-size:18px;line-height:1.45;font-style:italic;color:var(--pierre)}
+
+.fiche{margin:20px 20px 0;border:1px solid rgba(239,231,214,.14);border-radius:var(--r-m);overflow:hidden}
+.fiche .ln{display:grid;grid-template-columns:96px 1fr;gap:0;border-bottom:1px solid rgba(239,231,214,.1)}
+.fiche .ln:last-child{border-bottom:0}
+.fiche dt{
+  padding:12px 11px;font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--or-fonce);background:rgba(239,231,214,.035);border-right:1px solid rgba(239,231,214,.1);
+}
+.fiche dd{margin:0;padding:12px 13px;font-size:13.5px;line-height:1.5;color:var(--pierre-2)}
+.fiche dd b{color:var(--pierre);font-weight:600}
+
+.marche{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:18px 20px 0}
+.marche > div{padding:13px;border-radius:10px;font-size:12.5px;line-height:1.45}
+.marche .oui{background:rgba(143,191,158,.09);border:1px solid rgba(143,191,158,.24)}
+.marche .non{background:rgba(216,103,74,.08);border:1px solid rgba(216,103,74,.24)}
+.marche .eyebrow{display:block;margin-bottom:6px}
+.marche .oui .eyebrow{color:var(--sauge)}
+.marche .non .eyebrow{color:var(--brique)}
+.marche ul{margin:0;padding-left:15px;color:var(--pierre-2)}
+.marche li{margin-bottom:4px}
+
+.preuve{
+  margin:18px 20px 0;display:flex;gap:11px;align-items:center;padding:12px 14px;
+  border-radius:10px;background:rgba(239,231,214,.045);border:1px solid rgba(239,231,214,.1);
+}
+.preuve .k{width:32px;height:32px;border-radius:99px;background:rgba(143,191,158,.14);display:grid;place-items:center;flex:0 0 auto}
+.preuve .k svg{width:16px;height:16px;stroke:var(--sauge);fill:none;stroke-width:1.7}
+.preuve b{display:block;font-size:12.5px;margin-bottom:2px}
+.preuve span{font-family:var(--ff-mono);font-size:10.5px;color:var(--zinc);line-height:1.4}
+
+.faces{display:flex;align-items:center;margin-left:auto}
+.faces .ava{margin-right:-7px;border:2px solid var(--vert)}
+
+/* --- carte / radar --- */
+.mapwrap{position:absolute;inset:0}
+.mapwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+.mapover{position:absolute;left:0;right:0;bottom:84px;padding:0 14px 12px;z-index:6}
+.mapcard{
+  background:rgba(11,29,23,.9);backdrop-filter:blur(16px);border:1px solid rgba(239,231,214,.14);
+  border-radius:var(--r-m);padding:13px 15px;
+}
+.app.paper .mapcard{background:rgba(242,235,220,.94);border-color:rgba(22,38,31,.14)}
+.mapchips{position:absolute;top:56px;left:0;right:0;z-index:6}
+
+/* --- billets (Soirs) --- */
+.ticket{
+  position:relative;border-radius:var(--r-m);background:var(--vert-2);border:1px solid rgba(239,231,214,.13);
+  overflow:hidden;text-align:left;width:100%;display:block;margin-bottom:13px;
+}
+.ticket .ph{height:132px;position:relative}
+.ticket .ph canvas{position:absolute;inset:0;width:100%;height:100%}
+.ticket .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,29,23,.15),rgba(11,29,23,.88))}
+.ticket .tt{position:absolute;left:0;right:0;bottom:0;padding:0 15px 12px;z-index:2}
+.ticket .tt h3{font-family:var(--ff-display);font-weight:600;font-size:20px;margin:0;line-height:1.08;letter-spacing:-.015em}
+.ticket .perf{
+  height:1px;background:repeating-linear-gradient(90deg,rgba(239,231,214,.3) 0 6px,transparent 6px 12px);position:relative;
+}
+.ticket .perf::before,.ticket .perf::after{content:"";position:absolute;top:-7px;width:14px;height:14px;border-radius:99px;background:var(--vert)}
+.ticket .perf::before{left:-7px}
+.ticket .perf::after{right:-7px}
+.ticket .info{padding:12px 15px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.ticket .info .l{font-family:var(--ff-mono);font-size:11px;color:var(--zinc);line-height:1.6}
+.ticket .info .l b{color:var(--pierre);font-weight:400}
+.ticket .price{font-family:var(--ff-display);font-size:26px;font-weight:600;letter-spacing:-.02em;text-align:right;line-height:1}
+.ticket .price span{display:block;font-family:var(--ff-mono);font-size:9px;letter-spacing:.1em;color:var(--zinc);text-transform:uppercase;margin-top:4px}
+.jauge{height:3px;background:rgba(239,231,214,.13);border-radius:99px;overflow:hidden;margin-top:9px}
+.jauge i{display:block;height:100%;background:var(--brique);border-radius:99px}
+
+/* --- LE CARNET (papier) --- */
+.app.paper .hd h1 i{color:#0E5138}
+.app.paper .eyebrow{color:#7C8A7E}
+.app.paper .badge{border-color:rgba(22,38,31,.2);color:#3D4B43}
+.app.paper .badge.or{color:#8A6318;border-color:rgba(180,132,44,.45);background:rgba(224,172,69,.16)}
+.app.paper .btn.ghost{border-color:rgba(22,38,31,.25);color:var(--encre)}
+.app.paper .row .txt p,.app.paper .row .txt .meta{color:#6E7A6F}
+.app.paper .statusbar{color:var(--encre)}
+
+.carnetmap{
+  margin:0 20px;border-radius:var(--r-m);overflow:hidden;position:relative;height:230px;
+  border:1px solid rgba(22,38,31,.16);background:#E7DFCC;
+}
+.carnetmap canvas{position:absolute;inset:0;width:100%;height:100%}
+.carnetmap .lgd{
+  position:absolute;left:10px;bottom:10px;font-family:var(--ff-mono);font-size:9.5px;
+  background:rgba(242,235,220,.92);padding:6px 9px;border-radius:6px;color:#3D4B43;line-height:1.6;
+}
+.carnetmap .lgd i{display:inline-block;width:7px;height:7px;border-radius:99px;margin-right:5px}
+
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:18px 20px 0;background:rgba(22,38,31,.14);border:1px solid rgba(22,38,31,.14);border-radius:var(--r-m);overflow:hidden}
+.statgrid div{background:var(--papier);padding:14px 11px;text-align:center}
+.statgrid b{display:block;font-family:var(--ff-display);font-size:27px;font-weight:600;letter-spacing:-.03em;line-height:1;color:var(--encre)}
+.statgrid span{font-family:var(--ff-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#7C8A7E;display:block;margin-top:6px}
+
+.tampons{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:13px}
+.tampon{
+  aspect-ratio:1;border-radius:99px;display:grid;place-items:center;text-align:center;padding:6px;
+  border:1.5px dashed #A8763B;color:#A8763B;transform:rotate(-4deg);
+  font-family:var(--ff-mono);font-size:8px;letter-spacing:.05em;line-height:1.25;text-transform:uppercase;
+}
+.tampon:nth-child(2n){transform:rotate(5deg);border-color:#2E6B4F;color:#2E6B4F}
+.tampon:nth-child(3n){transform:rotate(-2deg)}
+.tampon.vide{border-style:dotted;border-color:rgba(22,38,31,.2);color:rgba(22,38,31,.24);transform:none}
+.tampon b{display:block;font-family:var(--ff-display);font-size:15px;letter-spacing:-.02em;margin-bottom:1px}
+
+.serie{margin:20px 20px 0;padding:14px 15px;border-radius:var(--r-m);border:1px solid rgba(22,38,31,.16);background:rgba(46,107,79,.07)}
+.serie .wk{display:flex;gap:5px;margin-top:11px}
+.serie .wk i{flex:1;height:26px;border-radius:4px;background:rgba(22,38,31,.09);display:block}
+.serie .wk i.on{background:#2E6B4F}
+.serie .wk i.today{background:#2E6B4F;box-shadow:0 0 0 2px rgba(46,107,79,.28)}
+
+/* --- BILAN (carte partageable) --- */
+.bilan{
+  margin:16px 20px 0;border-radius:var(--r-l);padding:22px 20px 20px;position:relative;overflow:hidden;
+  background:linear-gradient(158deg,#123026,#0B1D17 62%,#1E4E3A);border:1px solid rgba(224,172,69,.28);color:var(--pierre);
+}
+.bilan::before{content:"";position:absolute;inset:0;background:radial-gradient(360px 200px at 82% 4%,rgba(224,172,69,.22),transparent 70%)}
+.bilan > *{position:relative}
+.bilan .yr{font-family:var(--ff-display);font-size:60px;font-weight:700;letter-spacing:-.045em;line-height:.86;color:var(--or)}
+.bilan h3{font-family:var(--ff-display);font-weight:500;font-size:22px;margin:10px 0 16px;letter-spacing:-.015em;line-height:1.15}
+.bilan .bl{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(239,231,214,.13);font-size:13px;align-items:baseline}
+.bilan .bl:last-of-type{border-bottom:0}
+.bilan .bl span{color:var(--zinc);font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.bilan .bl b{font-weight:600;text-align:right;font-size:14px}
+.bilan .rk{margin-top:15px;padding-top:14px;border-top:1px solid rgba(224,172,69,.3);font-family:var(--ff-display);font-style:italic;font-size:16px;line-height:1.4}
+
+/* --- ONBOARDING --- */
+.ob{flex:1;display:flex;flex-direction:column;padding:0 24px;overflow-y:auto;scrollbar-width:none}
+.ob::-webkit-scrollbar{display:none}
+.ob .num{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.15em;color:var(--or);margin-bottom:22px}
+.ob h2{font-family:var(--ff-display);font-weight:500;font-size:28px;line-height:1.1;margin:0 0 10px;letter-spacing:-.025em;text-wrap:balance}
+.ob p.lead{font-size:13.5px;color:var(--zinc);line-height:1.5;margin:0 0 18px}
+.goûts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.gout{
+  padding:11px 11px;border-radius:10px;border:1px solid rgba(239,231,214,.16);text-align:left;
+  font-size:12px;line-height:1.32;color:var(--pierre-2);min-height:62px;display:flex;align-items:flex-end;transition:.14s;
+}
+.gout[aria-pressed="true"]{background:var(--or);color:#2A1C05;border-color:var(--or);font-weight:600}
+.progress{height:2px;background:rgba(239,231,214,.14);margin:0 24px}
+.progress i{display:block;height:100%;background:var(--or);transition:width .35s ease}
+
+/* --- PASS --- */
+.pass{padding:0 22px}
+.passcard{
+  border-radius:var(--r-l);padding:20px;background:linear-gradient(152deg,#E0AC45,#B4842C 55%,#8A6420);
+  color:#241705;position:relative;overflow:hidden;
+}
+.passcard::after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:99px;border:22px solid rgba(36,23,5,.07)}
+.passcard .pn{font-family:var(--ff-display);font-size:33px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.passcard .pm{font-family:var(--ff-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;opacity:.72;margin-top:5px}
+.passcard .pr{margin-top:22px;display:flex;align-items:baseline;gap:7px}
+.passcard .pr b{font-family:var(--ff-display);font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.passcard .pr span{font-size:12.5px;opacity:.75}
+.incl{margin-top:20px;display:flex;flex-direction:column;gap:0}
+.incl div{display:grid;grid-template-columns:20px 1fr;gap:11px;padding:11px 0;border-bottom:1px solid rgba(239,231,214,.1);font-size:13.5px;line-height:1.45;align-items:start}
+.incl div:last-child{border-bottom:0}
+.incl svg{width:15px;height:15px;stroke:var(--or);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:2px}
+.incl b{font-weight:600}
+.incl span{color:var(--zinc);display:block;font-size:12px;margin-top:2px;line-height:1.4}
+
+/* --- NOTIFICATIONS --- */
+.lockbg{position:absolute;inset:0;background:linear-gradient(178deg,#0A1A14,#123026 45%,#0B1D17)}
+.lockbg canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.5}
+.lockclock{position:relative;text-align:center;padding-top:64px;z-index:2}
+.lockclock .h{font-family:var(--ff-display);font-size:76px;font-weight:400;letter-spacing:-.05em;line-height:.92}
+.lockclock .d{font-family:var(--ff-mono);font-size:12px;color:var(--pierre-2);letter-spacing:.06em;margin-top:6px}
+.notifs{position:relative;z-index:2;padding:34px 14px 0;display:flex;flex-direction:column;gap:9px}
+.notif{
+  background:rgba(239,231,214,.13);backdrop-filter:blur(20px);border:1px solid rgba(239,231,214,.14);
+  border-radius:16px;padding:12px 14px;text-align:left;
+}
+.notif .nh{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.notif .nh .ap{width:16px;height:16px;border-radius:4px;background:var(--or);display:grid;place-items:center;font-family:var(--ff-display);font-size:10px;font-weight:700;color:#2A1C05}
+.notif .nh b{font-family:var(--ff-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--pierre-2)}
+.notif .nh i{margin-left:auto;font-family:var(--ff-mono);font-size:10px;color:var(--zinc);font-style:normal}
+.notif p{margin:0;font-size:13.5px;line-height:1.45}
+.notif p b{font-weight:600}
+
+/* --- CERCLE --- */
+.relais{
+  margin:18px 20px 0;padding:15px;border-radius:var(--r-m);border:1px solid rgba(224,172,69,.26);
+  background:linear-gradient(140deg,rgba(224,172,69,.1),transparent);
+}
+.relais .rt{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.relais .rt b{font-size:13.5px}
+.relais p{margin:0 0 12px;font-size:12.5px;color:var(--pierre-2);line-height:1.5}
+.relais .cons{font-family:var(--ff-mono);font-size:11.5px;color:var(--or);padding:9px 11px;background:rgba(11,29,23,.4);border-radius:7px;margin-bottom:12px;line-height:1.5}
+
+/* ============================================================
+   LE DOSSIER (sous la scène)
+   ============================================================ */
+.dossier{position:relative;z-index:1;border-top:1px solid rgba(239,231,214,.11);background:var(--nuit);padding:74px 40px 90px;margin-top:40px}
+.dwrap{max-width:1120px;margin:0 auto}
+.dwrap > .eyebrow{display:block;margin-bottom:14px;color:var(--or)}
+.dwrap h2{font-family:var(--ff-display);font-weight:500;font-size:clamp(30px,4vw,46px);letter-spacing:-.026em;margin:0 0 16px;text-wrap:balance;line-height:1.06}
+.dwrap h2 i{font-style:italic;color:var(--or)}
+.dlead{font-size:17px;line-height:1.62;color:var(--pierre-2);max-width:62ch;margin:0 0 52px}
+.dsec{margin-top:64px}
+.dsec > h3{font-family:var(--ff-display);font-weight:500;font-size:27px;letter-spacing:-.018em;margin:0 0 6px}
+.dsec > p.intro{color:var(--zinc);font-size:14px;margin:0 0 26px;max-width:60ch;line-height:1.6}
+
+.cols3{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:26px}
+.blk{border-top:2px solid var(--or);padding-top:15px}
+.blk h4{font-size:15px;font-weight:700;margin:0 0 8px;letter-spacing:-.005em}
+.blk .eyebrow{display:block;margin-bottom:9px}
+.blk p{margin:0 0 10px;font-size:13.5px;line-height:1.6;color:var(--pierre-2)}
+.blk p:last-child{margin-bottom:0}
+.blk ul{margin:0;padding-left:16px;font-size:13.5px;line-height:1.6;color:var(--pierre-2)}
+.blk li{margin-bottom:6px}
+.blk strong{color:var(--pierre);font-weight:600}
+
+.tblwrap{overflow-x:auto;border:1px solid rgba(239,231,214,.13);border-radius:var(--r-m)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+th,td{padding:12px 15px;text-align:left;border-bottom:1px solid rgba(239,231,214,.1);vertical-align:top}
+th{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--or-fonce);font-weight:400;background:rgba(239,231,214,.035)}
+tbody tr:last-child td{border-bottom:0}
+td b{font-weight:600}
+td.num{font-family:var(--ff-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{background:rgba(224,172,69,.09);font-weight:600;border-top:1px solid rgba(224,172,69,.28)}
+
+.vs{display:grid;gap:0;border:1px solid rgba(239,231,214,.13);border-radius:var(--r-m);overflow:hidden}
+.vs > div{display:grid;grid-template-columns:150px 1fr 1fr;border-bottom:1px solid rgba(239,231,214,.1)}
+.vs > div:last-child{border-bottom:0}
+.vs .c{padding:14px 16px;font-size:13px;line-height:1.55}
+.vs .who{font-weight:700;font-size:13.5px;border-right:1px solid rgba(239,231,214,.1);background:rgba(239,231,214,.03)}
+.vs .them{color:var(--zinc);border-right:1px solid rgba(239,231,214,.1)}
+.vs .us{color:var(--pierre-2)}
+.vs .us b{color:var(--or);font-weight:600}
+.vs .hdr .c{font-family:var(--ff-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--or-fonce);padding:10px 16px}
+
+.timeline{display:grid;gap:0}
+.tl{display:grid;grid-template-columns:120px 1fr;gap:22px;padding:20px 0;border-bottom:1px solid rgba(239,231,214,.1)}
+.tl:last-child{border-bottom:0}
+.tl .when{font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;color:var(--or);text-transform:uppercase;padding-top:2px}
+.tl .when span{display:block;color:var(--zinc-fonce);margin-top:5px;letter-spacing:0;text-transform:none}
+.tl h4{margin:0 0 7px;font-size:16px;font-weight:700;letter-spacing:-.008em}
+.tl p{margin:0 0 8px;font-size:13.5px;line-height:1.6;color:var(--pierre-2)}
+.tl .kpi{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+.warn{
+  margin-top:26px;padding:16px 18px;border-radius:var(--r-m);border:1px solid rgba(216,103,74,.3);
+  background:rgba(216,103,74,.07);font-size:13.5px;line-height:1.62;color:var(--pierre-2);
+}
+.warn b{color:var(--brique);font-weight:600;display:block;margin-bottom:5px;font-size:12px;font-family:var(--ff-mono);letter-spacing:.1em;text-transform:uppercase}
+
+.footer{border-top:1px solid rgba(239,231,214,.11);margin-top:64px;padding-top:26px;font-size:12.5px;color:var(--zinc-fonce);line-height:1.65;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+
+@media (max-width:1080px){
+  .stage{grid-template-columns:1fr}
+  .rail{position:relative;height:auto;border-right:0;border-bottom:1px solid rgba(239,231,214,.1)}
+  .viewport{padding:30px 18px 60px}
+  .dossier{padding:56px 20px 70px}
+  .solo{flex-direction:column;align-items:center}
+  .notes{max-width:393px}
+  .vs > div{grid-template-columns:1fr}
+  .vs .who,.vs .them{border-right:0;border-bottom:1px solid rgba(239,231,214,.09)}
+  .tl{grid-template-columns:1fr;gap:10px}
+}
+</style>
+
+<div class="stage">
+  <aside class="rail">
+    <div class="brand">
+      <b>D<i>é</i>rive</b>
+      <span>Paris · Prototype 1.0</span>
+    </div>
+    <p class="brand-note">L'app qui répond à « je fais quoi ce soir » en huit secondes, t'envoie là où tu ne serais jamais allé, et garde la trace.</p>
+
+    <div class="modes" role="group" aria-label="Mode d'affichage">
+      <button id="m-solo" aria-pressed="true">Écran</button>
+      <button id="m-planche" aria-pressed="false">Planche</button>
+    </div>
+
+    <div class="railgroup">
+      <span class="eyebrow">Premier contact</span>
+      <div class="navlist" data-group="0"></div>
+    </div>
+    <div class="railgroup">
+      <span class="eyebrow">Le quotidien</span>
+      <div class="navlist" data-group="1"></div>
+    </div>
+    <div class="railgroup">
+      <span class="eyebrow">La profondeur</span>
+      <div class="navlist" data-group="2"></div>
+    </div>
+    <div class="railgroup">
+      <span class="eyebrow">L'attachement</span>
+      <div class="navlist" data-group="3"></div>
+    </div>
+
+    <div class="railfoot">
+      <b style="color:var(--pierre-2)">20 écrans · 393 × 830</b><br>
+      Passez en « Planche » pour capturer la totalité du parcours d'un seul écran.
+    </div>
+  </aside>
+
+  <main class="viewport">
+    <div class="viewhead">
+      <div>
+        <h1 id="vh-title">Ce soir</h1>
+        <p id="vh-desc">Prototype d'intention — vingt écrans navigables.</p>
+      </div>
+      <span class="demo-flag">Prototype — lieux et personnes fictifs</span>
+    </div>
+    <div id="mount"></div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   DONNÉES DE DÉMONSTRATION
+   Tous les établissements et contributeurs sont fictifs.
+   Rues, arrondissements et stations de métro sont réels.
+   ============================================================ */
+
+const ECLAIREURS = {
+  camille: {n:"Camille R.", a:31, q:"11e", spe:"Caves à manger, cinémas de quartier", c:"#E0AC45", i:"CR",
+    bio:"Chef de rang pendant six ans avant de tout arrêter. Connaît la carte des vins de 90 adresses par cœur et le nom du chat de la moitié d'entre elles.",
+    lieux:342, derives:11, depuis:"2024", pasaime:"Les rooftops. Tous. Sans exception."},
+  malik:  {n:"Malik B.", a:27, q:"19e", spe:"La nuit, les canaux, l'after", c:"#8FBF9E", i:"MB",
+    bio:"Ingénieur son. Sort quatre nuits sur sept depuis 2019. Tient un carnet papier des sound systems parisiens depuis ses 20 ans.",
+    lieux:288, derives:9, depuis:"2024", pasaime:"Les clubs où on ne peut pas s'asseoir."},
+  salome: {n:"Salomé T.", a:24, q:"5e", spe:"Paris à moins de 15 €, librairies", c:"#D8674A", i:"ST",
+    bio:"Thèse en histoire de l'art, financée en partie par sa connaissance encyclopédique des musées gratuits et des cantines universitaires ouvertes au public.",
+    lieux:401, derives:14, depuis:"2023", pasaime:"Les brunchs à 29 € avec un œuf dedans."},
+  theo:   {n:"Théo K.", a:35, q:"18e", spe:"Bistrots, comptoirs, patrons", c:"#94A49C", i:"TK",
+    bio:"Fils de cafetier. Juge une adresse à la propreté du percolateur et à la vitesse à laquelle on lui répond bonjour.",
+    lieux:517, derives:8, depuis:"2023", pasaime:"Le mot « concept ». Le mot « signature ». Ensemble, c'est rédhibitoire."},
+  nour:   {n:"Nour A.", a:29, q:"13e", spe:"L'Asie parisienne, les marchés", c:"#E0AC45", i:"NA",
+    bio:"Traductrice. A grandi entre Choisy et Ivry. Sait où trouver un bon bún chả à 23 h un mardi.",
+    lieux:263, derives:7, depuis:"2024", pasaime:"Les cartes traduites en anglais avec des fautes en français."},
+  anais:  {n:"Anaïs D.", a:26, q:"20e", spe:"Romantique sans être ringard", c:"#8FBF9E", i:"AD",
+    bio:"Scénographe de théâtre. Compose des itinéraires comme des actes : un décor, une tension, une sortie.",
+    lieux:198, derives:12, depuis:"2024", pasaime:"Les dîners aux chandelles avec de la musique d'ascenseur."},
+  wilfried:{n:"Wilfried M.", a:33, q:"12e", spe:"Sport urbain, bains, piscines", c:"#94A49C", i:"WM",
+    bio:"Maître-nageur reconverti dans le design. Connaît la température de l'eau des 38 piscines municipales.",
+    lieux:176, derives:6, depuis:"2025", pasaime:"Les salles de sport avec des miroirs partout."}
+};
+
+const LIEUX = {
+  zinzolin:{n:"Zinzolin", t:"Cave à manger", q:"20e", adr:"rue de la Mare", m:"Jourdain", note:8.7, n_avis:213,
+    seed:41, prix:"28–34 €", pitch:"Douze couverts, une ardoise, et un patron qui décide pour toi si tu hésites plus de trente secondes.",
+    verdict:"On y va pour manger cinq assiettes en se disant qu'on en prendra trois, et on repart en ayant appris le nom d'un cépage du Jura.",
+    commander:"Les <b>poireaux brûlés, crème de noisette</b>. Ils ne sont sur l'ardoise qu'un jeudi sur deux, demandez-les quand même.",
+    moment:"Mardi ou mercredi, <b>19 h 15</b>. Après 20 h il n'y a plus de place et le patron n'a plus le temps de parler.",
+    piege:"Ne réservez pas pour six. La salle n'est pas faite pour, et vous le sentirez.",
+    reel:"<b>31 € par personne</b> en moyenne sur 213 passages membres, vin compris. Espèces bienvenues, carte à partir de 15 €.",
+    oui:["Vous êtes deux ou trois","Vous voulez parler","Vous aimez qu'on choisisse pour vous"],
+    non:["Vous êtes pressé","Vous êtes huit","Vous cherchez un menu végétarien complet"],
+    verif:"Camille R., le 28 août", dernier:"il y a 2 jours", tags:["Bruit modéré","Sans réservation avant 19h","Végé : 2 plats"]},
+  antonin:{n:"Bar Antonin", t:"Bar à vin", q:"10e", adr:"quai de Valmy", m:"Jacques Bonsergent", note:8.2, n_avis:387,
+    seed:12, prix:"9–14 €", pitch:"Le seul bar du canal où l'on vous ressert un verre d'eau sans que vous ayez à le demander.",
+    verdict:"Ce n'est pas le plus beau bar du canal. C'est celui où vous resterez trois heures sans vous en rendre compte.",
+    commander:"Le <b>verre du fond de cave</b> — ce n'est pas sur la carte. Dites juste : « celui de la semaine ».",
+    moment:"<b>18 h 30 en semaine</b>, quand la lumière passe encore par la vitrine ouest. Le dimanche c'est mort, et c'est très bien.",
+    piege:"La terrasse côté quai est prise d'assaut à 19 h. L'intérieur est meilleur, personne ne le croit.",
+    reel:"<b>22 € pour deux verres</b> et une planche. Pas de minimum carte.",
+    oui:["Premier verre d'un rendez-vous","Vous voulez lire seul","Il fait beau mais pas trop chaud"],
+    non:["Vous voulez dîner vraiment","Vous êtes plus de quatre","Vous détestez le bruit du samedi"],
+    verif:"Malik B., le 21 août", dernier:"hier", tags:["Ouvert 17h–01h","Terrasse ouest","Espèces & CB"]},
+  duduche:{n:"Le Grand Duduche", t:"Guinguette", q:"19e", adr:"quai de la Loire", m:"Laumière", note:8.0, n_avis:156,
+    seed:73, prix:"12–20 €", pitch:"Une buvette sous les platanes qui ferme quand le dernier client s'en va, et pas à l'heure écrite sur la porte.",
+    verdict:"L'endroit le plus proche d'un été de province qu'on puisse atteindre en métro depuis Châtelet.",
+    commander:"Un <b>demi et une assiette de saucisson</b>. La carte fait quatre lignes, n'essayez pas d'en sortir.",
+    moment:"<b>Jeudi ou dimanche, 18 h–21 h.</b> Le samedi appartient aux groupes d'anniversaire.",
+    piege:"Il n'y a pas de toilettes chauffées et il n'y en aura jamais. Octobre est la limite.",
+    reel:"<b>14 € à deux.</b> C'est l'adresse la moins chère de ce carnet.",
+    oui:["Il fait plus de 17°","Vous êtes trois ou plus","Vous avez un chien"],
+    non:["Il pleut","Vous voulez un vrai repas","Vous cherchez du calme le week-end"],
+    verif:"Théo K., le 30 août", dernier:"il y a 4 jours", tags:["Extérieur uniquement","Chiens admis","Fermé nov.–mars"]},
+  nadar:{n:"Cinéma Nadar", t:"Salle de quartier", q:"14e", adr:"rue Daguerre", m:"Denfert-Rochereau", note:9.1, n_avis:94,
+    seed:8, prix:"7,50 €", pitch:"Une salle, 84 fauteuils, une programmation tenue par la même personne depuis onze ans.",
+    verdict:"La dernière salle de Paris où l'on vous engueule si votre téléphone s'allume. On y retourne pour ça.",
+    commander:"La <b>séance de 22 h le mercredi</b> : carte blanche au projectionniste, jamais annoncée à l'avance.",
+    moment:"<b>Mercredi 22 h.</b> Arrivez à 21 h 40, il y a un verre offert dans le hall.",
+    piege:"Pas de réservation en ligne. Il faut y aller. C'est le principe.",
+    reel:"<b>7,50 €</b>, 6 € pour les moins de 26 ans, sans justificatif compliqué.",
+    oui:["Vous venez seul","Vous voulez voir un film dont vous ignorez tout","Il pleut"],
+    non:["Vous êtes en retard","Vous voulez du confort moderne","Vous cherchez un blockbuster"],
+    verif:"Salomé T., le 25 août", dernier:"il y a 6 heures", tags:["Espèces uniquement","84 places","Pas de bande-annonce"]},
+  odette:{n:"Chez Odette & Fils", t:"Bistrot", q:"12e", adr:"rue Crozatier", m:"Reuilly-Diderot", note:8.5, n_avis:271,
+    seed:55, prix:"24–30 €", pitch:"Un bistrot de 1962 repris par le petit-fils, qui n'a changé ni les banquettes ni le prix du plat du jour.",
+    verdict:"La preuve qu'un bistrot parisien peut être exactement ce qu'on en attend sans être un décor pour touristes.",
+    commander:"Le <b>plat du jour ardoise</b>, quel qu'il soit. Et un quart de rouge, jamais un verre.",
+    moment:"<b>Le midi en semaine, 12 h 30.</b> Le soir, l'âme du lieu part avec les habitués.",
+    piege:"Le dessert est industriel et assumé comme tel. Prenez un café et allez ailleurs.",
+    reel:"<b>19 € le midi</b> (plat + quart), 28 € le soir.",
+    oui:["Vous déjeunez seul","Vous voulez un vrai plat du jour","Vous avez 50 minutes"],
+    non:["Vous dînez tard","Vous voulez un dessert","Vous êtes végétarien"],
+    verif:"Théo K., le 27 août", dernier:"aujourd'hui", tags:["Midi 12h–14h30","Tickets restaurant","Végé : 1 plat"]},
+  kolibri:{n:"Maison Kolibri", t:"Café / travail", q:"3e", adr:"rue Charlot", m:"Filles du Calvaire", note:7.8, n_avis:412,
+    seed:29, prix:"4–9 €", pitch:"Un café où l'on peut rester quatre heures avec un ordinateur sans qu'on vous fasse sentir quoi que ce soit.",
+    verdict:"Le meilleur bureau gratuit du 3e, à condition d'arriver avant 10 h et d'accepter la table du fond.",
+    commander:"Le <b>filtre du jour</b>, jamais le cappuccino. Et le pain aux graines, sorti à 11 h.",
+    moment:"<b>Avant 10 h</b> ou <b>après 16 h</b>. Entre les deux, c'est une salle de coworking bondée.",
+    piege:"Trois prises pour vingt places. Venez chargé.",
+    reel:"<b>4,20 € le filtre</b>, 9 € avec le pain et un jus.",
+    oui:["Vous devez travailler 3 h","Vous êtes seul","Vous détestez les cafés bruyants"],
+    non:["Vous avez un appel visio","Vous venez à cinq","Vous voulez déjeuner chaud"],
+    verif:"Salomé T., le 29 août", dernier:"il y a 3 heures", tags:["Wi-Fi","3 prises","Pas de réservation"]},
+  sardines:{n:"Le Théâtre des Sardines", t:"Concert / cave", q:"11e", adr:"rue Saint-Maur", m:"Parmentier", note:8.9, n_avis:138,
+    seed:61, prix:"10–15 €", pitch:"Une cave voûtée de 60 places sous une ancienne poissonnerie. Trois concerts par semaine, jamais annoncés plus de dix jours à l'avance.",
+    verdict:"On y entend le souffle du contrebassiste. Aucune salle parisienne de cette taille ne sonne aussi bien.",
+    commander:"Rien. Buvez avant. Le bar de la cave sert de la bière tiède et l'assume.",
+    moment:"<b>Jeudi 20 h 30.</b> Le programme du jeudi est toujours le plus risqué et souvent le meilleur.",
+    piege:"Pas de vestiaire, pas de réseau, pas de sortie avant la fin du set. Prévenez qui doit l'être.",
+    reel:"<b>12 € l'entrée</b>, en espèces à la porte, plus 4 € la bière.",
+    oui:["Vous aimez le jazz ou l'impro","Vous êtes deux","Vous acceptez de ne pas savoir ce que vous allez voir"],
+    non:["Vous êtes claustrophobe","Vous voulez discuter","Vous devez partir avant 22 h 30"],
+    verif:"Malik B., le 26 août", dernier:"il y a 5 jours", tags:["60 places","Espèces","Debout"]},
+  michko:{n:"La Cave à Michko", t:"Cave / dégustation", q:"20e", adr:"rue des Panoyaux", m:"Ménilmontant", note:8.4, n_avis:167,
+    seed:19, prix:"18–25 €", pitch:"Un caviste qui ouvre son arrière-boutique à six personnes le vendredi soir et parle pendant deux heures.",
+    verdict:"Le seul endroit où j'ai vu quelqu'un pleurer devant un chenin. Ce n'était pas moi.",
+    commander:"Rien à commander : Michko décide. Dites-lui juste si vous préférez le vif ou le rond.",
+    moment:"<b>Vendredi 19 h.</b> Six places, il faut passer dans la journée pour s'inscrire.",
+    piege:"Ce n'est pas un dîner. Mangez avant ou vous rentrerez très bien.",
+    reel:"<b>22 €</b> pour cinq verres et du fromage. Sans doute le meilleur rapport de Paris.",
+    oui:["Vous voulez apprendre","Vous êtes deux","Vous acceptez de parler à des inconnus"],
+    non:["Vous voulez dîner","Vous êtes en groupe","Vous êtes pressé"],
+    verif:"Camille R., le 22 août", dernier:"il y a 8 jours", tags:["6 places","Vendredi uniquement","Inscription sur place"]},
+  aurore:{n:"Piscine Aurore", t:"Piscine municipale", q:"13e", adr:"rue du Château des Rentiers", m:"Nationale", note:8.3, n_avis:203,
+    seed:88, prix:"3,50 €", pitch:"Un bassin de 1934 sous une verrière, 27°, et personne entre 14 h et 16 h en semaine.",
+    verdict:"Nager sous cette verrière un mardi après-midi de novembre est la chose la plus proche du luxe qu'on puisse s'offrir pour 3,50 €.",
+    commander:"La <b>ligne 1</b>, côté verrière. Les autres sont plus fréquentées et moins belles.",
+    moment:"<b>Mardi ou jeudi, 14 h–16 h.</b> Nocturne le mercredi jusqu'à 22 h, presque vide après 20 h 30.",
+    piege:"Bonnet obligatoire, contrôlé. La machine du hall ne marche jamais.",
+    reel:"<b>3,50 €</b> l'entrée, 30 € les dix.",
+    oui:["Vous voulez être seul","Il fait gris","Vous êtes à Paris depuis peu et vous étouffez"],
+    non:["Vous venez après 17 h","Vous êtes le samedi","Vous n'avez pas de bonnet"],
+    verif:"Wilfried M., le 24 août", dernier:"il y a 1 jour", tags:["Bonnet obligatoire","Verrière 1934","Nocturne mercredi"]},
+  serres:{n:"Les Grandes Serres du Rail", t:"Lieu hybride", q:"12e", adr:"petite ceinture, av. Daumesnil", m:"Michel Bizot", note:8.6, n_avis:121,
+    seed:34, prix:"0–16 €", pitch:"Trois serres montées sur une portion abandonnée de la petite ceinture. Concerts, cantine, potager, entrée libre le dimanche.",
+    verdict:"Le genre d'endroit dont on parle à quelqu'un qui vient d'arriver à Paris pour lui prouver que la ville n'est pas figée.",
+    commander:"La <b>cantine du dimanche midi</b>, 11 € l'assiette unique, servie jusqu'à épuisement.",
+    moment:"<b>Dimanche 12 h–18 h.</b> Le reste de la semaine c'est fermé ou privatisé.",
+    piege:"L'accès se fait par un escalier non signalé au 168. Personne ne le trouve du premier coup.",
+    reel:"<b>Gratuit</b>, 11 € si vous mangez, 16 € les soirs de concert.",
+    oui:["C'est dimanche","Vous venez d'arriver à Paris","Vous êtes en groupe"],
+    non:["C'est lundi à jeudi","Vous cherchez un endroit intime","Il pleut fort"],
+    verif:"Anaïs D., le 31 août", dernier:"il y a 2 jours", tags:["Dimanche","Entrée libre","Accès escalier 168"]},
+  fourche:{n:"Librairie La Fourche", t:"Librairie / nocturne", q:"17e", adr:"avenue de Clichy", m:"La Fourche", note:8.8, n_avis:88,
+    seed:47, prix:"0 €", pitch:"Ouverte jusqu'à minuit du jeudi au samedi. Un fauteuil au fond, une lampe, et personne pour vous demander ce que vous cherchez.",
+    verdict:"À 23 h un vendredi, c'est l'endroit le plus calme de Paris qui ne soit pas chez vous.",
+    commander:"La <b>table du fond à gauche</b> : les invendus et les fins de série à 4 €.",
+    moment:"<b>Jeudi–samedi, 22 h–minuit.</b> Avant, c'est une librairie normale.",
+    piege:"Le fauteuil est unique. Il est pris à partir de 22 h 30.",
+    reel:"<b>Gratuit.</b> Vous ressortirez avec un livre à 4 €, statistiquement.",
+    oui:["Vous ne voulez pas boire","Il est tard et vous ne voulez pas rentrer","Vous êtes seul"],
+    non:["Vous êtes en groupe","Vous cherchez une nouveauté","C'est lundi"],
+    verif:"Salomé T., le 20 août", dernier:"il y a 3 jours", tags:["Nocturne jeu–sam","Fonds poésie","Un seul fauteuil"]}
+};
+
+const DERIVES = [
+  {id:"canaux", t:"La nuit blanche des canaux", by:"malik", h:"4 h", km:"3,8 km", eur:"35 €", seed:12,
+   niv:"Facile", faites:1847, note:9.0,
+   sous:"De l'écluse des Récollets au bassin de la Villette, en six arrêts, dont deux qui n'ont pas d'adresse.",
+   intro:"Ce n'est pas une balade au bord de l'eau. C'est une descente, du 10e vers le 19e, calée sur l'heure à laquelle chaque endroit devient le meilleur qu'il puisse être. Partez à 18 h 30. Ne prenez pas de vélo, vous en aurez besoin d'un à la fin.",
+   etapes:[
+     {h:"18 h 30", n:"Bar Antonin", l:"antonin", adr:"quai de Valmy, 10e",
+      p:"Commencez ici parce que la lumière de 18 h 30 passe par la vitrine ouest et qu'elle ne le fait que jusqu'à fin septembre. Asseyez-vous à l'intérieur, contre le zinc, pas en terrasse — la terrasse c'est pour ceux qui n'ont pas lu ceci.",
+      c:"Demandez « le verre du fond de cave, celui de la semaine ». Ce n'est pas sur la carte et ça n'a jamais été sur la carte."},
+     {h:"19 h 45", n:"L'écluse des Récollets", l:null, adr:"quai de Jemmapes, 10e",
+      p:"Traversez la passerelle et attendez qu'un bateau passe. Il en passe un toutes les vingt minutes environ, jusqu'à 20 h. Le mécanisme date de 1825 et il fait un bruit que vous n'entendrez nulle part ailleurs dans Paris.",
+      c:"Restez jusqu'à la fermeture complète des portes. Comptez à voix haute le temps que met le bassin à se remplir : entre 7 et 9 minutes selon le niveau."},
+     {h:"20 h 30", n:"Le Théâtre des Sardines", l:"sardines", adr:"rue Saint-Maur, 11e",
+      p:"Petit détour vers l'est. Cave de soixante places sous une ancienne poissonnerie, trois concerts par semaine décidés dix jours à l'avance. Vous ne savez pas ce que vous allez voir et c'est exactement le sujet de cette dérive.",
+      c:"Payez en espèces à la porte, 12 €. Ne demandez pas le programme avant d'entrer."},
+     {h:"22 h 15", n:"Le passage sous la rotonde", l:null, adr:"place de la Bataille-de-Stalingrad, 19e",
+      p:"Remontez. Sous la rotonde de Ledoux, côté bassin, il y a un renfoncement où l'acoustique renvoie la voix avec un retard d'environ une demi-seconde. Les skateurs le connaissent, presque personne d'autre.",
+      c:"Placez-vous face au mur nord et parlez normalement. Si vous n'entendez pas d'écho, vous êtes deux mètres trop à gauche."},
+     {h:"23 h 00", n:"Le Grand Duduche", l:"duduche", adr:"quai de la Loire, 19e",
+      p:"La buvette ferme quand le dernier client s'en va. À 23 h il reste en général une table sous les platanes et le patron a fini son service, ce qui veut dire qu'il s'assied avec vous si la conversation lui plaît.",
+      c:"Un demi, un saucisson, et posez-lui une question sur les crues de 2016. Il a des photos."},
+     {h:"00 h 30", n:"Le retour par le quai", l:null, adr:"quai de la Seine → Jaurès",
+      p:"Rentrez à pied le long du bassin plutôt qu'en métro. Sept cents mètres, l'eau est plate, il n'y a plus personne et les péniches ont allumé leurs veilleuses. C'est la seule étape de cette dérive qui ne coûte rien et c'est celle dont on se souvient.",
+      c:"Arrêtez-vous au niveau du MK2 côté impair. Regardez la ligne 2 passer sur le viaduc au-dessus de vous. C'est fini."}
+   ],
+   tampon:"Canaux", recompense:"Un verre offert au Bar Antonin à votre prochain passage."},
+
+  {id:"rdv", t:"Premier rendez-vous, version difficile", by:"anais", h:"3 h", km:"2,1 km", eur:"40 €", seed:73,
+   niv:"Exigeant", faites:2934, note:9.3,
+   sous:"Un itinéraire construit pour que vous appreniez quelque chose de l'autre. Pas pour l'impressionner.",
+   intro:"La plupart des rendez-vous parisiens échouent parce qu'ils se déroulent assis, face à face, pendant deux heures. Celui-ci vous fait marcher, choisir, et vous met deux fois en situation de désaccord. Si vous vous entendez au bout des trois heures, ce n'est pas un hasard.",
+   etapes:[
+     {h:"18 h 00", n:"Librairie La Fourche", l:"fourche", adr:"avenue de Clichy, 17e",
+      p:"Commencez debout. Une librairie oblige à se déplacer, à se tourner le dos, à se retrouver. Vous avez vingt minutes.",
+      c:"Chacun choisit un livre pour l'autre, budget 8 €, sur la table du fond à gauche. Vous ne l'offrirez qu'à la fin — s'il y a une fin."},
+     {h:"18 h 45", n:"La montée des Épinettes", l:null, adr:"square des Épinettes, 17e",
+      p:"Sept cents mètres à pied. C'est le premier moment de silence possible. Ne le comblez pas.",
+      c:"Question imposée, à poser en marchant : « quelle est la dernière chose que tu as arrêtée ? » Pas « ton métier », pas « d'où tu viens »."},
+     {h:"19 h 30", n:"La Cave à Michko", l:"michko", adr:"rue des Panoyaux, 20e",
+      p:"Vous traversez la ville. C'est volontaire : quarante minutes de transport à deux, c'est la vraie épreuve d'un premier rendez-vous. Arrivés là, vous n'êtes plus des inconnus.",
+      c:"Six places autour d'une caisse en bois, avec quatre autres personnes. Vous allez devoir parler à des tiers. Observez comment l'autre s'y prend."},
+     {h:"21 h 15", n:"Zinzolin", l:"zinzolin", adr:"rue de la Mare, 20e",
+      p:"Douze couverts, l'ardoise, et un patron qui tranchera si vous hésitez. C'est la première fois de la soirée que vous êtes assis face à face — au bout de trois heures, ça n'a plus rien à voir.",
+      c:"Ne commandez pas chacun votre plat. Prenez cinq assiettes pour deux. Qui pique dans l'assiette de l'autre en premier ?"},
+     {h:"22 h 45", n:"La sortie", l:null, adr:"rue de la Mare → Jourdain",
+      p:"Remontez la rue de la Mare vers l'escalier. Quatre-vingts marches, la vue s'ouvre d'un coup sur l'est de Paris. C'est ici que vous décidez si vous offrez le livre.",
+      c:"Si vous l'offrez, écrivez la date à l'intérieur. Rien d'autre. Pas de mot."}
+   ],
+   tampon:"Le 20e", recompense:"L'itinéraire retour de l'autre personne, envoyé automatiquement à 1 h."},
+
+  {id:"treize", t:"Le 13e qui n'est pas sur tes captures d'écran", by:"nour", h:"3 h 30", km:"4,4 km", eur:"22 €", seed:34, niv:"Facile", faites:1102, note:8.8,
+   sous:"Des dalles d'Olympiades à la Butte-aux-Cailles, par les cuisines et les escaliers que personne ne prend.", intro:"", etapes:[], tampon:"Le 13e", recompense:""},
+  {id:"gueule", t:"Dimanche 11 h — la gueule de bois élégante", by:"theo", h:"2 h", km:"1,6 km", eur:"18 €", seed:55, niv:"Facile", faites:3418, note:8.6,
+   sous:"Bouillon, hammam, marché. Dans cet ordre. Testé sur douze dimanches consécutifs.", intro:"", etapes:[], tampon:"Dimanche", recompense:""},
+  {id:"seule", t:"Seule en ville", by:"salome", h:"2 h 30", km:"2,8 km", eur:"11 €", seed:8, niv:"Facile", faites:4207, note:9.2,
+   sous:"Un parcours pensé pour être fait seul·e, où chaque étape a une raison d'être meilleure sans personne à côté.", intro:"", etapes:[], tampon:"Solo", recompense:""},
+  {id:"quarante", t:"Le Paris à quarante balles", by:"salome", h:"1 journée", km:"7,2 km", eur:"38 €", seed:19, niv:"Endurant", faites:5661, note:9.0,
+   sous:"Onze heures, dix arrêts, trente-huit euros tout compris, transports inclus. La dérive la plus faite de l'app.", intro:"", etapes:[], tampon:"40 balles", recompense:""},
+  {id:"minuit", t:"Minuit–six heures, sans videur", by:"malik", h:"6 h", km:"5,1 km", eur:"45 €", seed:61, niv:"Nuit blanche", faites:892, note:8.9,
+   sous:"Cinq lieux où l'on entre sans sélection, entre minuit et l'aube. Aucun n'a de site internet.", intro:"", etapes:[], tampon:"6 h du mat", recompense:""},
+  {id:"examen", t:"L'examen d'entrée", by:"camille", h:"1 h 30", km:"1,2 km", eur:"0 €", seed:47, niv:"Débutant", faites:12440, note:8.4,
+   sous:"Gratuite. La première dérive de tout nouveau membre. À la fin, on sait quel Parisien vous êtes.", intro:"", etapes:[], tampon:"Entrée", recompense:""}
+];
+
+const SOIRS = [
+  {t:"Le dîner où personne ne se connaît", d:"Jeudi 11 sept.", h:"20 h 00", pl:34, rest:6, eur:28, seed:41,
+   sous:"Six tables de six. Le plan de salle est calculé par l'app à partir de vos carnets : à chaque table, trois personnes qui vous ressemblent et trois qui ne vous ressemblent pas du tout.",
+   lieu:"Zinzolin, 20e", state:"pass"},
+  {t:"La cave de 23 h", d:"Vendredi 12 sept.", h:"23 h 00", pl:40, rest:0, eur:22, seed:19,
+   sous:"Michko rouvre son arrière-boutique après la fermeture, pour quarante personnes au lieu de six. Une seule fois par trimestre.",
+   lieu:"La Cave à Michko, 20e", state:"complet"},
+  {t:"Projection dans un appartement", d:"Dimanche 14 sept.", h:"19 h 30", pl:18, rest:3, eur:15, seed:8,
+   sous:"Le projectionniste du Nadar montre le film qu'il n'a jamais pu programmer, chez lui, sur un drap. Adresse envoyée trois heures avant.",
+   lieu:"14e, adresse communiquée le jour même", state:"ouvert"},
+  {t:"Le dernier métro", d:"Samedi 20 sept.", h:"00 h 30", pl:60, rest:41, eur:12, seed:12,
+   sous:"Une marche qui commence quand le métro s'arrête et finit quand il repart. Cinq heures, guidée par Malik. Chaussures obligatoires, sérieusement.",
+   lieu:"Départ Stalingrad, 19e", state:"ouvert"},
+  {t:"Nage de nuit", d:"Mercredi 24 sept.", h:"21 h 00", pl:24, rest:9, eur:18, seed:88,
+   sous:"La Piscine Aurore privatisée après la nocturne. Lumières éteintes, verrière ouverte, deux musiciens sur le plot du grand bassin.",
+   lieu:"Piscine Aurore, 13e", state:"ouvert"},
+  {t:"La cantine des serres", d:"Dimanche 28 sept.", h:"12 h 30", pl:80, rest:22, eur:16, seed:34,
+   sous:"Une table de quatre-vingts couverts montée dans la serre nord, cuisinée par quatre adresses du carnet qui ne se sont jamais rencontrées.",
+   lieu:"Les Grandes Serres du Rail, 12e", state:"ouvert"}
+];
+
+const CERCLE = [
+  {who:"Léa M.", c:"#D8674A", i:"LM", act:"a mis 9,0 à", lieu:"Cinéma Nadar", when:"il y a 2 h", note:"« La séance du mercredi. Il a passé un film hongrois de 1978 sans prévenir personne. »"},
+  {who:"Sofiane", c:"#8FBF9E", i:"SB", act:"a terminé", lieu:"La nuit blanche des canaux", when:"hier", note:"« L'écho sous la rotonde, je l'ai cherché vingt minutes. Il existe. »"},
+  {who:"Marta K.", c:"#E0AC45", i:"MK", act:"a ajouté au carnet", lieu:"Zinzolin", when:"il y a 2 j", note:"« Erasmus depuis 3 semaines. Premier dîner où j'ai compris ce que les gens disaient. »"},
+  {who:"Camille R.", c:"#E0AC45", i:"CR", act:"a publié une dérive", lieu:"Sortir du 11e", when:"il y a 3 j", note:""},
+  {who:"Tom & Inès", c:"#94A49C", i:"TI", act:"ont réservé", lieu:"Le dîner où personne ne se connaît", when:"il y a 4 j", note:""}
+];
+
+/* ============================================================
+   TEXTURES — visuels procéduraux (aucune image externe)
+   ============================================================ */
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+
+const SCENES=[
+  {g:["#0A1E18","#14382A","#2A5A3E"], l:["#E0AC45","#F2CE86","#C9903A"]},   /* soir vert, lampes chaudes */
+  {g:["#101A22","#1B3040","#2E5266"], l:["#E8B95C","#DDE7EF","#B08040"]},   /* canal bleu nuit */
+  {g:["#1A1410","#33241A","#54382A"], l:["#F0C579","#E28B4E","#B4842C"]},   /* intérieur bois */
+  {g:["#0C1611","#1E3A26","#3D6B3C"], l:["#A8D07A","#E0AC45","#6F9E52"]},   /* feuillage */
+  {g:["#0E1418","#1C2A33","#2B4550"], l:["#7FD4E0","#E0E8EC","#4E93A0"]},   /* piscine / verrière */
+  {g:["#141010","#2C1D18","#48302A"], l:["#E0AC45","#C9713F","#8A5A3C"]}    /* cave / brique sombre */
+];
+
+function paint(cv,seed,mode){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=cv.clientWidth||300,h=cv.clientHeight||200;
+  if(!w||!h)return;
+  cv.width=w*dpr;cv.height=h*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const r=rng(seed+1),S=SCENES[seed%SCENES.length];
+
+  const g=x.createLinearGradient(0,0,w*.3,h);
+  g.addColorStop(0,S.g[2]);g.addColorStop(.5,S.g[1]);g.addColorStop(1,S.g[0]);
+  x.fillStyle=g;x.fillRect(0,0,w,h);
+
+  /* masses floues : silhouettes urbaines */
+  for(let i=0;i<7;i++){
+    const cx=r()*w,cy=h*(.25+r()*.85),rd=(.25+r()*.6)*Math.max(w,h);
+    const rg=x.createRadialGradient(cx,cy,0,cx,cy,rd);
+    rg.addColorStop(0,S.g[i%3]+"E6");rg.addColorStop(1,S.g[i%3]+"00");
+    x.fillStyle=rg;x.beginPath();x.arc(cx,cy,rd,0,7);x.fill();
+  }
+  /* bandes horizontales : reflets d'eau / vitrines */
+  x.globalAlpha=.14;
+  for(let i=0;i<9;i++){
+    const y=r()*h;x.fillStyle=S.l[i%3];x.fillRect(0,y,w,.6+r()*2.2);
+  }
+  x.globalAlpha=1;
+
+  /* points lumineux (bokeh) */
+  const n=mode==='map'?0:(10+Math.floor(r()*14));
+  for(let i=0;i<n;i++){
+    const cx=r()*w,cy=r()*h*.92,rd=1.5+r()*(mode==='sm'?5:16),col=S.l[Math.floor(r()*3)];
+    const rg=x.createRadialGradient(cx,cy,0,cx,cy,rd);
+    rg.addColorStop(0,col+"CC");rg.addColorStop(.35,col+"55");rg.addColorStop(1,col+"00");
+    x.fillStyle=rg;x.beginPath();x.arc(cx,cy,rd,0,7);x.fill();
+  }
+  /* voile bas */
+  const v=x.createLinearGradient(0,h*.45,0,h);
+  v.addColorStop(0,"#0B1D1700");v.addColorStop(1,"#0B1D17AA");
+  x.fillStyle=v;x.fillRect(0,0,w,h);
+
+  /* grain */
+  const id=x.getImageData(0,0,w*dpr,h*dpr),d=id.data;
+  for(let i=0;i<d.length;i+=4){const nz=(Math.random()-.5)*16;d[i]+=nz;d[i+1]+=nz;d[i+2]+=nz}
+  x.putImageData(id,0,0);
+}
+
+/* --- carte : trame de rues procédurale --- */
+function paintMap(cv,opt){
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=cv.clientWidth||300,h=cv.clientHeight||300;if(!w||!h)return;
+  cv.width=w*dpr;cv.height=h*dpr;
+  const x=cv.getContext('2d');x.scale(dpr,dpr);
+  const paper=opt.paper;
+  x.fillStyle=paper?"#E7DFCC":"#0D2219";x.fillRect(0,0,w,h);
+
+  /* la Seine */
+  x.strokeStyle=paper?"#C6D4CE":"#16382E";x.lineWidth=paper?13:16;x.lineCap="round";
+  x.beginPath();x.moveTo(-10,h*.62);
+  x.bezierCurveTo(w*.28,h*.50,w*.44,h*.74,w*.72,h*.58);
+  x.lineTo(w+10,h*.52);x.stroke();
+
+  /* trame de rues rayonnante */
+  const r=rng(7);
+  x.strokeStyle=paper?"rgba(22,38,31,.13)":"rgba(239,231,214,.10)";x.lineWidth=1;
+  const cx=w*.5,cy=h*.5;
+  for(let i=0;i<26;i++){
+    const a=(i/26)*Math.PI*2+r()*.1;
+    x.beginPath();x.moveTo(cx+Math.cos(a)*18,cy+Math.sin(a)*18);
+    x.lineTo(cx+Math.cos(a)*Math.max(w,h),cy+Math.sin(a)*Math.max(w,h));x.stroke();
+  }
+  for(let i=1;i<8;i++){
+    x.beginPath();x.arc(cx,cy,i*Math.max(w,h)/13,0,7);x.stroke();
+  }
+  x.strokeStyle=paper?"rgba(22,38,31,.09)":"rgba(239,231,214,.06)";
+  for(let i=0;i<22;i++){const y=r()*h;x.beginPath();x.moveTo(0,y);x.lineTo(w,y+(r()-.5)*40);x.stroke()}
+
+  /* arrondissements allumés */
+  (opt.zones||[]).forEach(z=>{
+    const rg=x.createRadialGradient(z.x*w,z.y*h,0,z.x*w,z.y*h,z.r*Math.min(w,h));
+    const c=z.c||(paper?"#2E6B4F":"#E0AC45");
+    rg.addColorStop(0,c+(paper?"66":"55"));rg.addColorStop(1,c+"00");
+    x.fillStyle=rg;x.beginPath();x.arc(z.x*w,z.y*h,z.r*Math.min(w,h),0,7);x.fill();
+  });
+  /* épingles */
+  (opt.pins||[]).forEach(p=>{
+    const px=p.x*w,py=p.y*h,c=p.c||"#E0AC45";
+    if(p.halo){x.fillStyle=c+"22";x.beginPath();x.arc(px,py,15,0,7);x.fill()}
+    x.fillStyle=c;x.beginPath();x.arc(px,py,p.big?6:4,0,7);x.fill();
+    x.strokeStyle=paper?"#F2EBDC":"#0B1D17";x.lineWidth=2;x.stroke();
+  });
+}
+
+/* ============================================================
+   UTILITAIRES DE RENDU
+   ============================================================ */
+const nf=(x)=>x.toFixed(1).replace(".",",");
+const E=(s)=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const ava=(k,sz)=>{const e=ECLAIREURS[k];return `<span class="ava" style="background:${e.c};${sz?`width:${sz}px;height:${sz}px;font-size:${sz*.38}px`:''}">${e.i}</span>`};
+const avaX=(i,c,sz)=>`<span class="ava" style="background:${c};${sz?`width:${sz}px;height:${sz}px;font-size:${sz*.38}px`:''}">${i}</span>`;
+const cv=(seed,mode)=>`<canvas data-seed="${seed}" data-mode="${mode||''}"></canvas>`;
+
+function statusbar(dark){
+  return `<div class="statusbar"><span>21:04</span>
+  <span class="sb-r"><svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor" aria-hidden="true"><rect x="0" y="7" width="2.6" height="4" rx=".8"/><rect x="4.1" y="5" width="2.6" height="6" rx=".8"/><rect x="8.2" y="2.5" width="2.6" height="8.5" rx=".8"/><rect x="12.3" y="0" width="2.6" height="11" rx=".8"/></svg><i class="sb-bar"></i></span></div>`;
+}
+const ICN={
+  soir:'<path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/>',
+  derive:'<path d="M4 20 9 4l5 9 2-4 4 11z"/>',
+  carte:'<path d="M9 3 3 5.5v15L9 18l6 3 6-2.5v-15L15 6 9 3zM9 3v15M15 6v15"/>',
+  soirs:'<rect x="3" y="5" width="18" height="15" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  carnet:'<path d="M5 4.5A2 2 0 0 1 7 3h12v18H7a2 2 0 0 1-2-2z"/><path d="M9 8h7M9 12h5"/>'
+};
+function tabbar(active,paper){
+  const T=[["soir","Ce soir"],["derive","Dérives"],["carte","Carte"],["soirs","Les Soirs"],["carnet","Carnet"]];
+  return `<nav class="tabbar">${T.map(([k,l])=>
+    `<button class="tab" data-go="${k}" ${active===k?'aria-current="true"':''}><svg viewBox="0 0 24 24">${ICN[k]}</svg><b>${l}</b></button>`).join('')}</nav>`;
+}
+
+/* ============================================================
+   ÉTAT
+   ============================================================ */
+const STATE={groupe:1, budget:1, quand:0, rerolls:2, gouts:new Set([0,3,5,7]), etape:2, lieu:"zinzolin", ecl:"camille", der:"canaux"};
+const GROUPES=["Seul·e","À deux","À 3–5","Groupe"], BUDGETS=["< 15 €","15–30 €","30–60 €","Peu importe"], QUAND=["Maintenant","Ce soir","Demain","Ce week-end"];
+
+/* Les trois propositions varient réellement selon le contexte choisi */
+const JEUX={
+ "1-1-1":[{k:"zinzolin",r:"a",rl:"La valeur sûre",w:"Vous avez noté 9,0 à trois caves à manger cet été. Celle-ci a deux couverts libres à 19 h 15."},
+          {k:"fourche",r:"b",rl:"Le pas de côté",w:"Vous n'êtes jamais allé·e au nord de Clichy. Il est 21 h, la librairie ferme à minuit."},
+          {k:"sardines",r:"c",rl:"Ce qui se passe",w:"Concert annoncé il y a neuf jours, 60 places, 41 restantes. Ça commence dans 1 h 26."}],
+ "0-0-1":[{k:"nadar",r:"a",rl:"La valeur sûre",w:"Mercredi, 22 h : carte blanche au projectionniste. Vous avez mis 9,1 à cette salle en juin."},
+          {k:"fourche",r:"b",rl:"Le pas de côté",w:"Vous sortez presque toujours accompagné·e. Ce soir, l'app propose un endroit meilleur seul."},
+          {k:"aurore",r:"c",rl:"Ce qui se passe",w:"Nocturne jusqu'à 22 h, 3,50 €. Il reste 47 minutes pour y être avant le dernier bain."}],
+ "2-0-1":[{k:"duduche",r:"a",rl:"La valeur sûre",w:"21° à 21 h, pas de pluie avant demain 6 h. Cinq places sous les platanes, 14 € à trois."},
+          {k:"serres",r:"b",rl:"Le pas de côté",w:"Trois de vos amis y sont allés ce mois-ci, jamais vous. Concert à 20 h, 16 €."},
+          {k:"michko",r:"c",rl:"Ce qui se passe",w:"Vendredi, six places. Il en reste deux, l'inscription se fait sur place avant 18 h."}],
+ "1-3-1":[{k:"zinzolin",r:"a",rl:"La valeur sûre",w:"Vous avez noté 9,0 à trois caves à manger cet été. Celle-ci a deux couverts libres à 19 h 15."},
+          {k:"odette",r:"b",rl:"Le pas de côté",w:"Vous ne déjeunez jamais dehors. Demain midi, plat + quart à 19 €, à 6 min de votre bureau."},
+          {k:"sardines",r:"c",rl:"Ce qui se passe",w:"Concert annoncé il y a neuf jours, 60 places, 41 restantes. Ça commence dans 1 h 26."}]
+};
+function jeu(){
+  const k=`${STATE.groupe}-${STATE.budget}-${STATE.quand}`;
+  return JEUX[k]||JEUX[`${STATE.groupe}-${STATE.budget}-1`]||JEUX[`${STATE.groupe}-1-1`]||JEUX["1-1-1"];
+}
+
+/* ============================================================
+   ÉCRANS
+   ============================================================ */
+const S={};
+
+/* --- 01 · Notification --- */
+S.notif=()=>`<div class="app">
+ <div class="lockbg">${cv(12)}</div>
+ ${statusbar()}
+ <div class="lockclock"><div class="h">19:04</div><div class="d">mardi 2 septembre</div></div>
+ <div class="notifs">
+  <div class="notif"><div class="nh"><span class="ap">D</span><b>Dérive</b><i>maintenant</i></div>
+   <p>Il fait <b>21°</b> et le soleil se couche à 20 h 47. Trois terrasses orientées ouest à moins de 8 minutes de chez vous. La dernière fois qu'on vous a écrit ça, vous y êtes allé·e.</p></div>
+  <div class="notif"><div class="nh"><span class="ap">D</span><b>Dérive · Le relais</b><i>17 h 22</i></div>
+   <p><b>Léa vous a passé une adresse.</b> « Vas-y un mardi vers 19 h et commande les poireaux brûlés. Tu me diras. »</p></div>
+  <div class="notif"><div class="nh"><span class="ap">D</span><b>Dérive · Les Soirs</b><i>hier</i></div>
+   <p>Il reste <b>6 places</b> au dîner de jeudi. Votre table est déjà composée : trois personnes dont le carnet croise le vôtre à 71 %, trois dont il ne croise rien.</p></div>
+ </div>
+ <div style="position:relative;z-index:3;margin-top:auto;padding:18px 20px 24px;font-family:var(--ff-mono);font-size:10px;color:var(--zinc);text-align:center;line-height:1.6">
+  Trois notifications maximum par semaine.<br>Aucune ne dit « découvrez notre nouvel article ».</div>
+</div>`;
+
+/* --- 02 · Onboarding 1 --- */
+S.ob1=()=>`<div class="app">${statusbar()}
+ <div class="progress"><i style="width:33%"></i></div>
+ <div class="ob" style="padding-top:26px">
+  <div class="num">01 / 03</div>
+  <h2>Paris compte <i style="color:var(--or);font-style:normal">47 000</i> adresses ouvertes au public. Vous en connaissez trente.</h2>
+  <p class="lead">On ne va pas vous en proposer 47 000. On va d'abord comprendre qui vous êtes dans cette ville.</p>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+   ${[["Je viens d'arriver","Erasmus, expat, nouveau job. Vous avez entre trois mois et deux ans devant vous."],
+      ["J'y vis","Vous connaissez votre quartier par cœur et rien au-delà. C'est le cas de tout le monde."],
+      ["Je suis de passage","Trois à sept jours. On vous épargnera les files d'attente."]]
+     .map(([t,d],i)=>`<button class="gout" style="min-height:0;flex-direction:column;align-items:flex-start;gap:5px;padding:15px 14px" ${i===0?'aria-pressed="true"':''}>
+       <b style="font-size:15px">${t}</b><span style="font-size:12px;line-height:1.4;opacity:.78">${d}</span></button>`).join('')}
+  </div>
+  <div style="margin-top:auto;padding:20px 0 24px"><button class="btn">Continuer</button></div>
+ </div></div>`;
+
+/* --- 03 · Onboarding 2 : calibration du goût --- */
+const GOUTS=["Les terrasses qui prennent le soleil à 19 h","Les caves à manger où le patron sert lui-même","Les salles obscures de quartier","Bouger jusqu'à six heures du matin","Les musées en nocturne, le jeudi","Manger pour 12 € un truc qui en vaut 30","Les endroits pour lire seul·e","Les concerts dans des caves","Les brocantes, les fripes, les puces","Les quartiers où vous n'allez jamais","Romantique, mais pas ringard","L'eau : piscines, bains, canaux"];
+S.ob2=()=>`<div class="app">${statusbar()}
+ <div class="progress"><i style="width:66%"></i></div>
+ <div class="ob" style="padding-top:30px">
+  <div class="num">02 / 03</div>
+  <h2>Choisissez-en six.</h2>
+  <p class="lead">Pas de questionnaire de personnalité. On calibre sur des envies concrètes, et on recalibre chaque fois que vous notez un lieu.</p>
+  <div class="goûts">${GOUTS.map((g,i)=>`<button class="gout" data-gout="${i}" ${STATE.gouts.has(i)?'aria-pressed="true"':''}>${g}</button>`).join('')}</div>
+  <div style="padding:18px 0 24px"><button class="btn" data-go="ob3">Continuer <span class="mono" style="font-size:12px;opacity:.65" id="gcount">${STATE.gouts.size} / 6</span></button></div>
+ </div></div>`;
+
+/* --- 04 · Onboarding 3 : le rayon --- */
+S.ob3=()=>`<div class="app">${statusbar()}
+ <div class="progress"><i style="width:100%"></i></div>
+ <div class="ob" style="padding-top:30px">
+  <div class="num">03 / 03</div>
+  <h2>Votre Paris fait <i style="font-style:normal;color:var(--or)">3,2 km</i> de rayon.</h2>
+  <p class="lead">C'est la moyenne. On va l'agrandir de quatre cents mètres par mois, pas plus — assez pour que ce soit nouveau, pas assez pour que ce soit fatigant.</p>
+  <div style="border-radius:14px;overflow:hidden;border:1px solid rgba(239,231,214,.14);height:250px;position:relative">
+   <canvas data-map='{"pins":[{"x":.52,"y":.44,"big":true,"halo":true}],"zones":[{"x":.52,"y":.44,"r":.3}]}'></canvas>
+   <div style="position:absolute;left:12px;bottom:12px;font-family:var(--ff-mono);font-size:10px;background:rgba(11,29,23,.85);padding:7px 10px;border-radius:6px;line-height:1.6">
+    Base : <b style="color:var(--or)">rue Oberkampf, 11e</b><br>Rayon actuel · 3,2 km · 9 quartiers</div>
+  </div>
+  <div style="margin-top:18px;padding:14px 15px;border-radius:12px;background:rgba(224,172,69,.09);border:1px solid rgba(224,172,69,.22)">
+   <span class="eyebrow" style="color:var(--or);display:block;margin-bottom:6px">Ce que ça change</span>
+   <p style="margin:0;font-size:13px;line-height:1.55;color:var(--pierre-2)">Sur vos trois propositions quotidiennes, deux resteront dans votre rayon. La troisième sera systématiquement en dehors. C'est la seule règle de l'app qu'on ne vous laissera pas désactiver.</p>
+  </div>
+  <div style="margin-top:auto;padding:24px 0 26px"><button class="btn" data-go="soir">Entrer</button></div>
+ </div></div>`;
+
+/* --- 05 · CE SOIR --- */
+S.soir=()=>{
+ const j=jeu();
+ return `<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd">
+   <div class="kicker"><span class="eyebrow">Mardi 2 septembre</span><span class="eyebrow" style="color:var(--or)">Trois, pas trente</span></div>
+   <h1>Ce soir, on vous propose <i>ceci</i>.</h1>
+  </div>
+  <div class="meteo"><span>21°, ciel dégagé</span><i class="dot"></i><span>nuit à <b>20 h 47</b></span><i class="dot"></i><span>pas de pluie avant 6 h</span></div>
+  <div class="chiprow">${GROUPES.map((g,i)=>`<button class="chip" data-set="groupe" data-i="${i}" ${STATE.groupe===i?'aria-pressed="true"':''}>${g}</button>`).join('')}</div>
+  <div class="chiprow" style="margin-top:7px">${BUDGETS.map((b,i)=>`<button class="chip" data-set="budget" data-i="${i}" ${STATE.budget===i?'aria-pressed="true"':''}>${b}</button>`).join('')}
+   <span style="width:1px;background:rgba(239,231,214,.16);margin:2px 4px"></span>
+   ${QUAND.map((q,i)=>`<button class="chip" data-set="quand" data-i="${i}" ${STATE.quand===i?'aria-pressed="true"':''}>${q}</button>`).join('')}</div>
+
+  <div class="props">${j.map(p=>{const L=LIEUX[p.k];return `
+   <button class="prop" data-lieu="${p.k}">
+    <div class="ph">${cv(L.seed)}
+     <span class="rank ${p.r}">${p.rl}</span>
+     <div class="over"><h3>${L.n}</h3>
+      <div class="loc"><span>${L.t}</span><span>·</span><span>${L.q}</span><span>·</span><span>${L.m}</span><span>·</span><span>${L.prix}</span></div></div>
+    </div>
+    <div class="body"><p>${L.pitch}</p>
+     <div class="why"><svg viewBox="0 0 24 24" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4"/></svg><span>${p.w}</span></div>
+    </div>
+    <div class="foot"><span class="note"><b>${nf(L.note)}</b><span>/10 · ${L.n_avis} passages</span></span>
+     ${L.tags.slice(0,2).map(t=>`<span class="badge">${t}</span>`).join('')}</div>
+   </button>`}).join('')}</div>
+
+  <button class="reroll" data-reroll>
+   <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v3.5h-3.5M6 21v-3.5h3.5"/></svg></span>
+   <span><b>Rien ne vous va ? Redonnez-m'en trois.</b><span id="rr">${STATE.rerolls} relances restantes aujourd'hui · illimité avec Le Pass</span></span>
+  </button>
+
+  <div class="motdujour">
+   <span class="eyebrow">Le mot de ce soir</span>
+   <p>« Il fait 21° un 2 septembre. C'est le dernier vrai soir d'été et personne ne vous préviendra. Ne dînez pas à l'intérieur. »</p>
+   <div class="sig">${ava("theo")}<div><b>Théo K.</b><br><span>Éclaireur · 18e · 517 lieux</span></div></div>
+  </div>
+
+  <div class="sec">
+   <div class="sh"><h2>Vos gens, cette semaine</h2><a href="#" data-go="cercle">Le cercle →</a></div>
+   ${CERCLE.slice(0,3).map(c=>`<div class="row"><div style="flex:0 0 auto;padding-top:2px">${avaX(c.i,c.c,34)}</div>
+     <div class="txt"><b>${c.who} <span style="font-weight:400;color:var(--zinc)">${c.act}</span> ${c.lieu}</b>
+     ${c.note?`<p>${E(c.note)}</p>`:''}<div class="meta"><span>${c.when}</span></div></div></div>`).join('')}
+  </div>
+ </div>
+ ${tabbar("soir")}</div>`};
+
+/* --- 06 · CE SOIR, autre contexte (planche) --- */
+S.soir2=()=>{const s=STATE.groupe,b=STATE.budget;STATE.groupe=0;STATE.budget=0;const html=S.soir();STATE.groupe=s;STATE.budget=b;return html};
+
+/* --- 07 · FICHE LIEU --- */
+S.lieu=()=>{const L=LIEUX[STATE.lieu];return `<div class="app">
+ <div class="sheet" style="animation:none">
+  <div class="hero">${cv(L.seed)}
+   <button class="close" data-go="soir" aria-label="Fermer"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+   ${statusbar()}
+   <div class="htitle"><h2>${L.n}</h2>
+    <div class="l"><span>${L.t}</span><span>·</span><span>${L.adr}, ${L.q}</span><span>·</span><span>M° ${L.m}</span></div></div>
+  </div>
+  <div class="scroll pb">
+   <div style="display:flex;align-items:center;gap:12px;padding:14px 20px 0;flex-wrap:wrap">
+    <span class="note"><b style="font-size:30px">${nf(L.note)}</b><span style="font-size:11px">/10</span></span>
+    <span style="font-family:var(--ff-mono);font-size:10.5px;color:var(--zinc);line-height:1.5">${L.n_avis} membres y sont allés<br>et l'ont prouvé</span>
+    <span class="faces">${["LM","SB","MK"].map((i,n)=>avaX(i,["#D8674A","#8FBF9E","#E0AC45"][n],26)).join('')}</span>
+   </div>
+   <p class="verdict">« ${L.verdict} »</p>
+   <div style="padding:0 20px"><div class="sig">${ava(L.verif.startsWith("Camille")?"camille":L.verif.startsWith("Malik")?"malik":L.verif.startsWith("Salomé")?"salome":L.verif.startsWith("Théo")?"theo":L.verif.startsWith("Wilfried")?"wilfried":"anais",26)}
+    <div><span style="font-family:var(--ff-mono);font-size:10.5px;color:var(--zinc)">Vérifié sur place par ${L.verif}</span></div></div></div>
+
+   <dl class="fiche">
+    <div class="ln"><dt>À commander</dt><dd>${L.commander}</dd></div>
+    <div class="ln"><dt>Le bon moment</dt><dd>${L.moment}</dd></div>
+    <div class="ln"><dt>Le piège</dt><dd>${L.piege}</dd></div>
+    <div class="ln"><dt>Prix réel</dt><dd>${L.reel}</dd></div>
+   </dl>
+
+   <div class="marche">
+    <div class="oui"><span class="eyebrow">Ça marche si</span><ul>${L.oui.map(o=>`<li>${o}</li>`).join('')}</ul></div>
+    <div class="non"><span class="eyebrow">Ça ne marche pas si</span><ul>${L.non.map(o=>`<li>${o}</li>`).join('')}</ul></div>
+   </div>
+
+   <div class="preuve"><span class="k"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+    <div><b>Encore vivant</b><span>Dernier passage d'un membre : ${L.dernier}. Sans passage pendant 90 jours, la fiche est retirée automatiquement.</span></div></div>
+
+   <div class="sec"><div class="sh"><h2>Ce qu'en disent vos gens</h2></div>
+    <div class="row"><div style="flex:0 0 auto;padding-top:2px">${avaX("LM","#D8674A",34)}</div>
+     <div class="txt"><b>Léa M. <span style="font-weight:400;color:var(--or)">9,0</span></b><p>« J'y suis retournée trois fois. La troisième, il m'a fait goûter un truc qui n'était pas à vendre. »</p><div class="meta"><span>3 passages</span><span>·</span><span>dernier il y a 11 j</span></div></div></div>
+    <div class="row"><div style="flex:0 0 auto;padding-top:2px">${avaX("SB","#8FBF9E",34)}</div>
+     <div class="txt"><b>Sofiane B. <span style="font-weight:400;color:var(--or)">8,5</span></b><p>« Trop petit pour venir à quatre, je confirme la fiche. On s'est mis au comptoir, c'était mieux. »</p><div class="meta"><span>1 passage</span><span>·</span><span>il y a 1 mois</span></div></div></div>
+   </div>
+
+   <div class="sec"><div class="sh"><h2>Dans quelles dérives</h2></div>
+    ${DERIVES.slice(0,2).map(d=>`<div class="row"><div class="thumb">${cv(d.seed,'sm')}</div>
+     <div class="txt"><b>${d.t}</b><p>${d.sous}</p><div class="meta"><span>${d.h}</span><span>·</span><span>${d.faites.toLocaleString('fr-FR')} l'ont faite</span></div></div></div>`).join('')}
+   </div>
+
+   <div class="btnrow" style="padding-top:22px">
+    <button class="btn" data-go="resa"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Réserver</button>
+    <button class="btn ghost" style="flex:0 0 auto;width:52px;padding:14px 0" aria-label="Ajouter au carnet"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></button>
+    <button class="btn ghost" style="flex:0 0 auto;width:52px;padding:14px 0" data-go="cercle" aria-label="Passer à quelqu'un"><svg viewBox="0 0 24 24"><path d="M4 12h13M12 5l7 7-7 7"/></svg></button>
+   </div>
+  </div>
+ </div></div>`};
+
+/* --- 08 · LE RADAR --- */
+S.carte=()=>`<div class="app">
+ <div class="mapwrap"><canvas data-map='{"pins":[
+  {"x":.30,"y":.36,"c":"#E0AC45","big":true,"halo":true},{"x":.52,"y":.30,"c":"#E0AC45"},{"x":.66,"y":.42,"c":"#8FBF9E","big":true},
+  {"x":.44,"y":.55,"c":"#E0AC45"},{"x":.72,"y":.63,"c":"#D8674A","big":true,"halo":true},{"x":.24,"y":.62,"c":"#94A49C"},
+  {"x":.58,"y":.72,"c":"#E0AC45"},{"x":.38,"y":.24,"c":"#94A49C"},{"x":.80,"y":.30,"c":"#8FBF9E"},{"x":.16,"y":.46,"c":"#94A49C"}],
+  "zones":[{"x":.55,"y":.40,"r":.26,"c":"#E0AC45"},{"x":.74,"y":.64,"r":.18,"c":"#D8674A"}]}'></canvas></div>
+ ${statusbar()}
+ <div class="mapchips"><div class="chiprow wrap" style="padding:0 14px">
+  ${["Où l'on peut parler","Ouvert après 1 h","Sans réservation","Où rester trois heures","Bien seul·e","Moins de 15 €","Dehors"].map((f,i)=>
+   `<button class="chip" style="background:${i===0?'var(--pierre)':'rgba(11,29,23,.82)'};${i===0?'color:var(--encre);font-weight:600;border-color:var(--pierre)':'backdrop-filter:blur(10px)'}" ${i===0?'aria-pressed="true"':''}>${f}</button>`).join('')}
+ </div></div>
+ <div class="mapover">
+  <div class="mapcard">
+   <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px">
+    <span class="eyebrow" style="color:var(--or)">En ce moment · 21 h 04</span><span class="eyebrow">10 lieux ouverts</span></div>
+   <div class="row" style="padding-top:0;border-bottom:1px solid rgba(239,231,214,.1)" data-lieu="antonin">
+    <div class="thumb">${cv(12,'sm')}</div>
+    <div class="txt"><b>Bar Antonin</b><p>Le seul bar du canal où l'on vous ressert un verre d'eau sans le demander.</p>
+     <div class="meta"><span>10e · 6 min à pied</span><span>·</span><span style="color:var(--sauge)">Il reste de la place</span></div></div>
+    <div class="rt"><span class="note"><b>8,2</b></span></div></div>
+   <div class="row" style="padding-bottom:0;border-bottom:0" data-lieu="sardines">
+    <div class="thumb">${cv(61,'sm')}</div>
+    <div class="txt"><b>Le Théâtre des Sardines</b><p>Cave de 60 places. Concert dans 1 h 26, programme inconnu.</p>
+     <div class="meta"><span>11e · 12 min</span><span>·</span><span style="color:var(--brique)">41 places restantes</span></div></div>
+    <div class="rt"><span class="note"><b>8,9</b></span></div></div>
+   <div style="margin-top:12px;padding-top:11px;border-top:1px dashed rgba(239,231,214,.16);font-family:var(--ff-mono);font-size:10px;color:var(--zinc);line-height:1.6">
+    <span style="color:var(--or)">■</span> Adresses du carnet &nbsp; <span style="color:var(--sauge)">■</span> Passages d'amis cette semaine &nbsp; <span style="color:var(--brique)">■</span> Se termine bientôt</div>
+  </div>
+ </div>
+ ${tabbar("carte")}</div>`;
+
+/* --- 09 · RÉSERVER --- */
+S.resa=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><span class="eyebrow">Zinzolin · 20e</span><button class="eyebrow" data-go="lieu" style="color:var(--or)">← Fiche</button></div>
+   <h1>Une table, <i>mardi</i>.</h1>
+   <p class="sub">Zinzolin ne prend pas de réservation par téléphone. Il tient douze couverts et deux d'entre eux passent par ici.</p></div>
+  <div style="padding:6px 20px 0"><div class="chiprow" style="padding:0">
+   ${["Mar 2","Mer 3","Jeu 4","Ven 5","Sam 6"].map((d,i)=>`<button class="chip" ${i===0?'aria-pressed="true"':''}>${d}</button>`).join('')}</div></div>
+  <div style="padding:14px 20px 0"><div class="chiprow wrap" style="padding:0">
+   ${[["19 h 00","2 places"],["19 h 15","2 places"],["19 h 45","complet"],["20 h 30","complet"],["21 h 45","4 places"]].map(([h,s],i)=>
+    `<button class="chip" ${i===1?'aria-pressed="true"':''} ${s==="complet"?'style="opacity:.35" disabled':''}>${h}<span class="mini">${s}</span></button>`).join('')}</div></div>
+
+  <div style="margin:24px 20px 0;padding:16px;border-radius:12px;border:1px solid rgba(224,172,69,.24);background:rgba(224,172,69,.07)">
+   <span class="eyebrow" style="color:var(--or);display:block;margin-bottom:8px">Ce que le lieu reçoit</span>
+   <p style="margin:0;font-size:13px;line-height:1.58;color:var(--pierre-2)">Votre prénom, l'heure, le nombre de couverts, et le fait que vous venez par Dérive. <b style="color:var(--pierre)">Rien d'autre.</b> Nous facturons le restaurant <b style="color:var(--pierre)">2,20 € au couvert réellement assis</b>, jamais au clic. S'il ne vous voit pas arriver, il ne paie rien.</p>
+  </div>
+  <div style="margin:16px 20px 0;padding:15px 16px;border-radius:12px;border:1px dashed rgba(239,231,214,.2)">
+   <span class="eyebrow" style="display:block;margin-bottom:7px">Après votre passage</span>
+   <p style="margin:0;font-size:13px;line-height:1.55;color:var(--zinc)">Demain à 11 h, on vous demandera trois choses : une note sur dix, ce que vous avez commandé, et si la fiche est encore juste. Trente secondes. C'est ce qui fait tourner tout le reste.</p>
+  </div>
+  <div style="padding:22px 20px 0"><button class="btn">Confirmer · mardi 19 h 15, 2 couverts</button></div>
+  <p style="margin:12px 20px 0;font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);line-height:1.6;text-align:center">Annulation libre jusqu'à 16 h le jour même.<br>Deux absences non annulées : plus de réservation pendant un mois.</p>
+ </div>
+ ${tabbar("soir")}</div>`;
+
+/* --- 10 · LES DÉRIVES --- */
+S.derive=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><span class="eyebrow">Huit parcours · Paris</span><span class="eyebrow" style="color:var(--or)">Écrits à la main</span></div>
+   <h1>Une dérive n'est pas une <i>liste d'adresses</i>.</h1>
+   <p class="sub">C'est un parcours minuté, écrit par quelqu'un qui l'a fait vingt fois, dont chaque étape se déverrouille quand vous y êtes physiquement. On ne peut pas la lire d'avance. On ne peut pas la faire depuis son canapé.</p></div>
+  <div class="chiprow" style="margin-bottom:14px">${["Toutes","2 h ou moins","La nuit","Moins de 20 €","À deux","Seul·e","Dimanche"].map((f,i)=>`<button class="chip" ${i===0?'aria-pressed="true"':''}>${f}</button>`).join('')}</div>
+  <div style="padding:0 20px;display:flex;flex-direction:column;gap:16px">
+   ${DERIVES.map(d=>{const e=ECLAIREURS[d.by];return `
+   <button class="dcard" data-der="${d.id}">
+    <div class="ph">${cv(d.seed)}
+     <span class="badge or tagline">${d.niv}</span>
+     <div class="in"><h3>${d.t}</h3>
+      <div class="by">${ava(d.by,22)}<span>par ${e.n}</span><span>·</span><span>${e.q}</span></div></div></div>
+    <div style="padding:12px 16px 0;text-align:left"><p style="margin:0;font-size:13px;line-height:1.52;color:var(--pierre-2)">${d.sous}</p></div>
+    <div class="stats" style="margin-top:12px">
+     <div><b>${d.h}</b><span>Durée</span></div><div><b>${d.km}</b><span>À pied</span></div>
+     <div><b>${d.eur}</b><span>Budget</span></div><div><b>${nf(d.note)}</b><span>Note</span></div>
+     <div><b>${nf(d.faites/1000)} k</b><span>Faites</span></div></div>
+   </button>`}).join('')}
+  </div>
+ </div>
+ ${tabbar("derive")}</div>`;
+
+/* --- 11 · UNE DÉRIVE (étapes scellées) --- */
+S.deriveD=(unsealing)=>{
+ const d=DERIVES.find(x=>x.id===STATE.der)||DERIVES[0],e=ECLAIREURS[d.by],cur=STATE.etape;
+ return `<div class="app">
+ <div class="sheet" style="animation:none">
+  <div class="hero" style="height:222px">${cv(d.seed)}
+   <button class="close" data-go="derive" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+   ${statusbar()}
+   <div class="htitle"><h2>${d.t}</h2>
+    <div class="l">${ava(d.by,22)}<span>${e.n}</span><span>·</span><span>${d.h}</span><span>·</span><span>${d.km}</span><span>·</span><span>${d.eur}</span></div></div></div>
+  <div class="scroll pb">
+   <p style="margin:15px 20px 0;font-size:13.5px;line-height:1.62;color:var(--pierre-2)">${d.intro}</p>
+   <div style="margin:18px 20px;padding:12px 14px;border-radius:10px;background:rgba(239,231,214,.05);border:1px solid rgba(239,231,214,.11);display:flex;gap:12px;align-items:center">
+    <div style="flex:1"><div style="font-family:var(--ff-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--zinc);margin-bottom:6px">Progression</div>
+     <div style="height:3px;background:rgba(239,231,214,.14);border-radius:99px;overflow:hidden"><i style="display:block;height:100%;width:${(cur/d.etapes.length*100).toFixed(0)}%;background:var(--or)"></i></div></div>
+    <span class="mono" style="font-size:12px;color:var(--or)">${cur} / ${d.etapes.length}</span></div>
+
+   <div class="steps">
+   ${d.etapes.map((s,i)=>{
+     const done=i<cur-1, now=i===cur-1, sealed=i>=cur;
+     if(sealed && i>cur) return `<div class="step"><span class="pin">${i+1}</span>
+       <div class="sealed" style="padding:15px 16px"><div class="lock" style="display:flex;gap:11px;align-items:center;text-align:left">
+        <span class="wax" style="width:30px;height:30px;font-size:13px;margin:0;flex:0 0 auto">${i+1}</span>
+        <span style="font-family:var(--ff-mono);font-size:11px;color:var(--zinc);line-height:1.5">Étape scellée · se déverrouille à l'arrivée</span></div></div></div>`;
+     if(sealed) return `<div class="step ${unsealing?'unsealing':''}"><span class="pin">${i+1}</span>
+       <div class="sealed"><div class="blur"><h4>${s.n}</h4><p>${s.p.slice(0,90)}…</p></div>
+        <div class="lock" style="position:absolute;inset:0;display:grid;place-items:center;padding:18px">
+         <div><div class="wax">${i+1}</div><b>Prochaine étape</b>
+          <span>Elle s'ouvrira quand votre téléphone sera à moins de 60 mètres de la porte. Pas avant.</span>
+          <button class="btn sm" data-unseal style="margin:13px auto 0">J'y suis</button></div></div></div></div>`;
+     return `<div class="step ${done?'done':'now'}"><span class="pin">${done?'✓':i+1}</span>
+      <div class="card"><div class="top">
+       <div class="hm"><span class="hr">${s.h}</span>${s.l?`<button class="eyebrow" data-lieu="${s.l}" style="color:var(--or)">Fiche →</button>`:'<span class="eyebrow">Sans adresse</span>'}</div>
+       <h4>${s.n}</h4><div class="adr">${s.adr}</div>
+       <p class="prose">${s.p}</p></div>
+       <div class="consigne"><span class="eyebrow">La consigne</span><p>${s.c}</p></div>
+      </div></div>`;
+   }).join('')}
+   </div>
+
+   <div style="margin:8px 20px 0;padding:16px;border-radius:12px;border:1px dashed rgba(224,172,69,.32);text-align:center">
+    <span class="eyebrow" style="color:var(--or);display:block;margin-bottom:8px">À l'arrivée</span>
+    <p style="margin:0 0 4px;font-size:13.5px;line-height:1.55;color:var(--pierre-2)">Le tampon <b style="color:var(--pierre)">« ${d.tampon} »</b> entre dans votre carnet.</p>
+    <p style="margin:0;font-size:12.5px;color:var(--zinc);line-height:1.5">${d.recompense}</p></div>
+   <div style="padding:16px 20px 0;font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);text-align:center;line-height:1.7">
+    ${d.faites.toLocaleString('fr-FR')} personnes ont terminé cette dérive.<br>Note moyenne ${nf(d.note)} / 10 · 4 % l'abandonnent en cours de route.</div>
+  </div>
+ </div></div>`};
+
+S.deverrouille=()=>{const s=STATE.etape;STATE.etape=3;const h=S.deriveD();STATE.etape=s;return h};
+
+/* --- 13 · LES SOIRS --- */
+S.soirs=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><span class="eyebrow">Six dates · septembre</span><span class="eyebrow" style="color:var(--or)">Jamais deux fois la même</span></div>
+   <h1>Des soirées qu'on <i>fabrique</i>, pas qu'on revend.</h1>
+   <p class="sub">Trente à quatre-vingts places. Co-produites avec les lieux du carnet, en dehors de leurs horaires. Aucune billetterie extérieure ne les a. Ouvertes vingt-quatre heures aux membres du Pass avant tout le monde.</p></div>
+  <div style="padding:0 20px">
+   ${SOIRS.map(s=>{const taux=100-Math.round(s.rest/s.pl*100);return `
+   <button class="ticket" ${s.state==='complet'?'disabled style="opacity:.55"':''}>
+    <div class="ph">${cv(s.seed)}
+     <span class="badge ${s.state==='complet'?'plein':s.state==='pass'?'or':'sauge'}" style="position:absolute;top:12px;left:12px;z-index:3;backdrop-filter:blur(8px)">
+      ${s.state==='complet'?'Complet · liste d\'attente':s.state==='pass'?'Réservé au Pass · encore 19 h':'Ouvert à tous'}</span>
+     <div class="tt"><h3>${s.t}</h3></div></div>
+    <div class="perf"></div>
+    <div style="padding:12px 15px 0;text-align:left"><p style="margin:0;font-size:12.5px;line-height:1.5;color:var(--pierre-2)">${s.sous}</p></div>
+    <div class="info"><div class="l"><b>${s.d} · ${s.h}</b><br>${s.lieu}<br>
+      ${s.rest?`<span style="color:${s.rest<10?'var(--brique)':'var(--zinc)'}">${s.rest} places sur ${s.pl}</span>`:`<span style="color:var(--zinc-fonce)">${s.pl} places · complet</span>`}
+      <span class="jauge" style="display:block;width:110px"><i style="width:${taux}%"></i></span></div>
+     <div class="price">${s.eur} €<span>par personne</span></div></div>
+   </button>`}).join('')}
+  </div>
+  <div style="margin:8px 20px 0;padding:15px 16px;border-radius:12px;background:rgba(239,231,214,.045);border:1px solid rgba(239,231,214,.1)">
+   <span class="eyebrow" style="display:block;margin-bottom:7px">Pourquoi si peu de places</span>
+   <p style="margin:0;font-size:12.5px;line-height:1.6;color:var(--zinc)">Parce qu'on les monte dans des lieux réels, à leurs heures creuses, avec leurs équipes. Quatre-vingts couverts dans une serre, c'est le maximum qu'on sache faire correctement. Un Soir raté abîme le lieu autant que nous.</p></div>
+ </div>
+ ${tabbar("soirs")}</div>`;
+
+/* --- 14 · UN SOIR (billet + plan de salle) --- */
+S.soirD=()=>{const s=SOIRS[0];return `<div class="app">
+ <div class="sheet" style="animation:none">
+  <div class="hero" style="height:200px">${cv(s.seed)}
+   <button class="close" data-go="soirs" aria-label="Retour"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+   ${statusbar()}
+   <div class="htitle"><h2>${s.t}</h2><div class="l"><span>${s.d}</span><span>·</span><span>${s.h}</span><span>·</span><span>${s.lieu}</span></div></div></div>
+  <div class="scroll pb">
+   <p style="margin:15px 20px 0;font-size:13.5px;line-height:1.6;color:var(--pierre-2)">${s.sous}</p>
+   <div style="margin:20px 20px 0;padding:17px;border-radius:14px;border:1px solid rgba(224,172,69,.28);background:linear-gradient(150deg,rgba(224,172,69,.1),transparent)">
+    <span class="eyebrow" style="color:var(--or);display:block;margin-bottom:12px">Votre table · calculée ce matin</span>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px">
+     ${[["Vous","#E0AC45","V",""],["Inès","#8FBF9E","IL","71 %"],["Tomás","#94A49C","TC","68 %"],["Fatou","#D8674A","FD","64 %"],["Jan","#8FBF9E","JW","9 %"],["Rim","#E0AC45","RB","4 %"]]
+      .map(([n,c,i,p])=>`<div style="text-align:center">${avaX(i,c,38)}<div style="font-size:11.5px;margin-top:6px;font-weight:600">${n}</div>
+       <div class="mono" style="font-size:9.5px;color:${p&&parseInt(p)>50?'var(--sauge)':'var(--zinc-fonce)'}">${p||'—'}</div></div>`).join('')}</div>
+    <p style="margin:0;font-size:12px;line-height:1.55;color:var(--pierre-2)">Le pourcentage est le <b style="color:var(--pierre)">recoupement de vos carnets</b>. Trois personnes proches de vous, deux très éloignées, une au hasard. C'est la seule recette de la soirée et elle ne change jamais.</p>
+   </div>
+   <dl class="fiche" style="margin-top:20px">
+    <div class="ln"><dt>Le déroulé</dt><dd>19 h 45 arrivée, un verre debout. 20 h 15 on s'assied, six assiettes partagées. 22 h 30 le service reprend, la salle rouvre au public, vous restez ou vous partez.</dd></div>
+    <div class="ln"><dt>Compris</dt><dd>Le repas complet, deux verres, l'eau. <b>Pas</b> les verres suivants.</dd></div>
+    <div class="ln"><dt>Une règle</dt><dd>On ne demande pas « tu fais quoi dans la vie » avant le dessert. C'est écrit sur le set de table. Les gens s'y tiennent.</dd></div>
+   </dl>
+   <div style="padding:20px 20px 0"><button class="btn">Réserver · 28 € · il reste 6 places</button>
+    <p style="margin:11px 0 0;text-align:center;font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);line-height:1.6">Remboursable jusqu'à 48 h avant.<br>Le lieu touche 62 % du billet.</p></div>
+  </div>
+ </div></div>`};
+
+/* --- 15 · LE CARNET (papier) --- */
+S.carnet=()=>`<div class="app paper">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd" style="padding-top:8px"><div class="kicker"><span class="eyebrow">Votre carnet · depuis février 2026</span><span class="eyebrow" style="color:#8A6318">7 mois</span></div>
+   <h1>Vous avez allumé <i>34 %</i> du 11e, et 3 % de Paris.</h1></div>
+  <div class="carnetmap">
+   <canvas data-map='{"paper":true,"zones":[
+    {"x":.56,"y":.40,"r":.20,"c":"#2E6B4F"},{"x":.64,"y":.52,"r":.13,"c":"#2E6B4F"},{"x":.48,"y":.30,"r":.10,"c":"#A8763B"},
+    {"x":.70,"y":.34,"r":.09,"c":"#A8763B"},{"x":.42,"y":.58,"r":.07,"c":"#A8763B"}],
+    "pins":[{"x":.56,"y":.40,"c":"#1C4636","big":true},{"x":.64,"y":.50,"c":"#1C4636"},{"x":.50,"y":.32,"c":"#1C4636"},
+    {"x":.70,"y":.36,"c":"#A8763B"},{"x":.44,"y":.56,"c":"#A8763B"},{"x":.60,"y":.62,"c":"#1C4636"},{"x":.34,"y":.44,"c":"#A8763B"}]}'></canvas>
+   <div class="lgd"><i style="background:#2E6B4F"></i>Quartiers explorés &nbsp; <i style="background:#A8763B"></i>Une seule visite</div>
+  </div>
+  <div class="statgrid">
+   <div><b>87</b><span>Lieux</span></div><div><b>12</b><span>Quartiers</span></div><div><b>6</b><span>Dérives</span></div>
+   <div><b>214 h</b><span>Dehors</span></div><div><b>1 840 €</b><span>Dépensés</span></div><div><b>8,1</b><span>Note moyenne</span></div>
+  </div>
+
+  <div class="serie">
+   <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:14px">Série en cours · 17 semaines</b>
+    <span class="mono" style="font-size:11px;color:#5F7A68">record : 23</span></div>
+   <p style="margin:7px 0 0;font-size:12.5px;color:#5F7A68;line-height:1.5">Une adresse nouvelle par semaine. Pas deux, pas dix. Une.</p>
+   <div class="wk">${Array.from({length:17},(_,i)=>`<i class="${i===16?'today':'on'}"></i>`).join('')}</div>
+  </div>
+
+  <div class="sec"><div class="sh"><h2>Vos tampons</h2><a href="#" data-go="tampons">Les 24 →</a></div>
+   <div class="tampons">
+    ${[["Canaux","4h · août"],["Le 20e","3h · juil."],["40 balles","1j · juin"],["Solo","2h · mai"]].map(([t,d])=>
+     `<div class="tampon"><b>${t}</b>${d}</div>`).join('')}
+   </div></div>
+
+  <div class="sec"><div class="sh"><h2>Vos dernières notes</h2><a href="#">Tout →</a></div>
+   ${[["Zinzolin","9,0","« Les poireaux. Y retourner avec Léa, elle va comprendre. »","28 août"],
+      ["Cinéma Nadar","9,1","« Séance du mercredi. Film hongrois de 1978, aucune annonce. »","21 août"],
+      ["Maison Kolibri","7,0","« Bruyant après 10 h. Ne plus y aller pour travailler. »","19 août"]]
+    .map(([n,note,txt,d])=>`<div class="row"><div class="txt"><b>${n} <span style="color:#8A6318;font-weight:600">${note}</span></b>
+     <p style="font-style:italic">${txt}</p><div class="meta"><span>${d}</span><span>·</span><span>note privée</span></div></div></div>`).join('')}
+  </div>
+  <div style="padding:22px 20px 0"><button class="btn dark" data-go="bilan">Voir votre bilan 2026</button></div>
+ </div>
+ ${tabbar("carnet",true)}</div>`;
+
+/* --- 16 · LES TAMPONS --- */
+S.tampons=()=>`<div class="app paper">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd" style="padding-top:8px"><div class="kicker"><button class="eyebrow" data-go="carnet" style="color:#8A6318">← Carnet</button><span class="eyebrow">6 obtenus · 18 restants</span></div>
+   <h1>Vingt-quatre tampons. <i>Six</i> sont à vous.</h1>
+   <p class="sub" style="color:#6E7A6F">On ne peut pas les acheter, ni les obtenir en lisant. Chacun demande d'être physiquement quelque part, parfois à une heure précise, parfois un seul mois de l'année.</p></div>
+  <div style="padding:4px 20px 0"><div class="tampons" style="grid-template-columns:repeat(3,1fr);gap:14px">
+   ${[["Canaux","obtenu · août",1],["Le 20e","obtenu · juil.",1],["40 balles","obtenu · juin",1],["Solo","obtenu · mai",1],
+      ["Entrée","obtenu · fév.",1],["Dimanche","obtenu · avril",1],["6 h du mat","dérive de nuit",0],["Le 13e","4,4 km",0],
+      ["Crue","seulement si la Seine monte",0],["Nocturne","musées, le jeudi",0],["Février","le mois le plus dur",0],["Bains","5 piscines",0]]
+    .map(([t,d,ok])=>`<div class="tampon ${ok?'':'vide'}" style="font-size:7.5px"><b style="font-size:13px">${t}</b>${d}</div>`).join('')}
+  </div></div>
+  <div style="margin:24px 20px 0;padding:15px 16px;border-radius:12px;border:1px solid rgba(22,38,31,.16);background:rgba(46,107,79,.06)">
+   <span class="eyebrow" style="display:block;margin-bottom:7px;color:#2E6B4F">Le tampon « Crue »</span>
+   <p style="margin:0;font-size:12.5px;line-height:1.6;color:#4A5A50">Il ne s'obtient que les jours où la Seine dépasse 3,20 m à Austerlitz. Il y en a eu quatre en 2025. Personne ne peut le préparer. C'est celui que tout le monde veut.</p></div>
+ </div>
+ ${tabbar("carnet",true)}</div>`;
+
+/* --- 17 · LE BILAN --- */
+S.bilan=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd" style="padding-top:8px"><div class="kicker"><button class="eyebrow" data-go="carnet" style="color:var(--or)">← Carnet</button><span class="eyebrow">Partageable</span></div></div>
+  <div class="bilan">
+   <div class="yr">2026</div>
+   <h3>Vous avez passé deux cent quatorze heures dehors.</h3>
+   <div class="bl"><span>Quartier de cœur</span><b>Le 20e — 22 passages</b></div>
+   <div class="bl"><span>Adresse la plus fidèle</span><b>Bar Antonin — 9 fois</b></div>
+   <div class="bl"><span>Sortie la plus tardive</span><b>5 h 12, le 14 juin</b></div>
+   <div class="bl"><span>Plus longue série</span><b>17 semaines, en cours</b></div>
+   <div class="bl"><span>Budget de l'année</span><b>1 840 € — 21 € la sortie</b></div>
+   <div class="bl"><span>Découverte de l'année</span><b>Cinéma Nadar, 9,1</b></div>
+   <div class="rk">« Vous êtes dans les 4 % de membres qui sortent plus souvent seuls qu'accompagnés. Et vous notez ces soirées 0,8 point au-dessus des autres. »</div>
+  </div>
+  <div class="btnrow"><button class="btn">Partager la carte</button><button class="btn ghost" style="flex:0 0 auto;width:52px;padding:14px 0" aria-label="Enregistrer"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg></button></div>
+  <div class="sec"><div class="sh"><h2>Le détail</h2></div>
+   ${[["Janvier","4 sorties","6,9"],["Février","3 sorties","7,4"],["Mars","9 sorties","8,0"],["Avril","11 sorties","8,3"],
+      ["Mai","14 sorties","8,4"],["Juin","19 sorties","8,6"],["Juillet","16 sorties","8,2"],["Août","11 sorties","8,5"]]
+    .map(([m,s,n])=>`<div class="row" style="align-items:center"><div class="txt"><b style="font-size:13.5px">${m}</b>
+     <div class="meta" style="margin-top:2px"><span>${s}</span></div></div>
+     <div style="flex:1;padding:0 12px"><span style="display:block;height:4px;border-radius:99px;background:rgba(239,231,214,.12)"><i style="display:block;height:100%;width:${parseInt(s)/19*100}%;background:var(--or);border-radius:99px"></i></span></div>
+     <div class="rt"><span class="note"><b style="font-size:14px">${n}</b></span></div></div>`).join('')}
+  </div>
+  <p style="margin:20px 20px 0;font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);text-align:center;line-height:1.7">
+   Le bilan sort le 12 décembre, pas le 1er.<br>Personne ne partage un bilan le jour où tout le monde le fait.</p>
+ </div>
+ ${tabbar("carnet")}</div>`;
+
+/* --- 18 · LE CERCLE & LE RELAIS --- */
+S.cercle=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><span class="eyebrow">14 personnes · 3 éclaireurs suivis</span><span class="eyebrow" style="color:var(--or)">Pas de likes</span></div>
+   <h1>Un cercle, pas un <i>fil</i>.</h1>
+   <p class="sub">Seulement les gens que vous connaissez vraiment, plus les éclaireurs que vous suivez. Pas de compteur, pas de commentaire, pas d'inconnu. On ne peut pas devenir populaire ici.</p></div>
+
+  <div class="relais">
+   <div class="rt">${avaX("LM","#D8674A",34)}<div><b>Léa vous a passé une adresse</b><br><span class="mono" style="font-size:10.5px;color:var(--zinc)">il y a 4 heures · Zinzolin, 20e</span></div></div>
+   <div class="cons">« Vas-y un mardi vers 19 h et commande les poireaux brûlés. Tu me diras. »</div>
+   <p>Un relais n'est pas un lien. C'est une consigne, avec une échéance. Vous avez <b style="color:var(--pierre)">quatorze jours</b> pour y aller. Léa sera prévenue quand ce sera fait — et seulement à ce moment-là.</p>
+   <div style="display:flex;gap:9px"><button class="btn sm" style="flex:1" data-go="resa">Réserver mardi</button>
+    <button class="btn ghost sm" style="flex:1">Plus tard</button></div>
+  </div>
+
+  <div class="sec"><div class="sh"><h2>Cette semaine</h2><span class="eyebrow">5 mouvements</span></div>
+   ${CERCLE.map(c=>`<div class="row"><div style="flex:0 0 auto;padding-top:2px">${avaX(c.i,c.c,36)}</div>
+    <div class="txt"><b>${c.who} <span style="font-weight:400;color:var(--zinc)">${c.act}</span> ${c.lieu}</b>
+     ${c.note?`<p style="font-style:italic">${E(c.note)}</p>`:''}
+     <div class="meta"><span>${c.when}</span></div></div>
+    <div class="rt"><button class="badge" style="color:var(--or);border-color:rgba(224,172,69,.36)">Relayer</button></div></div>`).join('')}
+  </div>
+
+  <div class="sec"><div class="sh"><h2>Vos éclaireurs</h2><a href="#" data-go="eclaireur">Tous →</a></div>
+   ${["camille","malik","salome"].map(k=>{const e=ECLAIREURS[k];return `<div class="row" data-ecl="${k}">
+    <div style="flex:0 0 auto;padding-top:2px">${ava(k,44)}</div>
+    <div class="txt"><b>${e.n}</b><p>${e.spe}</p>
+     <div class="meta"><span>${e.lieux} lieux</span><span>·</span><span>${e.derives} dérives</span><span>·</span><span>${e.q}</span></div></div></div>`}).join('')}
+  </div>
+ </div>
+ ${tabbar("soir")}</div>`;
+
+/* --- 19 · UN ÉCLAIREUR --- */
+S.eclaireur=()=>{const e=ECLAIREURS[STATE.ecl];return `<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><button class="eyebrow" data-go="cercle" style="color:var(--or)">← Le cercle</button><span class="eyebrow">Membre depuis ${e.depuis}</span></div>
+   <div style="display:flex;gap:15px;align-items:center;margin:6px 0 14px">${ava(STATE.ecl,64)}
+    <div><h1 style="font-size:27px">${e.n}</h1><p style="margin:5px 0 0;font-family:var(--ff-mono);font-size:11px;color:var(--zinc)">${e.a} ans · ${e.q} · ${e.spe}</p></div></div>
+   <p class="sub" style="color:var(--pierre-2);font-size:13.5px">${e.bio}</p></div>
+  <div class="statgrid" style="background:rgba(239,231,214,.12);border-color:rgba(239,231,214,.13)">
+   <div style="background:var(--vert)"><b style="color:var(--pierre)">${e.lieux}</b><span>Lieux vus</span></div>
+   <div style="background:var(--vert)"><b style="color:var(--pierre)">${e.derives}</b><span>Dérives</span></div>
+   <div style="background:var(--vert)"><b style="color:var(--pierre)">31k</b><span>Parcours faits</span></div>
+  </div>
+  <div style="margin:18px 20px 0;padding:15px 16px;border-radius:12px;border:1px solid rgba(216,103,74,.28);background:rgba(216,103,74,.06)">
+   <span class="eyebrow" style="color:var(--brique);display:block;margin-bottom:7px">Ce qu'iel n'aime pas</span>
+   <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--pierre-2);font-style:italic">« ${e.pasaime} »</p>
+   <p style="margin:9px 0 0;font-size:11.5px;color:var(--zinc);line-height:1.5">Chaque éclaireur doit dire ce qu'iel déteste. C'est ce qui rend le reste crédible.</p></div>
+  <div class="sec"><div class="sh"><h2>Ses dérives</h2></div>
+   ${DERIVES.filter(d=>d.by===STATE.ecl).map(d=>`<div class="row" data-der="${d.id}"><div class="thumb">${cv(d.seed,'sm')}</div>
+    <div class="txt"><b>${d.t}</b><p>${d.sous}</p><div class="meta"><span>${d.h}</span><span>·</span><span>${d.eur}</span><span>·</span><span>${d.faites.toLocaleString('fr-FR')} faites</span></div></div>
+    <div class="rt"><span class="note"><b style="font-size:14px">${nf(d.note)}</b></span></div></div>`).join('')}
+  </div>
+  <div class="sec"><div class="sh"><h2>Ses signatures</h2></div>
+   ${["zinzolin","michko","nadar"].map(k=>{const L=LIEUX[k];return `<div class="row" data-lieu="${k}"><div class="thumb">${cv(L.seed,'sm')}</div>
+    <div class="txt"><b>${L.n}</b><p>${L.pitch}</p><div class="meta"><span>${L.q}</span><span>·</span><span>${L.prix}</span></div></div>
+    <div class="rt"><span class="note"><b style="font-size:14px">${nf(L.note)}</b></span></div></div>`}).join('')}
+  </div>
+  <div style="margin:20px 20px 0;padding:14px 15px;border-radius:12px;border:1px dashed rgba(239,231,214,.2)">
+   <span class="eyebrow" style="display:block;margin-bottom:7px">Comment on devient éclaireur</span>
+   <p style="margin:0;font-size:12.5px;line-height:1.6;color:var(--zinc)">Deux cents lieux au carnet, une dérive acceptée sur trois soumises, et un entretien d'une heure. Ce n'est pas un métier : c'est le Pass à vie, l'accès à tous les Soirs, et son nom sur ce qu'on écrit. Cent cinquante personnes à Paris.</p></div>
+ </div>
+ ${tabbar("soir")}</div>`};
+
+/* --- 20 · LE PASS --- */
+S.pass=()=>`<div class="app">${statusbar()}
+ <div class="scroll pb">
+  <div class="hd"><div class="kicker"><span class="eyebrow">Sans publicité, sans revente de données</span></div>
+   <h1>Le Pass</h1><p class="sub">Trois relances quotidiennes suffisent à 94 % des gens. Le Pass est pour les 6 % restants — et pour ceux qui veulent que cette app existe encore dans cinq ans.</p></div>
+  <div class="pass">
+   <div class="passcard"><div class="pn">Le Pass</div><div class="pm">Paris · annuel</div>
+    <div class="pr"><b>39 €</b><span>par an, soit 3,25 € par mois</span></div>
+    <div style="margin-top:14px;font-size:12px;opacity:.8">ou 5,99 € par mois, sans engagement</div></div>
+   <div class="incl">
+    ${[["Toutes les dérives","Huit aujourd'hui, deux nouvelles par mois. Sans Pass : une seule, l'examen d'entrée."],
+       ["Les Soirs, vingt-quatre heures avant","C'est le seul moyen d'entrer dans ceux à trente places."],
+       ["Relances illimitées","Autant de propositions que vous voulez, à toute heure."],
+       ["Le carnet complet","Statistiques, carte des quartiers allumés, bilan annuel, export."],
+       ["Le relais","Passer une adresse à quelqu'un avec une consigne et une échéance."],
+       ["Vingt euros rendus","Le Pass est remboursé en avantages réels sur vos six premières réservations. Pas en points."]]
+     .map(([t,d])=>`<div><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
+   </div>
+   <div style="padding:20px 0 0"><button class="btn">Prendre le Pass · 39 € / an</button>
+    <p style="margin:12px 0 0;text-align:center;font-family:var(--ff-mono);font-size:10px;color:var(--zinc-fonce);line-height:1.7">
+     Sans Pass, l'app reste utilisable tous les jours.<br>C'est volontaire : on ne veut pas d'abonnés en colère.</p></div>
+  </div>
+ </div>
+ ${tabbar("soir")}</div>`;
+
+/* ============================================================
+   ROUTEUR & MONTAGE
+   ============================================================ */
+const ECRANS=[
+ {k:"notif",   g:0, t:"L'écran verrouillé",      d:"Trois notifications par semaine, toutes écrites à la main. Aucune ne dit « découvrez notre nouvel article ».", n:"Le seul endroit où l'app parle en premier."},
+ {k:"ob1",     g:0, t:"Qui êtes-vous ici",       d:"Erasmus, local, de passage : trois produits différents derrière la même app.", n:"Segmentation à la première seconde."},
+ {k:"ob2",     g:0, t:"Calibration du goût",     d:"Six envies concrètes, pas un test de personnalité. Recalibré à chaque note.", n:"Douze cartes, six choix."},
+ {k:"ob3",     g:0, t:"Votre rayon",             d:"3,2 km au départ, +400 m par mois. Une des trois propositions quotidiennes sera toujours en dehors.", n:"La règle non désactivable."},
+ {k:"soir",    g:1, t:"Ce soir",                 d:"L'écran d'ouverture. Trois propositions, jamais plus : la valeur sûre, le pas de côté, ce qui se passe.", n:"Interactif — changez le contexte."},
+ {k:"soir2",   g:1, t:"Ce soir · autre contexte",d:"Seul·e, moins de 15 € : les trois propositions changent entièrement, y compris le pas de côté.", n:"Même écran, autre calcul."},
+ {k:"lieu",    g:1, t:"La fiche d'un lieu",      d:"À commander / le bon moment / le piège / le prix réel. Puis « ça marche si » et « ça ne marche pas si ».", n:"Le contraire d'une page Google."},
+ {k:"carte",   g:1, t:"Le radar",                d:"Filtres humains : « où l'on peut parler », « où rester trois heures », « bien seul·e ».", n:"Aucun filtre par note ou par type de cuisine."},
+ {k:"resa",    g:1, t:"Réserver une table",      d:"Le lieu paie 2,20 € au couvert réellement assis. Jamais au clic, jamais à l'affichage.", n:"Le modèle économique, montré à l'utilisateur."},
+ {k:"derive",  g:2, t:"Les dérives",             d:"Huit parcours minutés, écrits par des Parisiens nommés, qui ne se lisent pas d'avance.", n:"Le cœur du produit."},
+ {k:"deriveD", g:2, t:"Une dérive · étapes scellées", d:"Chaque étape s'ouvre à moins de 60 m de la porte. Consigne, texte, preuve de présence.", n:"Interactif — brisez le sceau."},
+ {k:"deverrouille", g:2, t:"Une dérive · déverrouillée", d:"L'étape trois est ouverte : le texte, la consigne, le lien vers la fiche.", n:"État après déverrouillage."},
+ {k:"soirs",   g:2, t:"Les Soirs",               d:"Trente à quatre-vingts places, co-produites avec les lieux, hors de leurs horaires.", n:"Contenu et revenu dans le même objet."},
+ {k:"soirD",   g:2, t:"Un Soir · le plan de salle", d:"Six tables de six, composées à partir du recoupement des carnets. Trois proches, deux éloignés, un au hasard.", n:"Le drop signature."},
+ {k:"carnet",  g:3, t:"Le carnet",               d:"Inversion : la ville est vert nuit, le carnet est du papier. Carte des quartiers allumés, série, notes privées.", n:"Le moteur de rétention."},
+ {k:"tampons", g:3, t:"Les tampons",             d:"Vingt-quatre tampons impossibles à acheter. Celui de la crue ne s'obtient que si la Seine dépasse 3,20 m.", n:"La collection."},
+ {k:"bilan",   g:3, t:"Le bilan",                d:"Sort le 12 décembre, pas le 1er. Personne ne partage un bilan le jour où tout le monde le fait.", n:"L'objet viral annuel."},
+ {k:"cercle",  g:3, t:"Le cercle & le relais",   d:"Passer une adresse avec une consigne et une échéance. L'expéditeur est prévenu quand c'est fait.", n:"Le mécanisme social propriétaire."},
+ {k:"eclaireur",g:3,t:"Un éclaireur",            d:"Nom, visage, spécialité, et surtout ce qu'iel déteste. C'est ce qui rend le reste crédible.", n:"La signature humaine."},
+ {k:"pass",    g:3, t:"Le Pass",                 d:"39 € par an. Sans Pass, l'app reste utilisable tous les jours — on ne veut pas d'abonnés en colère.", n:"La conversion."}
+];
+
+let MODE="solo", CUR="soir";
+const mount=document.getElementById("mount");
+
+function device(k,arg){
+  const d=document.createElement("div");d.className="device";
+  d.innerHTML=`<div class="screen">${S[k](arg)}</div>`;return d;
+}
+function textures(root){
+  root.querySelectorAll("canvas[data-seed]").forEach(c=>paint(c,+c.dataset.seed,c.dataset.mode));
+  root.querySelectorAll("canvas[data-map]").forEach(c=>{try{paintMap(c,JSON.parse(c.dataset.map))}catch(e){paintMap(c,{})}});
+}
+function render(){
+  mount.innerHTML="";
+  if(MODE==="planche"){
+    mount.className="grid";
+    ECRANS.forEach((e,i)=>{
+      const f=document.createElement("figure");f.className="cell";f.style.margin="0";
+      f.appendChild(device(e.k));
+      f.insertAdjacentHTML("beforeend",`<figcaption><em>${String(i+1).padStart(2,"0")}</em><b>${e.t}</b><i>${e.n}</i></figcaption>`);
+      mount.appendChild(f);
+    });
+    document.body.classList.add("planche");
+  }else{
+    document.body.classList.remove("planche");
+    mount.className="solo";
+    const e=ECRANS.find(x=>x.k===CUR)||ECRANS[4];
+    mount.appendChild(device(CUR));
+    mount.insertAdjacentHTML("beforeend",`<div class="notes">
+      <h2>Ce que fait cet écran</h2><p>${e.d}</p>
+      <div class="spec">
+        <div><b>Rôle</b><span>${e.n}</span></div>
+        <div><b>Format</b><span>393 × 830 pt · densité @3x</span></div>
+        <div><b>Typographie</b><span>Bodoni Moda (titres) · Archivo (interface) · DM Mono (données)</span></div>
+        <div><b>Couleurs</b><span>#0B1D17 nuit · #123026 vert Wallace · #EFE7D6 pierre · #E0AC45 or</span></div>
+      </div></div>`);
+    document.getElementById("vh-title").textContent=e.t;
+    document.getElementById("vh-desc").textContent="Prototype d'intention — vingt écrans navigables. Cliquez dans le téléphone : les chips, les relances, les sceaux et les fiches réagissent.";
+  }
+  textures(mount);
+}
+
+/* --- rail --- */
+["0","1","2","3"].forEach(g=>{
+  const box=document.querySelector(`.navlist[data-group="${g}"]`);
+  ECRANS.forEach((e,i)=>{ if(String(e.g)!==g)return;
+    const b=document.createElement("button");b.className="nav";b.dataset.k=e.k;
+    b.innerHTML=`<em>${String(i+1).padStart(2,"0")}</em><span>${e.t}</span>`;
+    b.onclick=()=>{CUR=e.k;MODE="solo";syncRail();render();window.scrollTo({top:0,behavior:"smooth"})};
+    box.appendChild(b);
+  });
+});
+function syncRail(){
+  document.querySelectorAll(".nav").forEach(n=>n.setAttribute("aria-current",String(MODE==="solo"&&n.dataset.k===CUR)));
+  document.getElementById("m-solo").setAttribute("aria-pressed",String(MODE==="solo"));
+  document.getElementById("m-planche").setAttribute("aria-pressed",String(MODE==="planche"));
+}
+document.getElementById("m-solo").onclick=()=>{MODE="solo";syncRail();render()};
+document.getElementById("m-planche").onclick=()=>{MODE="planche";syncRail();render()};
+
+/* --- interactions dans l'app --- */
+const TAB2SCREEN={soir:"soir",derive:"derive",carte:"carte",soirs:"soirs",carnet:"carnet"};
+mount.addEventListener("click",ev=>{
+  const t=ev.target.closest("[data-go],[data-lieu],[data-der],[data-ecl],[data-set],[data-reroll],[data-unseal],[data-gout]");
+  if(!t||MODE!=="solo")return;
+  ev.preventDefault();
+
+  if(t.dataset.set){STATE[t.dataset.set]=+t.dataset.i;return render()}
+  if(t.hasAttribute("data-reroll")){
+    if(STATE.rerolls>0){STATE.rerolls--;STATE.budget=(STATE.budget+1)%4;render()}
+    else{CUR="pass";syncRail();render()}
+    return;
+  }
+  if(t.dataset.gout!==undefined){
+    const i=+t.dataset.gout;
+    STATE.gouts.has(i)?STATE.gouts.delete(i):(STATE.gouts.size<6&&STATE.gouts.add(i));
+    return render();
+  }
+  if(t.hasAttribute("data-unseal")){
+    const step=t.closest(".step");step.classList.add("unsealing");
+    setTimeout(()=>{STATE.etape=Math.min(STATE.etape+1,6);CUR="deriveD";syncRail();render()},560);
+    return;
+  }
+  if(t.dataset.lieu){STATE.lieu=t.dataset.lieu;CUR="lieu"}
+  else if(t.dataset.der){STATE.der=t.dataset.der;STATE.etape=2;CUR="deriveD"}
+  else if(t.dataset.ecl){STATE.ecl=t.dataset.ecl;CUR="eclaireur"}
+  else if(t.dataset.go){CUR=TAB2SCREEN[t.dataset.go]||t.dataset.go}
+  syncRail();render();
+});
+
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>textures(mount),220)});
+syncRail();render();
+</script>
+
+<section class="dossier">
+ <div class="dwrap">
+  <span class="eyebrow">Le dossier · septembre 2026</span>
+  <h2>Un concept parisien de soixante-dix ans, <i>remis en service</i>.</h2>
+  <p class="dlead">En 1956, Guy Debord décrit la <em>dérive</em> : traverser la ville en se laissant guider par ce qu'elle propose, plutôt que par où l'on doit aller. C'était une théorie. Le téléphone la rend enfin opérable — et c'est exactement le genre de vieille idée qui redevient neuve quand la technologie la rattrape. Dérive n'est pas une application de contenu. C'est un instrument de ville, avec trois boucles qui s'alimentent.</p>
+
+  <div class="cols3">
+   <div class="blk"><span class="eyebrow">Boucle 1 · tous les jours</span><h4>Le soir</h4>
+    <p>Trois propositions, jamais plus, calculées sur la météo, l'heure, votre budget, votre groupe, votre quartier et vos 87 passages précédents. <strong>La valeur sûre</strong>, <strong>le pas de côté</strong> — toujours hors de votre rayon — et <strong>ce qui se passe</strong>, limité dans le temps.</p>
+    <p>C'est l'usage quotidien. Une app qu'on n'ouvre pas tous les jours ne vaut rien.</p></div>
+   <div class="blk"><span class="eyebrow">Boucle 2 · toutes les semaines</span><h4>Le carnet</h4>
+    <p>Chaque passage réellement effectué est consigné. La carte de Paris s'allume quartier par quartier, les tampons s'accumulent, la série se compte en semaines. Au bout de six mois, votre carnet vaut plus que l'app.</p>
+    <p><strong>C'est le coût de sortie</strong>, et il monte tout seul.</p></div>
+   <div class="blk"><span class="eyebrow">Boucle 3 · tous les mois</span><h4>La dérive</h4>
+    <p>Un parcours minuté de deux à six heures, écrit par un Parisien nommé, dont chaque étape se descelle uniquement quand votre téléphone est à moins de soixante mètres de la porte.</p>
+    <p><strong>Ni Instagram ni TikTok ne peuvent produire cet objet</strong> : il ne se consomme pas assis.</p></div>
+  </div>
+
+  <div class="dsec">
+   <h3>Ce que les autres ne font pas</h3>
+   <p class="intro">La question n'est pas « en quoi c'est mieux », mais « qu'est-ce qui est structurellement impossible chez eux ».</p>
+   <div class="vs">
+    <div class="hdr"><span class="c">&nbsp;</span><span class="c">Ce qu'ils font</span><span class="c">Ce qui leur est impossible</span></div>
+    <div><span class="c who">Fever · Shotgun<br>Ticketmaster</span><span class="c them">Vendre un stock de billets. Ils n'existent que là où il y a une billetterie.</span><span class="c us">Vous dire d'aller boire un verre dans un bar sans billet, un mardi. <b>Ils n'ont pas de revenu sur l'ordinaire</b>, qui est 95 % de la vie d'une ville.</span></div>
+    <div><span class="c who">Instagram<br>TikTok</span><span class="c them">Montrer un lieu magnifiquement, à des millions de gens qui n'iront pas.</span><span class="c us">Savoir si vous y êtes allé. <b>Aucun graphe de présence prouvée</b>, donc aucune note fiable, aucune mémoire, aucun outil.</span></div>
+    <div><span class="c who">Sortiraparis<br>Le guide ultime</span><span class="c them">Publier « les 40 meilleurs rooftops » pour tout le monde en même temps.</span><span class="c us">Vous proposer trois choses <b>et rien d'autre</b>. Leur modèle publicitaire exige le volume de pages ; le nôtre exige la justesse.</span></div>
+    <div><span class="c who">Google Maps</span><span class="c them">4,2 étoiles sur 8 400 avis anonymes, dont une part de faux.</span><span class="c us">Signer. <b>Une note de Camille, 342 lieux au carnet</b>, n'est pas du même ordre qu'une moyenne. Google ne peut pas devenir subjectif.</span></div>
+    <div><span class="c who">Une app<br>GoodBarber</span><span class="c them">Afficher des articles dans une coque native. Six semaines de développement.</span><span class="c us">Le descellement géolocalisé, le carnet, le plan de salle, le relais. <b>Aucun de ces objets n'est du contenu</b> : ce sont des mécanismes.</span></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>L'IA est en cuisine. Les humains sont en salle.</h3>
+   <p class="intro">C'est une position produit, et en 2027 ce sera un actif commercial défendable.</p>
+   <div class="cols3">
+    <div class="blk"><span class="eyebrow">Ce que la machine fait</span>
+     <ul><li>Dédupliquer et géocoder 47 000 adresses</li><li>Transcrire et structurer une note vocale d'éclaireur de 90 secondes</li><li>Détecter une fermeture définitive avant tout le monde</li><li>Calculer l'appariement des trois propositions</li><li>Composer le plan de salle d'un Soir</li></ul></div>
+    <div class="blk"><span class="eyebrow">Ce qu'elle ne fait jamais</span>
+     <ul><li>Écrire une phrase publiée</li><li>Attribuer une note</li><li>Signer quoi que ce soit</li><li>Décider qu'un lieu est bon</li><li>Écrire une dérive</li></ul>
+     <p style="margin-top:12px"><strong>« Aucune phrase de cette application n'a été écrite par une machine. »</strong> C'est vérifiable, opposable, et invendable par un concurrent qui a déjà automatisé.</p></div>
+    <div class="blk"><span class="eyebrow">Coût marginal du contenu</span>
+     <p>Une fiche complète coûte <strong>0,30 €</strong> : la note vocale est gratuite (l'éclaireur est payé en accès), la structuration automatique coûte quelques centimes, la relecture humaine prend quatre minutes.</p>
+     <p>Une dérive coûte <strong>en moyenne 340 €</strong> : c'est le seul contenu cher, et c'est le seul qu'on vend.</p></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>Le contenu se renouvelle sans qu'on y touche</h3>
+   <p class="intro">La difficulté d'un média de ville n'est pas de produire : c'est de ne pas pourrir. Trois sources et une règle de décroissance.</p>
+   <div class="cols3">
+    <div class="blk"><span class="eyebrow">Source 1 · 5 % du volume</span><h4>Le noyau éditorial</h4>
+     <p>Une à deux personnes. Cinq dérives par mois, la ligne, le ton, les refus. C'est le seul poste de contenu salarié.</p></div>
+    <div class="blk"><span class="eyebrow">Source 2 · 35 % du volume</span><h4>Les cent cinquante éclaireurs</h4>
+     <p>Non salariés. Payés en Pass à vie, accès à tous les Soirs, et leur nom sur ce qu'ils écrivent. Deux cents lieux au carnet pour candidater, une dérive acceptée sur trois soumises.</p>
+     <p>C'est le même contrat moral que les modérateurs de Letterboxd ou les contributeurs d'OpenStreetMap : <strong>le statut, pas l'argent</strong>.</p></div>
+    <div class="blk"><span class="eyebrow">Source 3 · 60 % du volume</span><h4>Le carnet des membres</h4>
+     <p>Le lendemain de chaque passage : une note, ce qui a été commandé, et « la fiche est-elle encore juste ». Trente secondes, 61 % de réponse.</p>
+     <p><strong>La règle de décroissance :</strong> sans aucun passage membre pendant quatre-vingt-dix jours, une fiche sort du catalogue automatiquement. L'app ne peut pas se périmer.</p></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>Quatre revenus, zéro bannière</h3>
+   <p class="intro">Le principe : on ne vend jamais de la visibilité, on vend du monde qui arrive vraiment.</p>
+   <div class="tblwrap"><table>
+    <thead><tr><th>Ligne</th><th>Mécanique</th><th>Prix</th><th class="num">Mois 3</th><th class="num">Mois 12</th></tr></thead>
+    <tbody>
+     <tr><td><b>Le Pass</b></td><td>Abonnement grand public. Dérives, Soirs en avant-première, carnet complet, relances illimitées.</td><td>39 € / an<br>ou 5,99 € / mois</td><td class="num">900<br>35 100 €</td><td class="num">12 000<br>468 000 €</td></tr>
+     <tr><td><b>Les Tables</b></td><td>Réservations envoyées aux lieux, facturées <b>au couvert réellement assis</b>. Pas de clic, pas d'affichage, pas de mise en avant achetable.</td><td>2,20 € / couvert</td><td class="num">1 100 / mois<br>2 420 € / mois</td><td class="num">11 000 / mois<br>24 200 € / mois</td></tr>
+     <tr><td><b>Les Soirs</b></td><td>Soirées co-produites avec les lieux, sur leurs heures creuses. Le lieu garde 62 %. Contenu, revenu et notoriété dans le même objet.</td><td>12 à 45 € / place</td><td class="num">4 dates<br>1 780 €</td><td class="num">12 dates / mois<br>71 000 € / an</td></tr>
+     <tr><td><b>Les Cartes</b></td><td>Pass en volume prépayé : écoles et universités pour leurs étudiants internationaux, résidences, entreprises qui recrutent à l'étranger, agences de relocation.</td><td>19 € / siège / an</td><td class="num">1 400 sièges<br>26 600 €</td><td class="num">25 000 sièges<br>475 000 €</td></tr>
+     <tr class="tot"><td>Total</td><td>Aucune bannière, aucun publi-rédactionnel, aucune revente de données.</td><td>—</td><td class="num">≈ 68 000 € encaissés<br>sur le trimestre</td><td class="num">≈ 1 300 000 €<br>sur l'année</td></tr>
+    </tbody>
+   </table></div>
+
+   <div class="warn"><b>La nuance qu'il faut assumer devant un investisseur</b>
+    Oui, la trésorerie devient positive au troisième mois : un seul opérateur coûte environ 2 800 € par mois, et 68 000 € auront été encaissés. Mais <strong>l'essentiel de ce cash est du produit constaté d'avance</strong> — des Pass annuels et des Cartes prépayées qui se reconnaissent sur douze mois. Rentable en trésorerie, pas encore en comptabilité. Dire l'inverse se verrait à la première diligence, et c'est précisément la nuance qui fait la différence entre un dossier crédible et un dossier gonflé.</div>
+  </div>
+
+  <div class="dsec">
+   <h3>Pourquoi 2026, et pas 2019</h3>
+   <div class="cols3">
+    <div class="blk"><span class="eyebrow">Le marché</span><h4>La note anonyme ne vaut plus rien</h4>
+     <p>Quand n'importe qui peut générer mille avis crédibles pour trois euros, une moyenne sur huit mille votes anonymes cesse d'être une information. <strong>Ce qui devient rare, c'est le jugement signé</strong> — Letterboxd, Beli, Substack l'ont prouvé sur d'autres verticales.</p></div>
+    <div class="blk"><span class="eyebrow">L'usage</span><h4>La preuve d'y être allé devient le contenu</h4>
+     <p>Le contenu généré devient gratuit et infini. La seule chose qu'une machine ne peut pas produire, c'est <strong>la preuve d'une présence physique</strong>. Strava l'a compris pour la course, personne ne l'a fait pour la ville.</p></div>
+    <div class="blk"><span class="eyebrow">Paris</span><h4>Une fenêtre démographique</h4>
+     <p>Fréquentation structurellement plus haute depuis 2024, cohortes d'étudiants internationaux au plus haut, et une génération de vingt à trente ans qui a explicitement demandé à sortir de l'écran. <strong>Le manque n'est pas l'inspiration : c'est la conversion de l'envie en sortie.</strong></p></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>La douve</h3>
+   <p class="intro">Cinq couches, dont trois se creusent toutes seules avec le temps.</p>
+   <div class="cols3">
+    <div class="blk"><span class="eyebrow">Se creuse seule</span><h4>Le graphe de présence prouvée</h4><p>Qui est allé où, quand, avec quelle note. Un concurrent lancé en 2028 démarre à zéro sur cette donnée et ne peut pas l'acheter.</p></div>
+    <div class="blk"><span class="eyebrow">Se creuse seule</span><h4>Le carnet de chaque membre</h4><p>Sept mois d'historique, 87 lieux, six tampons, dix-sept semaines de série. Le coût de sortie monte chaque semaine sans qu'on fasse rien.</p></div>
+    <div class="blk"><span class="eyebrow">Se creuse seule</span><h4>Le corpus scellé</h4><p>Les dérives ne sont pas lisibles sans être sur place : <strong>elles ne peuvent pas être aspirées</strong> par un concurrent ni par un modèle de langage.</p></div>
+    <div class="blk"><span class="eyebrow">À construire</span><h4>Les cent cinquante éclaireurs</h4><p>Un statut, pas un salaire. Ils partent si on les trahit, ils ne partent pas pour de l'argent.</p></div>
+    <div class="blk"><span class="eyebrow">À construire</span><h4>Deux cents lieux sous contrat</h4><p>Un restaurateur signe un accord d'apport d'affaires. Il n'en signe pas trois.</p></div>
+    <div class="blk"><span class="eyebrow">Le risque</span><h4>La densité</h4><p>Le produit ne vaut rien à cinq cents utilisateurs : « vos gens » serait vide et les notes non fiables. Il faut <strong>quinze mille membres actifs à Paris</strong> avant d'ouvrir une deuxième ville. C'est le vrai jalon, pas le chiffre d'affaires.</p></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>Le chemin</h3>
+   <div class="timeline">
+    <div class="tl"><div class="when">Mois 0 – 2<span>Un opérateur</span></div><div>
+     <h4>Trois arrondissements, pas plus</h4>
+     <p>Le 10e, le 11e, le 20e. Trois cents lieux vérifiés à pied, huit dérives, quarante éclaireurs recrutés à la main dans les lieux eux-mêmes. Liste d'attente plafonnée à mille places — la rareté est la première campagne d'acquisition, et elle est gratuite.</p>
+     <div class="kpi"><span class="badge or">300 lieux</span><span class="badge or">8 dérives</span><span class="badge or">40 éclaireurs</span></div></div></div>
+    <div class="tl"><div class="when">Mois 3<span>Le seuil</span></div><div>
+     <h4>Paris intra-muros, et la première Carte</h4>
+     <p>Ouverture générale. Signature de deux écoles et d'une résidence étudiante pour la rentrée de janvier : mille quatre cents sièges prépayés. <strong>C'est ce contrat, et lui seul, qui rend la trésorerie positive au troisième mois.</strong> Le grand public seul n'y suffirait pas.</p>
+     <div class="kpi"><span class="badge sauge">900 Pass</span><span class="badge sauge">1 400 sièges</span><span class="badge sauge">Trésorerie positive</span></div></div></div>
+    <div class="tl"><div class="when">Mois 6<span>Cinq personnes</span></div><div>
+     <h4>L'équipe minimale, et pas une de plus</h4>
+     <p>Un éditeur, un responsable des lieux, un développeur, un producteur des Soirs, un fondateur. Deux cents lieux sous contrat, douze Soirs par mois, douze mille membres actifs. À ce stade, la production de contenu tient à 95 % sur les éclaireurs et les carnets.</p>
+     <div class="kpi"><span class="badge">200 lieux</span><span class="badge">12 Soirs / mois</span><span class="badge">12 000 membres</span></div></div></div>
+    <div class="tl"><div class="when">12 décembre<span>Le pic</span></div><div>
+     <h4>Le Bilan</h4>
+     <p>Publié le 12 et non le 1er : personne ne partage un bilan le jour où tout le monde publie le sien. C'est le seul moment de l'année où l'app demande explicitement à être partagée, et le pic d'acquisition annuel.</p>
+     <div class="kpi"><span class="badge or">Pic d'acquisition</span></div></div></div>
+    <div class="tl"><div class="when">Mois 12 – 18<span>La levée</span></div><div>
+     <h4>Quatre millions pour la réplication, pas pour Paris</h4>
+     <p>Paris doit être rentable seul — c'est la démonstration. Les quatre millions financent le <strong>manuel de ville</strong> : un éditeur local, quarante éclaireurs, six mois d'amorçage, environ cent quatre-vingt mille euros par ville. Huit villes visées : Lyon, Bruxelles, Lisbonne, Barcelone, Berlin, Milan, Amsterdam, Madrid — plus vingt-quatre mois de trésorerie et la plateforme d'édition qui rend une ville reproductible sans le fondateur.</p>
+     <div class="kpi"><span class="badge or">8 villes</span><span class="badge or">180 k€ / ville</span><span class="badge or">24 mois de runway</span></div></div></div>
+   </div>
+  </div>
+
+  <div class="dsec">
+   <h3>L'identité, pour l'agence</h3>
+   <p class="intro">Tout ce qu'il faut pour reconstruire ces vingt écrans sans nous rappeler.</p>
+   <div class="cols3">
+    <div class="blk"><span class="eyebrow">Couleur</span><h4>Le vert de Paris</h4>
+     <p>Celui des fontaines Wallace, des colonnes Morris, des bancs et des boîtes de bouquinistes. <strong>#0B1D17</strong> nuit · <strong>#123026</strong> vert Wallace · <strong>#1E4E3A</strong> surface haute · <strong>#EFE7D6</strong> pierre de taille · <strong>#E0AC45</strong> or de brasserie · <strong>#94A49C</strong> zinc de toiture.</p>
+     <p>Sémantique séparée de l'accent : <strong>#8FBF9E</strong> disponible, <strong>#D8674A</strong> se termine bientôt.</p></div>
+    <div class="blk"><span class="eyebrow">Typographie</span><h4>Trois voix</h4>
+     <p><strong>Bodoni Moda</strong> pour tout ce qui est écrit par un humain : titres, verdicts, dérives. <strong>Archivo</strong> pour l'interface. <strong>DM Mono</strong> pour tout ce que la machine produit : heures, distances, prix, coordonnées, compteurs.</p>
+     <p>La règle tient en une phrase : <strong>si c'est en didone, un humain l'a écrit ; si c'est en mono, une machine l'a mesuré.</strong></p></div>
+    <div class="blk"><span class="eyebrow">Structure</span><h4>L'inversion du carnet</h4>
+     <p>La ville est vert nuit, <strong>le carnet est du papier</strong> — même composants, fond crème et encre verte. C'est le seul endroit de l'app qui change de monde, parce que c'est le seul qui vous appartient.</p>
+     <p>Le sceau de cire est le geste signature : il ne sert qu'à une chose, et il ne se brise qu'en étant physiquement là.</p></div>
+   </div>
+  </div>
+
+  <div class="footer">
+   <span>Dérive · prototype d'intention, septembre 2026<br>Vingt écrans · 393 × 830 pt · à capturer en mode Planche</span>
+   <span style="text-align:right">Établissements, éclaireurs, notes et chiffres d'usage : <b style="color:var(--or)">fictifs</b>, à but de démonstration.<br>Rues, arrondissements et stations sont réels.</span>
+  </div>
+ </div>
+</section>
