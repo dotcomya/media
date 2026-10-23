@@ -39,6 +39,6 @@ export function startDemo(): void {
       ...YESTERDAY.map(([time, tags]) => createEntry(tags, at(time))),
       ...TODAY.map(([ago, tags]) => createEntry(tags, now - ago * MINUTE)),
     ],
-    { babyName: 'Lou' },
+    { babyName: 'Lou', alarmReady: false },
   );
 }

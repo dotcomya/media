@@ -57,6 +57,21 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       </div>
 
       <div class="field">
+        <span class="field-label">Alarme iPhone</span>
+        <button
+          type="button"
+          class="action"
+          onClick={() => {
+            updateSettings({ alarmReady: false });
+            showToast('Le guide s’affichera au prochain appui sur Alarme');
+          }}
+        >
+          <Icon name="alarm" />
+          Revoir le guide du raccourci
+        </button>
+      </div>
+
+      <div class="field">
         <span class="field-label">Données</span>
         <button
           type="button"

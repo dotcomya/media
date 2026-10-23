@@ -24,9 +24,11 @@ export interface Entry {
 
 export interface Settings {
   babyName: string;
+  /** Le raccourci « Alarme tétée » est créé : le bouton Alarme le lance directement. */
+  alarmReady: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { babyName: '' };
+export const DEFAULT_SETTINGS: Settings = { babyName: '', alarmReady: false };
 
 export function uuid(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();

@@ -187,6 +187,16 @@ button:disabled {
   font-weight: 700;
 }
 
+a.head-btn,
+a.action {
+  text-decoration: none;
+}
+
+/* L'alarme : même forme que Réglages, à la couleur du prochain repas. */
+.head-alarm {
+  color: var(--feed);
+}
+
 .head-btn:active {
   background: var(--surface);
 }
@@ -310,9 +320,10 @@ button:disabled {
 }
 
 .hint {
-  margin: 8px 0 4px;
+  margin: 8px 0 10px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  line-height: 1.35;
 }
 
 /* Quatre emplacements fixes : chaque emoji garde toujours la même position. */
@@ -756,6 +767,20 @@ button:disabled {
   font-weight: 750;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding-left: 22px;
+  line-height: 1.35;
+}
+
+.steps li::marker {
+  color: var(--accent);
+  font-weight: 800;
 }
 
 .field .hint {

@@ -22,6 +22,8 @@ sur le téléphone et fonctionne en mode avion.
 - **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
   ensemble : on coche les deux), puis **Valider** ajoute la ligne à l'heure
   actuelle.
+- **⏰ Alarme** (en haut) : règle une vraie alarme iPhone à l'heure du prochain
+  repas, qui sonne fort même en mode silencieux. Voir ci-dessous.
 
 | Action | Pressions |
 |---|---|
@@ -39,6 +41,26 @@ sur le téléphone et fonctionne en mode avion.
   directement dans Excel en français), prénom, thème.
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
   facultatif ; vibration à chaque saisie sur Android (Safari iOS ne la gère pas).
+
+## Alarme iPhone à l'heure du prochain repas
+
+Un site web ne peut pas créer d'alarme dans l'app Horloge, et une notification
+push demanderait un serveur et resterait discrète (son de notification, coupé
+en mode silencieux). Veilleuse passe donc par l'app **Raccourcis** d'Apple :
+le bouton « ⏰ Alarme 21:06 » lance le raccourci **Alarme tétée** en lui
+passant l'heure (`shortcuts://run-shortcut?name=Alarme%20t%C3%A9t%C3%A9e&input=text&text=21%3A06`),
+et ce raccourci crée l'alarme.
+
+Le raccourci se crée une fois (le guide s'affiche au premier appui) :
+
+1. App Raccourcis → **+** ; nommer le raccourci exactement **Alarme tétée**.
+2. Action « obtenir les dates à partir de l'entrée » (chercher « dates »),
+   entrée : **Entrée du raccourci**.
+3. Action **Créer une alarme** (chercher « alarme ») : heure = variable
+   **Dates**, libellé **Tétée**.
+
+Les alarmes déjà sonnées restent dans Horloge, désactivées ; on les supprime
+d'un glissement. Le bouton n'apparaît que si le prochain repas est à venir.
 
 ## Lancer en local
 
@@ -185,9 +207,11 @@ veilleuse/
     │   ├── summary.ts      résumé du jour, prochain repas ligne par ligne (+ summary.test.ts)
     │   ├── format.ts       formats FR, 24 h                (+ format.test.ts)
     │   ├── time.ts         bornes de journée (changement d'heure inclus)
+    │   ├── alarm.ts        lien vers le raccourci d'alarme (+ alarm.test.ts)
     │   ├── csv.ts, share.ts, theme.ts, haptics.ts
     └── components/
         ├── App.tsx, DayPage.tsx   la page du jour : Heure | Quoi | Prochain repas
+        ├── AlarmSheet.tsx  guide du raccourci « Alarme tétée »
         ├── DemoBanner.tsx  bandeau de l'aperçu privé
         ├── DayStrip.tsx    bandeau des jours
         ├── Composer.tsx    les 4 cases à cocher + Valider
@@ -213,10 +237,10 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 17 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+- 18 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
   saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochain
   repas ligne par ligne (y compris d'un jour à l'autre), conversion des données
-  de la première version, formats.
+  de la première version, lien du raccourci d'alarme, formats.
 - Scénario de bout en bout dans Chromium (Playwright, émulation mobile) :
   cocher puis valider, prochain repas affiché à la bonne heure sur chaque ligne,
   annulation, changement de jour, correction, conversion d'une base de la

@@ -2,27 +2,13 @@
 // La classe « f » donne un léger remplissage de la couleur du trait.
 
 const PATHS = {
-  breast: (
-    <>
-      <path class="f" d="M3.5 9.5a8.5 8.5 0 0 0 17 0" />
-      <circle cx="12" cy="13.5" r="1.6" fill="currentColor" />
-    </>
-  ),
-  bottle: (
-    <>
-      <path class="f" d="M8 9.5 10 6V3h4v3l2 3.5V20a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 8 20Z" />
-      <path d="M9 3h6M8 13h3M8 16.5h3" />
-    </>
-  ),
-  pee: <path class="f" d="M12 3c3.6 4.6 6 8 6 11a6 6 0 0 1-12 0c0-3 2.4-6.4 6-11Z" />,
-  poop: (
-    <>
-      <rect class="f" x="3.5" y="15" width="17" height="5.5" rx="2.75" />
-      <rect class="f" x="6" y="10" width="12" height="5" rx="2.5" />
-      <path class="f" d="M8.8 10a3.2 3.2 0 0 1 3.2-3.2c.4-1.2.2-2.3-.5-3.3 2.6.3 4.2 2.4 3.6 5a3 3 0 0 1 .3 1.5" />
-    </>
-  ),
   check: <path d="m4.5 12.5 5 5 10-10.5" />,
+  alarm: (
+    <>
+      <circle class="f" cx="12" cy="13" r="7.5" />
+      <path d="M12 9v4l2.5 2M4.5 4.5 2.5 6.5M19.5 4.5l2 2M7 19.5 5.5 21M17 19.5l1.5 1.5" />
+    </>
+  ),
   share: <path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />,
   download: <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 20h14" />,
   settings: (

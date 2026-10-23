@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'preact/hooks';
+import { alarmUrl } from '../lib/alarm';
 import { formatClock, formatIn, formatSpan } from '../lib/format';
 import { nextFeedByEntry } from '../lib/summary';
 import { TAGS, type Entry } from '../model';
+import { useAppState } from '../store';
 import { useDay } from '../useDay';
+import { AlarmSheet } from './AlarmSheet';
 import { Composer } from './Composer';
 import { DayStrip } from './DayStrip';
 import { EntrySheet } from './EntrySheet';
@@ -16,13 +19,18 @@ import { ToastSlot } from './Toast';
  */
 export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   const day = useDay();
+  const { settings } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
+  const [alarmGuide, setAlarmGuide] = useState(false);
   const nextById = useMemo(() => nextFeedByEntry(day.entries), [day.entries]);
   // La ligne la plus récente, tous jours confondus : c'est elle qui dit quand nourrir bébé maintenant.
   const latestId = useMemo(
     () => day.entries.reduce<Entry | null>((latest, e) => (!latest || e.at > latest.at ? e : latest), null)?.id,
     [day.entries],
   );
+  // Heure du prochain repas maintenant ; l'alarme n'a de sens que si elle est à venir.
+  const nextAt = latestId ? nextById.get(latestId) : undefined;
+  const alarmAt = nextAt !== undefined && nextAt > day.now ? nextAt : undefined;
 
   return (
     <>
@@ -31,6 +39,18 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           <h1>{day.title}</h1>
           {day.subtitle && <p class="topbar-sub">{day.subtitle}</p>}
         </div>
+        {alarmAt !== undefined &&
+          (settings.alarmReady ? (
+            <a class="head-btn head-alarm" href={alarmUrl(alarmAt)}>
+              <Icon name="alarm" size={20} />
+              Alarme {formatClock(alarmAt)}
+            </a>
+          ) : (
+            <button type="button" class="head-btn head-alarm" onClick={() => setAlarmGuide(true)}>
+              <Icon name="alarm" size={20} />
+              Alarme {formatClock(alarmAt)}
+            </button>
+          ))}
         <button type="button" class="head-btn" onClick={onOpenSettings}>
           <Icon name="settings" size={20} />
           Réglages
@@ -102,6 +122,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
       </div>
 
       {editing && <EntrySheet entry={editing} onClose={() => setEditing(null)} />}
+      {alarmGuide && alarmAt !== undefined && <AlarmSheet at={alarmAt} onClose={() => setAlarmGuide(false)} />}
     </>
   );
 }
