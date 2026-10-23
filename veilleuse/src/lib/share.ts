@@ -7,6 +7,7 @@ const plural = (n: number, word: string): string => `${n} ${word}${n > 1 ? 's' :
 function describe(e: AppEvent): string {
   switch (e.type) {
     case 'breast': {
+      if (e.durationMs === 0) return `Tétée ${e.sides.map(sideLetter).join(' puis ')} (durée non notée)`;
       const parts = e.sides.length === 1
         ? [sideLetter(e.sides[0])]
         : [`G ${formatDuration(e.leftMs)}`, `D ${formatDuration(e.rightMs)}`];

@@ -565,6 +565,24 @@ button:disabled {
   font-size: 1.15rem;
 }
 
+/* Puce sur deux lignes : « Il y a 30 min » / « à 03:12 ». */
+.chip-ago {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chip-ago small {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.chip-wide {
+  display: flex;
+  width: 100%;
+  margin: 8px 0 16px;
+}
+
 /* Le sélecteur natif, invisible, couvre la puce « Choisir… » : il ouvre la roue de l'OS, pas le clavier. */
 .chip-picker {
   position: relative;
@@ -851,7 +869,7 @@ button:disabled {
 
 .daynav {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   padding: 10px 0;
 }

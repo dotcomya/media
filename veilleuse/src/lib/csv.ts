@@ -24,7 +24,9 @@ function row(e: AppEvent): (string | number)[] {
   switch (e.type) {
     case 'breast': {
       const sides = e.sides.map((s) => (s === 'L' ? 'G' : 'D')).join(' puis ');
-      return [...common, 'tétée', sides, minutes(e.leftMs), minutes(e.rightMs), minutes(e.durationMs), '', '', '', ...meta];
+      // Tétée oubliée sans durée : cellules vides plutôt que « 0 ».
+      const durations = e.durationMs === 0 ? ['', '', ''] : [minutes(e.leftMs), minutes(e.rightMs), minutes(e.durationMs)];
+      return [...common, 'tétée', sides, ...durations, '', '', '', ...meta];
     }
     case 'bottle':
       return [...common, 'biberon', '', '', '', '', e.ml, '', '', ...meta];

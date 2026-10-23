@@ -21,6 +21,7 @@ reste sur le téléphone et fonctionne en mode avion.
 | Changer de sein | 1 |
 | Pause (rot, change) / Reprendre | 1 |
 | Terminer | 1 (au-delà de 60 min, l'app propose d'ajuster la durée) |
+| Tétée oubliée | 2 (Journée → « Oubli sein G » ou « Oubli sein D » → « Il y a 30 min »…) |
 
 - **Bandeau d'état** en haut de l'accueil, rafraîchi en continu : dernière
   tétée (comptée depuis son **début**), dernier biberon, dernière couche.
@@ -33,8 +34,11 @@ reste sur le téléphone et fonctionne en mode avion.
 - **Correction** : toucher une entrée pour la modifier ou la supprimer. L'heure
   se règle par puces (« Maintenant », « −5 min », « −15 min », « −30 min »,
   « −1 h », cumulables), avec la roue native du téléphone en dernier recours.
-  Boutons « Tétée passée » et « Autre oubli » pour les saisies oubliées.
-- **Partage** : résumé texte du jour via la feuille de partage du téléphone,
+  Tétée oubliée : « Oubli sein G » / « Oubli sein D », puis l'heure (« Il y a
+  15 min » à « Il y a 2 h », ou « Autre heure… ») ; la durée reste « non
+  notée » et peut être complétée en touchant l'entrée. « Autre oubli » pour un
+  biberon ou une couche.
+- **Partage** (en haut de la Journée) : résumé texte du jour via la feuille de partage du téléphone,
   pour le pédiatre ou la sage-femme. Export CSV de toutes les données dans
   Réglages (séparateur `;`, s'ouvre directement dans Excel en français).
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
@@ -187,6 +191,7 @@ veilleuse/
         ├── App.tsx         onglets Accueil / Journée
         ├── Home.tsx        bandeau d'état + grille de gros boutons
         ├── FeedMode.tsx    tétée en cours, ajustement au-delà de 60 min
+        ├── ForgottenFeedSheet.tsx  tétée oubliée : sein puis heure
         ├── BottleSheet.tsx, DayView.tsx, EditSheet.tsx, SettingsSheet.tsx
         └── BottlePicker, DurationPicker, TimeChips, Sheet, Toast, TopBar, Icon
 ```

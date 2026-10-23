@@ -21,7 +21,7 @@ export function App() {
     <div class="app">
       <main class="screen">
         {tab === 'day' ? (
-          <DayView onOpenSettings={openSettings} onOpenFeed={() => setTab('home')} />
+          <DayView onOpenFeed={() => setTab('home')} />
         ) : activeFeed ? (
           <FeedMode feed={activeFeed} />
         ) : (

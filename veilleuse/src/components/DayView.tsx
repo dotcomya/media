@@ -1,13 +1,24 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useNow } from '../hooks';
-import { feedTimes, suggestedSide } from '../lib/feeding';
-import { diaperLabel, formatChrono, formatClock, formatDate, formatDayTitle, formatDuration, sideLetter, sideName } from '../lib/format';
+import { feedTimes } from '../lib/feeding';
+import {
+  diaperLabel,
+  formatChrono,
+  formatClock,
+  formatDate,
+  formatDayTitle,
+  formatDuration,
+  formatSides,
+  sideLetter,
+  sideName,
+} from '../lib/format';
 import { daySummaryText, shareText } from '../lib/share';
 import { eventsOfDay, summarizeDay } from '../lib/summary';
 import { addDays, startOfDay } from '../lib/time';
-import { breastData, type AppEvent, type BreastEvent, type EventData } from '../model';
+import type { AppEvent, EventData, Side } from '../model';
 import { showToast, useAppState } from '../store';
 import { EditSheet } from './EditSheet';
+import { ForgottenFeedSheet } from './ForgottenFeedSheet';
 import { Icon, type IconName } from './Icon';
 import { Sheet } from './Sheet';
 import { ToastSlot } from './Toast';
@@ -17,13 +28,14 @@ type Editing = { event: AppEvent } | { draft: EventData; defaultAt: number } | n
 
 const SWIPE_PX = 60;
 
-export function DayView({ onOpenSettings, onOpenFeed }: { onOpenSettings: () => void; onOpenFeed: () => void }) {
+export function DayView({ onOpenFeed }: { onOpenFeed: () => void }) {
   const { events, activeFeed, settings } = useAppState();
   const now = useNow(30_000);
   // Décalage en jours par rapport à aujourd'hui : reste juste si l'app reste ouverte après minuit.
   const [offset, setOffset] = useState(0);
   const [editing, setEditing] = useState<Editing>(null);
   const [choosing, setChoosing] = useState(false);
+  const [forgottenSide, setForgottenSide] = useState<Side | null>(null);
 
   const today = startOfDay(now);
   const day = addDays(today, offset);
@@ -48,11 +60,6 @@ export function DayView({ onOpenSettings, onOpenFeed }: { onOpenSettings: () => 
 
   // Un oubli ajouté depuis un jour passé est daté de ce jour-là, à l'heure actuelle.
   const defaultAt = Math.min(Date.now(), day + (Date.now() - today));
-  const addPastFeed = () => {
-    const breastEvents = events.filter((e): e is BreastEvent => e.type === 'breast');
-    const side = suggestedSide(breastEvents) ?? 'L';
-    setEditing({ draft: breastData([side], side === 'L' ? 10 * 60_000 : 0, side === 'R' ? 10 * 60_000 : 0), defaultAt });
-  };
   const addOther = (draft: EventData) => {
     setChoosing(false);
     setEditing({ draft, defaultAt });
@@ -72,7 +79,11 @@ export function DayView({ onOpenSettings, onOpenFeed }: { onOpenSettings: () => 
 
   return (
     <>
-      <TopBar title={title} subtitle={offset > -2 ? formatDate(day) : undefined} onOpenSettings={onOpenSettings} />
+      <TopBar
+        title={title}
+        subtitle={offset > -2 ? formatDate(day) : undefined}
+        action={{ icon: 'share', label: 'Partager', onClick: share }}
+      />
 
       <section class="tiles" aria-label="Résumé de la journée">
         <Tile label="Tétées" value={summary.feeds} />
@@ -118,26 +129,32 @@ export function DayView({ onOpenSettings, onOpenFeed }: { onOpenSettings: () => 
         <button type="button" class="chip" onClick={() => go(-1)}>
           <Icon name="prev" size={20} /> Veille
         </button>
-        <button type="button" class="chip" disabled={offset === 0} onClick={() => setOffset(0)}>
-          Aujourd'hui
-        </button>
         <button type="button" class="chip" disabled={offset === 0} onClick={() => go(1)}>
           Lendemain <Icon name="next" size={20} />
         </button>
       </nav>
 
-      <section class="row day-actions" aria-label="Actions">
-        <button type="button" class="action action-col tone-breast" onClick={addPastFeed}>
-          <Icon name="plus" />
-          Tétée passée
+      <section class="row day-actions" aria-label="Ajouter un oubli">
+        <button type="button" class="action action-col tone-breast" onClick={() => setForgottenSide('L')}>
+          <Icon name="breast" />
+          <span>
+            Oubli <br />
+            sein G
+          </span>
+        </button>
+        <button type="button" class="action action-col tone-breast" onClick={() => setForgottenSide('R')}>
+          <Icon name="breast" />
+          <span>
+            Oubli <br />
+            sein D
+          </span>
         </button>
         <button type="button" class="action action-col" onClick={() => setChoosing(true)}>
           <Icon name="plus" />
-          Autre oubli
-        </button>
-        <button type="button" class="action action-col" onClick={share}>
-          <Icon name="share" />
-          Partager
+          <span>
+            Autre <br />
+            oubli
+          </span>
         </button>
       </section>
 
@@ -150,6 +167,9 @@ export function DayView({ onOpenSettings, onOpenFeed }: { onOpenSettings: () => 
             <ChooserButton icon="diaper" tone="both" label="Pipi + caca" onClick={() => addOther({ type: 'diaper', pee: true, poop: true })} />
           </div>
         </Sheet>
+      )}
+      {forgottenSide && (
+        <ForgottenFeedSheet side={forgottenSide} defaultAt={defaultAt} onClose={() => setForgottenSide(null)} />
       )}
       {editing && <EditSheet {...editing} onClose={() => setEditing(null)} />}
     </>
@@ -177,10 +197,14 @@ function ChooserButton({ icon, tone, label, onClick }: { icon: IconName; tone: s
 function describe(event: AppEvent): { icon: IconName; tone: string; title: string; detail?: string } {
   switch (event.type) {
     case 'breast': {
+      const sides = [...new Set(event.sides)];
+      const perSide = sides.map((s) => `${sideLetter(s)} ${formatDuration(s === 'L' ? event.leftMs : event.rightMs)}`);
       const detail =
-        event.sides.length === 1
-          ? `sein ${sideName(event.sides[0])} · ${formatDuration(event.durationMs)}`
-          : `${[...new Set(event.sides)].map((s) => `${sideLetter(s)} ${formatDuration(s === 'L' ? event.leftMs : event.rightMs)}`).join(' → ')} · ${formatDuration(event.durationMs)}`;
+        event.durationMs === 0
+          ? `${formatSides(event.sides)} · durée non notée`
+          : sides.length === 1
+            ? `sein ${sideName(sides[0])} · ${formatDuration(event.durationMs)}`
+            : `${perSide.join(' → ')} · ${formatDuration(event.durationMs)}`;
       return { icon: 'breast', tone: 'breast', title: 'Tétée', detail };
     }
     case 'bottle':

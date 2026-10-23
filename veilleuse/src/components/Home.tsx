@@ -39,7 +39,10 @@ export function Home({ onOpenSettings }: { onOpenSettings: () => void }) {
 
   return (
     <>
-      <TopBar title={settings.babyName.trim() || 'Veilleuse'} onOpenSettings={onOpenSettings} />
+      <TopBar
+        title={settings.babyName.trim() || 'Veilleuse'}
+        action={{ icon: 'settings', label: 'Réglages', onClick: onOpenSettings }}
+      />
 
       <section class="status" aria-label="Derniers événements">
         <StatusRow

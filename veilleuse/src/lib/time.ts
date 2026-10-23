@@ -17,3 +17,11 @@ export function addDays(dayStart: number, n: number): number {
 }
 
 export const isInDay = (ts: number, dayStart: number): boolean => ts >= dayStart && ts < addDays(dayStart, 1);
+
+const pad = (n: number): string => String(n).padStart(2, '0');
+
+/** Format attendu par <input type="datetime-local"> : « 2026-10-21T14:05 ». */
+export function toDateTimeInput(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}

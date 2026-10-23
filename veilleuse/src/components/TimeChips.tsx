@@ -1,6 +1,6 @@
 import { useNow } from '../hooks';
 import { formatAgo, formatClock, formatRelativeDay } from '../lib/format';
-import { HOUR, MINUTE } from '../lib/time';
+import { HOUR, MINUTE, toDateTimeInput } from '../lib/time';
 
 const SHIFTS = [
   { label: '−5 min', ms: 5 * MINUTE },
@@ -8,14 +8,6 @@ const SHIFTS = [
   { label: '−30 min', ms: 30 * MINUTE },
   { label: '−1 h', ms: HOUR },
 ];
-
-const pad = (n: number): string => String(n).padStart(2, '0');
-
-/** Format attendu par <input type="datetime-local"> : « 2026-10-21T14:05 ». */
-function toInputValue(ts: number): string {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 interface Props {
   label: string;
@@ -52,8 +44,8 @@ export function TimeChips({ label, value, onChange }: Props) {
           Choisir…
           <input
             type="datetime-local"
-            value={toInputValue(value)}
-            max={toInputValue(now)}
+            value={toDateTimeInput(value)}
+            max={toDateTimeInput(now)}
             onChange={(e) => {
               const ts = new Date(e.currentTarget.value).getTime();
               if (!Number.isNaN(ts)) set(ts);
