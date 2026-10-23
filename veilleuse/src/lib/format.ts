@@ -10,16 +10,25 @@ export function formatClock(ts: number): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** « à l'instant », « il y a 40 min », « il y a 2 h 10 », « il y a 3 h », « il y a 1 j 4 h » */
-export function formatAgo(ms: number): string {
+/** Durée lisible d'un coup d'œil : « 40 min », « 2 h 10 », « 3 h », « 1 j 4 h ». */
+export function formatSpan(ms: number): string {
   const minutes = Math.floor(Math.max(0, ms) / MINUTE);
-  if (minutes < 1) return "à l'instant";
-  if (minutes < 60) return `il y a ${minutes} min`;
+  if (minutes < 60) return `${minutes} min`;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  if (h < 24) return m ? `il y a ${h} h ${pad(m)}` : `il y a ${h} h`;
+  if (h < 24) return m ? `${h} h ${pad(m)}` : `${h} h`;
   const days = Math.floor(h / 24);
-  return h % 24 ? `il y a ${days} j ${h % 24} h` : `il y a ${days} j`;
+  return h % 24 ? `${days} j ${h % 24} h` : `${days} j`;
+}
+
+/** « à l'instant », « il y a 40 min », « il y a 2 h 10 » */
+export function formatAgo(ms: number): string {
+  return ms < MINUTE ? "à l'instant" : `il y a ${formatSpan(ms)}`;
+}
+
+/** « maintenant », « dans 40 min », « dans 1 h 12 » */
+export function formatIn(ms: number): string {
+  return ms < MINUTE ? 'maintenant' : `dans ${formatSpan(ms)}`;
 }
 
 export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

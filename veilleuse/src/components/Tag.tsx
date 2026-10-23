@@ -1,7 +1,14 @@
-import { TAG_LABELS, type Tag } from '../model';
-import { Icon, type IconName } from './Icon';
+import { TAG_EMOJI, TAG_LABELS, type Tag } from '../model';
+import { Icon } from './Icon';
 
-const TAG_ICONS: Record<Tag, IconName> = { feed: 'breast', bottle: 'bottle', pee: 'pee', poop: 'poop' };
+/** Emoji d'une étiquette, lu par les lecteurs d'écran sous son nom. */
+export function Emoji({ tag, size }: { tag: Tag; size?: number }) {
+  return (
+    <span class="emoji" role="img" aria-label={TAG_LABELS[tag]} style={size ? { fontSize: `${size}px` } : undefined}>
+      {TAG_EMOJI[tag]}
+    </span>
+  );
+}
 
 interface ButtonProps {
   tag: Tag;
@@ -9,39 +16,30 @@ interface ButtonProps {
   onClick: () => void;
   /** Petite ligne sous le libellé, ex. « il y a 2 h 10 ». */
   sub?: string;
+  /** Forme : carte (emoji à gauche), case (emoji au-dessus) ou rond. */
+  shape?: 'card' | 'cell' | 'round';
 }
 
 /** Étiquette à cocher : on coche ce qui s'est passé, puis on valide. */
-export function TagButton({ tag, on, onClick, sub }: ButtonProps) {
+export function TagButton({ tag, on, onClick, sub, shape = 'card' }: ButtonProps) {
   return (
-    <button type="button" class={`tag-btn tone-${tag}${on ? ' on' : ''}`} aria-pressed={on} onClick={onClick}>
-      <Icon name={TAG_ICONS[tag]} size={26} />
-      <span class="tag-text">
+    <button
+      type="button"
+      class={`tag-btn tag-${shape} tone-${tag}${on ? ' on' : ''}`}
+      aria-pressed={on}
+      aria-label={TAG_LABELS[tag]}
+      onClick={onClick}
+    >
+      <span class="tag-emoji" aria-hidden="true">
+        {TAG_EMOJI[tag]}
+      </span>
+      <span class="tag-text" aria-hidden="true">
         <strong>{TAG_LABELS[tag]}</strong>
         {sub && <small>{sub}</small>}
       </span>
       <span class="tag-check" aria-hidden="true">
-        {on && <Icon name="check" size={16} />}
+        {on && <Icon name="check" size={shape === 'card' ? 16 : 12} />}
       </span>
     </button>
-  );
-}
-
-/** Version compacte (icône seule) pour les journées chargées ; la légende est dans le résumé. */
-export function TagDot({ tag }: { tag: Tag }) {
-  return (
-    <span class={`tag-dot tone-${tag}`} role="img" aria-label={TAG_LABELS[tag]} title={TAG_LABELS[tag]}>
-      <Icon name={TAG_ICONS[tag]} size={15} />
-    </span>
-  );
-}
-
-/** Étiquette affichée dans la liste du jour. */
-export function TagPill({ tag }: { tag: Tag }) {
-  return (
-    <span class={`pill tone-${tag}`}>
-      <Icon name={TAG_ICONS[tag]} size={15} />
-      {TAG_LABELS[tag]}
-    </span>
   );
 }

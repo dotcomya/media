@@ -5,6 +5,11 @@ export const TAGS = ['feed', 'bottle', 'pee', 'poop'] as const;
 export type Tag = (typeof TAGS)[number];
 
 export const TAG_LABELS: Record<Tag, string> = { feed: 'Tétée', bottle: 'Biberon', pee: 'Pipi', poop: 'Caca' };
+export const TAG_EMOJI: Record<Tag, string> = { feed: '🤱', bottle: '🍼', pee: '💧', poop: '💩' };
+
+/** Une tétée ou un biberon : ce qui fait courir le délai jusqu'au prochain repas. */
+export const FEED_TAGS: readonly Tag[] = ['feed', 'bottle'];
+export const isFeed = (entry: Pick<Entry, 'tags'>): boolean => entry.tags.some((tag) => FEED_TAGS.includes(tag));
 
 export interface Entry {
   id: string;

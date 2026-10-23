@@ -7,8 +7,19 @@ import { addEntry } from '../store';
 import { Icon } from './Icon';
 import { TagButton } from './Tag';
 
-/** On coche ce qui vient de se passer (tétée, pipi…), puis « Valider » crée une saisie horodatée. */
-export function Composer({ entries, now }: { entries: Entry[]; now: number }) {
+interface Props {
+  entries: Entry[];
+  now: number;
+  /**
+   * columns : 4 cases alignées sous les colonnes du tableau (proposition 1) ;
+   * cards : 2 × 2 cartes avec « il y a… » (proposition 2) ;
+   * round : 4 ronds sur une ligne (proposition 3).
+   */
+  layout: 'columns' | 'cards' | 'round';
+}
+
+/** On coche ce qui vient de se passer, puis « Valider » crée une saisie horodatée. */
+export function Composer({ entries, now, layout }: Props) {
   const [selected, setSelected] = useState<Tag[]>([]);
   const last = useMemo(() => lastByTag(entries), [entries]);
 
@@ -22,24 +33,31 @@ export function Composer({ entries, now }: { entries: Entry[]; now: number }) {
   };
 
   return (
-    <section class="composer" aria-label="Ajouter">
-      <div class="tag-grid">
+    <section class={`composer composer-${layout}`} aria-label="Ajouter">
+      <div class="composer-tags">
+        {layout === 'columns' && (
+          <div class="composer-now">
+            <strong>{formatClock(now)}</strong>
+            <small>maintenant</small>
+          </div>
+        )}
         {TAGS.map((tag) => {
           const at = last[tag];
           return (
             <TagButton
               key={tag}
               tag={tag}
+              shape={layout === 'cards' ? 'card' : layout === 'columns' ? 'cell' : 'round'}
               on={selected.includes(tag)}
               onClick={() => toggle(tag)}
-              sub={at === undefined ? 'pas encore' : formatAgo(now - at)}
+              sub={layout === 'cards' ? (at === undefined ? 'pas encore' : formatAgo(now - at)) : undefined}
             />
           );
         })}
       </div>
       <button type="button" class="action action-primary action-validate" disabled={!selected.length} onClick={validate}>
-        <Icon name="check" size={24} />
-        {selected.length ? `Valider · ${formatClock(now)}` : 'Cochez, puis validez'}
+        <Icon name="check" size={22} />
+        {selected.length ? `Valider à ${formatClock(now)}` : 'Cochez, puis validez'}
       </button>
     </section>
   );

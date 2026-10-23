@@ -255,130 +255,42 @@ button:disabled {
   visibility: hidden;
 }
 
-/* --- Résumé et liste du jour ------------------------------------------- */
+/* --- Sélecteur des propositions (temporaire) --------------------------- */
 
-.summary {
+.designs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2px 10px;
-  margin-bottom: 8px;
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-
-.summary-part::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 4px;
-  border-radius: 50%;
-  background: var(--tone);
-  vertical-align: 1px;
-}
-
-.summary-part.is-zero {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.timeline-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.entry {
-  width: 100%;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 10px;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  background: var(--surface);
-  text-align: left;
-}
-
-.entry:active {
-  border-color: var(--line);
-}
-
-.entry-time {
-  flex: none;
-  width: 3em;
-  font-size: 1rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-.entry-tags {
-  display: flex;
-  flex-wrap: wrap;
   gap: 6px;
+  padding: 6px 16px 0;
 }
 
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 9px 2px 6px;
+.designs button {
+  flex: 1;
+  min-height: 30px;
+  border: 1.5px solid var(--line);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--tone) 16%, var(--surface));
-  font-size: 0.85rem;
-  font-weight: 700;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
 }
 
-.timeline.is-dense {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 6px;
+.designs button.on {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
 }
 
-.is-dense .entry {
-  min-height: 32px;
-  gap: 8px;
-  padding: 3px 8px;
-  border-radius: 10px;
-}
+/* --- Éléments communs -------------------------------------------------- */
 
-.is-dense .entry-time {
-  width: auto;
-  font-size: 0.95rem;
-}
-
-.is-dense .entry-tags {
-  gap: 4px;
-}
-
-.tag-dot {
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--tone) 18%, var(--surface));
-  color: var(--tone);
-}
-
-.pill .icon {
-  color: var(--tone);
+.emoji {
+  display: inline-block;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-size: 19px;
+  line-height: 1;
 }
 
 .empty {
-  padding: 24px 0;
+  padding: 24px 12px;
   color: var(--muted);
   text-align: center;
 }
@@ -387,13 +299,483 @@ button:disabled {
   margin: 8px 0 4px;
   color: var(--muted);
   font-size: 0.82rem;
-  text-align: center;
+}
+
+/* Quatre emplacements fixes : chaque emoji garde toujours la même position. */
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+}
+
+.slot {
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+
+/* --- Prochaine tétée : bandeau (proposition 1) ------------------------- */
+
+.next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  border: 1.5px solid color-mix(in srgb, var(--feed) 45%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--feed) 14%, var(--surface));
+}
+
+.next-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.next-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.next-label,
+.dial-label,
+.next-time,
+.next-side {
+  white-space: nowrap;
+}
+
+.next-label,
+.dial-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.next-time {
+  font-size: 1.3rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.next-hint {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.next-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.next-in {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.next-side small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.next.is-late {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+}
+
+.is-late .next-in,
+.is-late .dial-in {
+  color: var(--danger);
+}
+
+/* --- Proposition 1 : tableau ------------------------------------------- */
+
+.design-1 {
+  --timecol: 62px;
+}
+
+.table {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.table-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--timecol) repeat(4, minmax(0, 1fr));
+  column-gap: 6px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.table-head {
+  min-height: 48px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.table-head .table-time {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.table-head .table-cell {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.table-head strong {
+  font-size: 0.95rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.table-body .table-row {
+  min-height: 36px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+}
+
+.table-body .table-row:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+}
+
+.table-body .table-row:active {
+  background: var(--surface-2);
+}
+
+.table-time {
+  padding-left: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-empty {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+/* --- Proposition 2 : fil du temps -------------------------------------- */
+
+.counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.count {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 1rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.thread-list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Le fil : une ligne verticale qui passe par les points de chaque saisie. */
+.thread-list::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 62px;
+  width: 2px;
+  background: var(--line);
+}
+
+.thread-item {
+  position: relative;
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 52px 22px auto 1fr;
+  align-items: center;
+  column-gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+}
+
+button.thread-item:active {
+  background: var(--surface);
+}
+
+.thread-time {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.thread-dot {
+  z-index: 1;
+  justify-self: center;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.thread-item.is-feed .thread-dot {
+  border-color: var(--feed);
+  background: var(--feed);
+}
+
+.thread-item .slots {
+  margin-left: 8px;
+}
+
+.thread-note,
+.list-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.thread-next {
+  min-height: 46px;
+  margin-bottom: 4px;
+}
+
+.thread-next .thread-time {
+  color: var(--feed);
+}
+
+.thread-next .thread-dot {
+  border-style: dashed;
+  border-color: var(--feed);
+}
+
+.thread-next-body {
+  grid-column: 3 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-left: 8px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border: 1.5px dashed color-mix(in srgb, var(--feed) 70%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--feed) 10%, transparent);
+  font-weight: 800;
+}
+
+.thread-next-body span {
+  font-weight: 750;
+}
+
+.thread-next.is-late .thread-next-body {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.thread-next.is-late .thread-next-body span,
+.thread-next.is-late .thread-time {
+  color: var(--danger);
+}
+
+/* --- Proposition 3 : cadran -------------------------------------------- */
+
+.dial {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.dial-ring {
+  position: relative;
+  flex: none;
+  width: 104px;
+  height: 104px;
+}
+
+.dial-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.dial-track,
+.dial-progress {
+  fill: none;
+  stroke-width: 8;
+}
+
+.dial-track {
+  stroke: var(--line);
+}
+
+.dial-progress {
+  stroke: var(--feed);
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s ease-out;
+}
+
+.dial.is-late .dial-progress {
+  stroke: var(--danger);
+}
+
+.dial-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dial-center strong {
+  font-size: 1.45rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.dial-center small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dial-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dial-in {
+  font-size: 1.3rem;
+  font-weight: 850;
+}
+
+.dial-last,
+.dial-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.dial-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dial-counts:not(:first-child) {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.dial-counts span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-card {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.list-row {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 56px auto 1fr;
+  align-items: center;
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  background: transparent;
+  text-align: left;
+}
+
+.list-row:last-child {
+  border-bottom: 0;
+}
+
+.list-row:active {
+  background: var(--surface-2);
+}
+
+.list-time {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- Zone de saisie, dans la moitié basse ------------------------------ */
 
 .bottom {
   position: relative;
+  margin-top: auto;
   padding-top: 10px;
 }
 
@@ -403,18 +785,48 @@ button:disabled {
   gap: var(--gap);
 }
 
-.tag-grid {
+.composer-tags {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--gap);
 }
 
+.composer-cards .composer-tags {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.composer-round .composer-tags {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Mêmes colonnes que le tableau : chaque case tombe sous sa colonne. */
+.composer-columns .composer-tags {
+  grid-template-columns: var(--timecol) repeat(4, minmax(0, 1fr));
+  column-gap: 6px;
+}
+
+.composer-now {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.composer-now strong {
+  font-size: 1rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.composer-now small {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
 .tag-btn {
-  min-height: 54px;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
   border: 2px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -423,23 +835,22 @@ button:disabled {
   transition: transform 0.08s ease-out;
 }
 
-.tag-btn > .icon {
-  color: var(--tone);
+.tag-btn:active {
+  transform: scale(0.96);
 }
 
-.tag-btn:active {
-  transform: scale(0.97);
+.tag-emoji {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  line-height: 1;
 }
 
 .tag-text {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 .tag-text strong {
-  font-size: 1.05rem;
   font-weight: 800;
 }
 
@@ -453,9 +864,6 @@ button:disabled {
 }
 
 .tag-check {
-  flex: none;
-  width: 24px;
-  height: 24px;
   display: grid;
   place-items: center;
   border: 2px solid var(--line);
@@ -471,6 +879,106 @@ button:disabled {
   border-color: var(--tone);
   background: var(--tone);
   color: var(--bg);
+}
+
+/* Carte : emoji à gauche, libellé et « il y a… », case à droite. */
+.tag-card {
+  min-height: 54px;
+  gap: 10px;
+  padding: 6px 10px;
+}
+
+.tag-card .tag-emoji {
+  font-size: 26px;
+}
+
+.tag-card .tag-text {
+  flex: 1;
+}
+
+.tag-card .tag-text strong {
+  font-size: 1.05rem;
+}
+
+.tag-card .tag-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-width: 1.5px;
+}
+
+/* Case : emoji au-dessus, libellé dessous (proposition 1). */
+.tag-cell,
+.tag-round {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.tag-cell {
+  min-height: 62px;
+  padding: 6px 2px;
+}
+
+.tag-cell .tag-emoji {
+  font-size: 24px;
+}
+
+.tag-cell .tag-text strong,
+.tag-round .tag-text strong {
+  font-size: 0.74rem;
+}
+
+.tag-cell .tag-check,
+.tag-round .tag-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-width: 1.5px;
+}
+
+.tag-card:not(.on) .tag-check,
+.tag-cell:not(.on) .tag-check,
+.tag-round:not(.on) .tag-check {
+  visibility: hidden;
+}
+
+/* Rond : grand emoji dans un cercle (proposition 3). */
+.tag-round {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.tag-round .tag-emoji {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
+  font-size: 28px;
+}
+
+.tag-round.on {
+  background: transparent;
+}
+
+.tag-round.on .tag-emoji {
+  border-color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 24%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 30%, transparent);
+}
+
+.tag-round .tag-check {
+  top: 0;
+  right: calc(50% - 34px);
 }
 
 .action {
@@ -608,6 +1116,12 @@ button:disabled {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 6px 16px 0;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
 }
 
 .sheet-body .tag-btn {
@@ -756,8 +1270,20 @@ button:disabled {
   .strip-day {
     height: 50px;
   }
-  .tag-btn {
+  .tag-card {
     min-height: 50px;
+  }
+  .tag-cell {
+    min-height: 56px;
+  }
+  .tag-round .tag-emoji {
+    width: 54px;
+    height: 54px;
+    font-size: 25px;
+  }
+  .dial-ring {
+    width: 92px;
+    height: 92px;
   }
   .action-validate {
     min-height: 50px;

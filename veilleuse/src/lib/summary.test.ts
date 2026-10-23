@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createEntry, type Entry } from '../model';
-import { entriesOfDay, lastByTag, summarizeDay } from './summary';
+import { FEED_INTERVAL_MS, entriesOfDay, feedGaps, lastByTag, nextFeed, summarizeDay } from './summary';
 import { addDays, startOfDay } from './time';
 
 // Les tests tournent en Europe/Paris (vite.config.ts).
@@ -58,5 +58,35 @@ describe('dernière fois, par étiquette', () => {
       createEntry(['poop'], at(19, 8, 0)),
     ];
     expect(lastByTag(entries)).toEqual({ feed: at(21, 3, 0), pee: at(20, 22, 0), poop: at(19, 8, 0) });
+  });
+});
+
+describe('prochaine tétée', () => {
+  it('dernier repas (tétée ou biberon) + 2 h 30', () => {
+    const entries = [
+      createEntry(['feed'], at(21, 13, 0)),
+      createEntry(['bottle', 'pee'], at(21, 15, 35)),
+      createEntry(['pee', 'poop'], at(21, 16, 10)), // une couche ne compte pas
+    ];
+    const next = nextFeed(entries);
+    expect(FEED_INTERVAL_MS).toBe(150 * 60_000);
+    expect(next?.last.at).toBe(at(21, 15, 35));
+    expect(next?.at).toBe(at(21, 18, 5));
+  });
+
+  it('ignore les repas supprimés, et ne propose rien sans repas', () => {
+    const deleted = { ...createEntry(['feed'], at(21, 17, 0)), deletedAt: at(21, 17, 1) };
+    expect(nextFeed([createEntry(['feed'], at(21, 14, 0)), deleted])?.at).toBe(at(21, 16, 30));
+    expect(nextFeed([createEntry(['pee'], at(21, 14, 0))])).toBeNull();
+  });
+
+  it('calcule l’écart entre deux repas successifs', () => {
+    const a = createEntry(['feed'], at(21, 10, 0));
+    const b = createEntry(['pee'], at(21, 11, 0));
+    const c = createEntry(['bottle'], at(21, 12, 20));
+    const gaps = feedGaps([c, b, a]);
+    expect(gaps.get(c.id)).toBe(140 * 60_000);
+    expect(gaps.has(a.id)).toBe(false);
+    expect(gaps.has(b.id)).toBe(false);
   });
 });

@@ -49,7 +49,7 @@ export function EntrySheet({ entry, onClose }: { entry: Entry; onClose: () => vo
         <span class="field-label">Ce qui s'est passé</span>
         <div class="tag-grid">
           {TAGS.map((tag) => (
-            <TagButton key={tag} tag={tag} on={tags.includes(tag)} onClick={() => toggle(tag)} />
+            <TagButton key={tag} tag={tag} shape="card" on={tags.includes(tag)} onClick={() => toggle(tag)} />
           ))}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAgo, formatClock, formatDayTitle } from './format';
+import { formatAgo, formatClock, formatDayTitle, formatIn } from './format';
 import { addDays, startOfDay } from './time';
 
 const min = (n: number) => n * 60_000;
@@ -12,6 +12,11 @@ describe('formats', () => {
     expect(formatAgo(min(125))).toBe('il y a 2 h 05');
     expect(formatAgo(min(180))).toBe('il y a 3 h');
     expect(formatAgo(min(60 * 28))).toBe('il y a 1 j 4 h');
+  });
+
+  it('temps restant', () => {
+    expect(formatIn(min(0.5))).toBe('maintenant');
+    expect(formatIn(min(72))).toBe('dans 1 h 12');
   });
 
   it('heures en 24 h', () => {

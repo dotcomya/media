@@ -7,9 +7,15 @@ compte, aucun serveur, tout reste sur le téléphone et fonctionne en mode avion
 
 **En ligne : https://dotcomya.github.io/media/** (GitHub Pages, branche `gh-pages`).
 
-| Aujourd'hui | Cocher puis valider | Un jour passé | Corriger |
-|---|---|---|---|
-| ![Aujourd'hui](docs/aujourdhui.png) | ![Cocher puis valider](docs/cocher.png) | ![Hier](docs/hier.png) | ![Corriger](docs/corriger.png) |
+### Trois propositions de design, à comparer
+
+Un sélecteur en haut de l'app permet de passer de l'une à l'autre avec ses
+vraies données ; chacune a aussi son lien direct.
+
+| [1 · Tableau](https://dotcomya.github.io/media/#1) | [2 · Fil](https://dotcomya.github.io/media/#2) | [3 · Cadran](https://dotcomya.github.io/media/#3) |
+|---|---|---|
+| ![Proposition 1 : tableau](docs/proposition-1.png) | ![Proposition 2 : fil du temps](docs/proposition-2.png) | ![Proposition 3 : cadran](docs/proposition-3.png) |
+| Carnet de suivi : une colonne par emoji, totaux du jour en tête, cases à cocher alignées sous les mêmes colonnes. | Fil du temps : l'heure à gauche, les emojis toujours à la même place, la prochaine tétée en tête du fil. | La prochaine tétée en grand, avec un anneau qui se remplit pendant les 2 h 30 ; la journée en liste sobre. |
 
 ## Ce que fait l'app
 
@@ -17,11 +23,13 @@ compte, aucun serveur, tout reste sur le téléphone et fonctionne en mode avion
   23 octobre ») et le bandeau des jours : un appui sur une date, ou un balayage
   sur la liste, pour passer aux jours précédents. Un point sous la date indique
   qu'il y a des saisies ce jour-là.
-- **Résumé du jour** : « 6 tétées · 2 biberons · 5 pipis · 2 cacas ».
-- **Liste du jour**, de la plus récente à la plus ancienne : l'heure et les
-  étiquettes. À partir de 9 saisies, elle passe sur deux colonnes compactes
-  (icônes seules, légende dans le résumé) pour que la journée tienne sans
-  défiler.
+- **Prochaine tétée** : heure du dernier repas (tétée 🤱 ou biberon 🍼) + 2 h 30,
+  affichée en clair (« vers 18:05 · dans 1 h 12 »), en rouge en cas de retard.
+- **Résumé du jour** : nombre de 🤱 tétées, 🍼 biberons, 💧 pipis, 💩 cacas.
+- **Liste du jour**, de la plus récente à la plus ancienne : l'heure dans la
+  colonne de gauche, puis les emojis, chacun toujours à la même position.
+  La page ne défile pas ; au-delà d'environ 15 saisies dans la journée, seule la
+  liste défile.
 - **Saisir** (aujourd'hui, en bas de l'écran) : on coche ce qui vient de se
   passer, puis **Valider** crée une saisie horodatée. Pipi et caca en même
   temps : on coche les deux. Chaque étiquette rappelle la dernière fois
@@ -53,7 +61,7 @@ Prérequis : Node.js 22.12 ou plus.
 cd veilleuse
 npm install
 npm run dev        # serveur de développement : http://localhost:5173
-npm test           # tests unitaires (résumé journalier, conversion des données, formats)
+npm test           # tests unitaires (résumé, prochaine tétée, conversion des données, formats)
 npm run build      # vérification TypeScript + build de production dans dist/
 npm run preview    # sert dist/ : http://localhost:4173 (service worker actif)
 ```
@@ -178,17 +186,20 @@ veilleuse/
     ├── model.ts            saisie, étiquettes, conversion des anciennes données (+ model.test.ts)
     ├── db.ts               accès IndexedDB et migration
     ├── store.ts            état de l'app et actions (ajouter, annuler, corriger…)
+    ├── useDay.ts           jour affiché, navigation, résumé : commun aux 3 pages
     ├── hooks.ts            useNow : horloge rafraîchie
     ├── styles.css
     ├── lib/
-    │   ├── summary.ts      résumé du jour, dernière fois par étiquette (+ summary.test.ts)
+    │   ├── summary.ts      résumé du jour, prochaine tétée, écarts (+ summary.test.ts)
     │   ├── format.ts       formats FR, 24 h                (+ format.test.ts)
     │   ├── time.ts         bornes de journée (changement d'heure inclus)
     │   ├── csv.ts, share.ts, theme.ts, haptics.ts
     └── components/
-        ├── App.tsx, DayPage.tsx   la page du jour
+        ├── App.tsx         sélecteur des trois propositions
+        ├── TablePage.tsx, ThreadPage.tsx, DialPage.tsx   propositions 1, 2, 3
+        ├── NextFeed.tsx    prochaine tétée (dernier repas + 2 h 30)
         ├── DayStrip.tsx    bandeau des jours
-        ├── Composer.tsx    étiquettes à cocher + Valider
+        ├── Composer.tsx    étiquettes à cocher + Valider (3 dispositions)
         ├── EntrySheet.tsx  corriger ou supprimer une saisie
         ├── SettingsSheet.tsx, TimeChips, Tag, Sheet, Toast, Icon
 ```
@@ -210,17 +221,17 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 14 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
-  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), dernière fois
-  par étiquette, conversion des données de la première version, formats.
-- Scénario de bout en bout dans Chromium (Playwright, émulation mobile) :
-  cocher puis valider, annulation, résumé, changement de jour par le bandeau et
-  par balayage, correction, conversion d'une base de la première version,
-  fonctionnement hors ligne, données conservées après fermeture complète du
-  navigateur.
-- Rendu contrôlé en **390 × 844** et **360 × 740** : la page ne défile pas, et
-  une journée de 20 saisies tient entière à l'écran. Capture en 360 × 740 :
-  [docs/aujourdhui-360.png](docs/aujourdhui-360.png).
+- 18 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochaine
+  tétée (dernier repas + 2 h 30), écart entre repas, conversion des données de
+  la première version, formats.
+- Scénarios de bout en bout dans Chromium (Playwright, émulation mobile), sur
+  chacune des trois propositions : cocher puis valider, prochaine tétée
+  affichée à la bonne heure, retard signalé, annulation, changement de jour,
+  correction ; plus conversion d'une base de la première version,
+  fonctionnement hors ligne, données conservées après fermeture du navigateur.
+- Rendu contrôlé en **390 × 844** et **360 × 740** : la page ne défile pas ;
+  une journée complète (11 saisies) tient entière à l'écran.
 
 Ces vérifications ont été faites sur un Chromium émulé, pas sur un iPhone ou
 un téléphone Android physique : un essai réel (installation, mode avion,
