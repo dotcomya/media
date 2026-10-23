@@ -5,6 +5,8 @@ maman épuisée, la nuit, d'une seule main : chaque saisie prend une ou deux
 pressions, sans jamais ouvrir de clavier. Aucun compte, aucun serveur, tout
 reste sur le téléphone et fonctionne en mode avion.
 
+**En ligne : https://dotcomya.github.io/media/** (GitHub Pages, branche `gh-pages`).
+
 | Accueil | Tétée en cours | Biberon | Journée | Correction |
 |---|---|---|---|---|
 | ![Accueil](docs/accueil.png) | ![Tétée en cours](docs/tetee.png) | ![Biberon](docs/biberon.png) | ![Journée](docs/journee.png) | ![Correction](docs/modifier.png) |
@@ -61,6 +63,23 @@ ligne avec `npm run build && npm run preview`.
 
 L'app est un site statique (`dist/`). Elle se trouve dans le sous-dossier
 `veilleuse/` du dépôt : c'est le seul réglage à indiquer à l'hébergeur.
+
+### GitHub Pages (version en ligne actuelle)
+
+La branche `gh-pages` contient uniquement le contenu de `dist/`. Pour publier
+une nouvelle version :
+
+```bash
+cd veilleuse
+npm run build
+touch dist/.nojekyll
+cd dist && git init -b gh-pages && git add -A && git commit -m "Publie Veilleuse"
+git push -f https://github.com/dotcomya/media gh-pages
+rm -rf .git
+```
+
+Garder la même adresse : les données sont liées à l'origine du site, en changer
+reviendrait à repartir d'un historique vide.
 
 ### Netlify
 
