@@ -21,9 +21,14 @@ sur le téléphone et fonctionne en mode avion.
   rouge si l'heure est passée.
 - **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
   ensemble : on coche les deux), puis **Valider** ajoute la ligne à l'heure
-  actuelle.
-- **⏰ Alarme** (en haut) : règle une vraie alarme iPhone à l'heure du prochain
-  repas, qui sonne fort même en mode silencieux. Voir ci-dessous.
+  actuelle. **Biberon** : une rangée de volumes (30 à 180 ml) apparaît, le
+  dernier volume donné déjà choisi ; il s'affiche ensuite sous le 🍼.
+- **⏰ Alarme, systématique** : chaque tétée ou biberon validé règle une vraie
+  alarme iPhone à l'heure du prochain repas (elle sonne même en mode
+  silencieux). Le bouton « ⏰ Alarme » en haut la règle aussi à la main ; on peut
+  couper l'alarme automatique dans Réglages. Voir ci-dessous.
+- **Partage maman / papa** : un code commun, et les deux téléphones voient et
+  complètent les mêmes lignes. Voir « Synchronisation » ci-dessous.
 
 | Action | Pressions |
 |---|---|
@@ -61,6 +66,37 @@ Le raccourci se crée une fois (le guide s'affiche au premier appui) :
 
 Les alarmes déjà sonnées restent dans Horloge, désactivées ; on les supprime
 d'un glissement. Le bouton n'apparaît que si le prochain repas est à venir.
+
+## Synchronisation entre les deux parents
+
+Chaque téléphone garde tout en local (l'app marche hors ligne) et échange ses
+changements avec un petit serveur : au démarrage, toutes les 20 s quand l'app
+est ouverte, au retour du réseau et après chaque saisie. La modification la plus
+récente gagne, suppressions comprises.
+
+- **Partage** : Réglages → « Créer un code de partage » sur un téléphone
+  (code du type `K7QM-2XRP-HW4D`), puis « J'ai reçu un code » sur l'autre.
+  Les saisies déjà présentes des deux côtés sont fusionnées.
+- **Serveur** : une table [Supabase](https://supabase.com) (offre gratuite),
+  lue et écrite par son API REST, sans bibliothèque ajoutée. Le code famille,
+  envoyé dans un en-tête, limite chaque téléphone aux lignes de sa famille
+  (Row Level Security).
+
+Mise en place, une seule fois :
+
+1. Créer un projet sur supabase.com (région Europe).
+2. SQL Editor → coller [`supabase/schema.sql`](supabase/schema.sql) → Run.
+3. Project Settings → API : relever l'URL du projet et la clé **publique**
+   (« anon public » ou « publishable »), jamais la clé secrète (service_role).
+4. Construire l'app avec ces deux valeurs :
+   ```bash
+   VITE_SYNC_URL=https://xxxx.supabase.co VITE_SYNC_KEY=<clé publique> npm run build
+   ```
+   (ou les mettre dans `veilleuse/.env.production`). Sans elles, l'app
+   fonctionne comme avant, sans partage.
+
+À savoir : un projet Supabase gratuit est mis en pause après 7 jours sans
+aucune connexion ; l'usage quotidien de l'app suffit à l'éviter.
 
 ## Lancer en local
 
@@ -190,6 +226,7 @@ veilleuse/
 ├── index.html              métadonnées PWA/iOS, thème appliqué avant rendu
 ├── vite.config.ts          build + plugin qui génère dist/sw.js
 ├── netlify.toml, vercel.json
+├── supabase/schema.sql     base de synchronisation (à lancer une fois)
 ├── public/                 manifeste, icônes, écrans de lancement iOS
 ├── scripts/icons.mjs       génération des PNG (Node pur)
 ├── docs/                   captures d'écran
@@ -201,6 +238,10 @@ veilleuse/
     ├── store.ts            état de l'app et actions (ajouter, annuler, corriger…)
     ├── useDay.ts           jour affiché et navigation entre les jours
     ├── demo.ts             données d'exemple de l'aperçu
+    ├── sync/
+    │   ├── engine.ts       envoi, réception, file d'attente hors ligne
+    │   ├── remote.ts       API REST de Supabase
+    │   └── merge.ts        « la plus récente gagne », code famille (+ merge.test.ts)
     ├── hooks.ts            useNow : horloge rafraîchie
     ├── styles.css
     ├── lib/
@@ -212,6 +253,8 @@ veilleuse/
     └── components/
         ├── App.tsx, DayPage.tsx   la page du jour : Heure | Quoi | Prochain repas
         ├── AlarmSheet.tsx  guide du raccourci « Alarme tétée »
+        ├── SharingSection.tsx  partage avec l'autre parent (Réglages)
+        ├── VolumePicker.tsx    volume du biberon
         ├── DemoBanner.tsx  bandeau de l'aperçu privé
         ├── DayStrip.tsx    bandeau des jours
         ├── Composer.tsx    les 4 cases à cocher + Valider
@@ -237,10 +280,14 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 18 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+- 24 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
   saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochain
   repas ligne par ligne (y compris d'un jour à l'autre), conversion des données
-  de la première version, lien du raccourci d'alarme, formats.
+  de la première version (volume du biberon compris), lien du raccourci
+  d'alarme, fusion entre téléphones, code famille, formats.
+- Synchronisation testée avec deux téléphones simulés et un faux serveur
+  reproduisant l'API Supabase : saisies croisées, volume, suppression, saisie
+  hors ligne envoyée au retour du réseau, conflit d'édition, arrêt du partage.
 - Scénario de bout en bout dans Chromium (Playwright, émulation mobile) :
   cocher puis valider, prochain repas affiché à la bonne heure sur chaque ligne,
   annulation, changement de jour, correction, conversion d'une base de la

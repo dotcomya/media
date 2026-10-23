@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEntry, describeTags, fromLegacy, sortTags } from './model';
+import { createEntry, describeEntry, fromLegacy, sortTags } from './model';
 
 const meta = { id: 'abc', at: 1000, createdAt: 1000, updatedAt: 2000, deletedAt: null };
 
@@ -10,7 +10,13 @@ describe('saisies', () => {
   });
 
   it('décrit une saisie en toutes lettres', () => {
-    expect(describeTags(['feed', 'pee', 'poop'])).toBe('Tétée, pipi, caca');
+    expect(describeEntry({ tags: ['feed', 'pee', 'poop'] })).toBe('Tétée, pipi, caca');
+    expect(describeEntry({ tags: ['bottle', 'pee'], ml: 90 })).toBe('Biberon 90 ml, pipi');
+  });
+
+  it('ne garde le volume que pour un biberon', () => {
+    expect(createEntry(['bottle'], 1000, 120).ml).toBe(120);
+    expect('ml' in createEntry(['feed'], 1000, 120)).toBe(false);
   });
 });
 
@@ -20,7 +26,7 @@ describe('conversion des données de la première version', () => {
       ...meta,
       tags: ['feed'],
     });
-    expect(fromLegacy({ ...meta, type: 'bottle', ml: 90 })?.tags).toEqual(['bottle']);
+    expect(fromLegacy({ ...meta, type: 'bottle', ml: 90 })).toEqual({ ...meta, tags: ['bottle'], ml: 90 });
     expect(fromLegacy({ ...meta, type: 'diaper', pee: true, poop: true })?.tags).toEqual(['pee', 'poop']);
     expect(fromLegacy({ ...meta, type: 'diaper', pee: false, poop: true })?.tags).toEqual(['poop']);
   });

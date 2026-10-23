@@ -11,3 +11,11 @@ export function alarmUrl(at: number): string {
   const params = `name=${encodeURIComponent(ALARM_SHORTCUT)}&input=text&text=${encodeURIComponent(formatClock(at))}`;
   return `shortcuts://run-shortcut?${params}`;
 }
+
+/** Lance le raccourci ; à appeler pendant un appui (iOS n'ouvre une autre app que sur un geste). */
+export function openAlarm(at: number): void {
+  const link = Object.assign(document.createElement('a'), { href: alarmUrl(at), hidden: true });
+  document.body.append(link);
+  link.click();
+  link.remove();
+}

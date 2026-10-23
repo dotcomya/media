@@ -5,7 +5,8 @@ import { useEffect, useState } from 'preact/hooks';
 import * as db from './db';
 import { formatClock } from './lib/format';
 import { vibrate } from './lib/haptics';
-import { DEFAULT_SETTINGS, createEntry, sortTags, type Entry, type Settings, type Tag } from './model';
+import { DEFAULT_SETTINGS, createEntry, sortTags, withVolume, type Entry, type Settings, type Tag } from './model';
+import { isSharing, scheduleSync, startSync, type SyncStatus } from './sync/engine';
 
 export interface Toast {
   id: number;
@@ -21,9 +22,18 @@ interface State {
   toast: Toast | null;
   /** Le navigateur s'est-il engagé à conserver les données ? null = inconnu. */
   persisted: boolean | null;
+  /** Partage avec l'autre parent. */
+  sync: { status: SyncStatus; family: string | null; lastSyncAt: number | null };
 }
 
-let state: State = { ready: false, entries: [], settings: DEFAULT_SETTINGS, toast: null, persisted: null };
+let state: State = {
+  ready: false,
+  entries: [],
+  settings: DEFAULT_SETTINGS,
+  toast: null,
+  persisted: null,
+  sync: { status: 'off', family: null, lastSyncAt: null },
+};
 /** Aperçu de démonstration : données d'exemple en mémoire, rien n'est enregistré. */
 let demo = false;
 const listeners = new Set<() => void>();
@@ -55,7 +65,18 @@ export async function init(): Promise<void> {
     showToast('Stockage indisponible : les données ne seront pas gardées');
     return;
   }
+  void startSync({
+    onChanges: applyRemote,
+    onStatus: (status, family, lastSyncAt) => setState({ sync: { status, family, lastSyncAt } }),
+  });
   setState({ persisted: await db.requestPersistence().catch(() => false) });
+}
+
+/** Saisies reçues de l'autre parent : on remplace nos versions (ou on retire les supprimées). */
+function applyRemote(changed: Entry[]): void {
+  const ids = new Set(changed.map((e) => e.id));
+  const kept = state.entries.filter((e) => !ids.has(e.id));
+  setState({ entries: [...kept, ...changed.filter((e) => e.deletedAt === null)] });
 }
 
 /** Lance l'app sur des données d'exemple, sans rien lire ni écrire sur le téléphone. */
@@ -99,7 +120,9 @@ export function undoToast(): void {
 function upsert(entry: Entry): void {
   const others = state.entries.filter((e) => e.id !== entry.id);
   setState({ entries: entry.deletedAt === null ? [...others, entry] : others });
-  persist(() => db.putEntry(entry));
+  const sharing = isSharing();
+  persist(() => db.putEntry(entry, sharing));
+  if (sharing) scheduleSync();
 }
 
 function softDelete(entry: Entry): void {
@@ -107,16 +130,19 @@ function softDelete(entry: Entry): void {
   upsert({ ...entry, deletedAt: now, updatedAt: now });
 }
 
-/** Enregistre ce qui a été coché, horodaté maintenant. */
-export function addEntry(tags: Tag[], at = Date.now()): void {
-  const entry = createEntry(tags, at);
+/** Enregistre ce qui a été coché (et le volume d'un biberon), horodaté maintenant. */
+export function addEntry(tags: Tag[], ml?: number, at = Date.now()): Entry {
+  const entry = createEntry(tags, at, ml);
   upsert(entry);
+  if (entry.ml) updateSettings({ lastBottleMl: entry.ml });
   vibrate([15, 40, 15]);
   showToast(`Ajouté à ${formatClock(at)}`, () => softDelete(entry));
+  return entry;
 }
 
 export function saveEntry(entry: Entry): void {
-  upsert({ ...entry, tags: sortTags(entry.tags), updatedAt: Date.now() });
+  const tags = sortTags(entry.tags);
+  upsert(withVolume({ ...entry, tags, updatedAt: Date.now() }, entry.ml));
   vibrate();
   showToast('Modifié');
 }

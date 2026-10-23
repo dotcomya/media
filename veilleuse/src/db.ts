@@ -51,9 +51,64 @@ export async function loadAll(): Promise<Snapshot> {
   };
 }
 
-/** Écrit une saisie (création, modification ou suppression logique). */
-export async function putEntry(entry: Entry): Promise<void> {
-  await (await getDb()).put('events', entry);
+/**
+ * Écrit une saisie (création, modification ou suppression logique). Avec `outbox`,
+ * la note aussi, dans la même transaction, comme « à envoyer » à l'autre téléphone.
+ */
+export async function putEntry(entry: Entry, outbox = false): Promise<void> {
+  const tx = (await getDb()).transaction(['events', 'kv'], 'readwrite');
+  const writes: Promise<unknown>[] = [tx.objectStore('events').put(entry)];
+  if (outbox) {
+    const kv = tx.objectStore('kv');
+    const pending = ((await kv.get('outbox')) as Outbox | undefined) ?? {};
+    writes.push(kv.put({ ...pending, [entry.id]: entry.updatedAt }, 'outbox'));
+  }
+  await Promise.all([...writes, tx.done]);
+}
+
+/** Saisies reçues de l'autre téléphone. */
+export async function putEntries(entries: Entry[]): Promise<void> {
+  const tx = (await getDb()).transaction('events', 'readwrite');
+  await Promise.all([...entries.map((e) => tx.store.put(e)), tx.done]);
+}
+
+/** Saisies à envoyer : id → updatedAt de la version à envoyer. */
+export type Outbox = Record<string, number>;
+
+export async function getOutbox(): Promise<Outbox> {
+  return (((await getDb()).get('kv', 'outbox')) as Promise<Outbox | undefined>).then((o) => o ?? {});
+}
+
+/** Met toutes ces saisies dans la file d'envoi (au moment de rejoindre un partage). */
+export async function queueAll(entries: Entry[]): Promise<void> {
+  const tx = (await getDb()).transaction('kv', 'readwrite');
+  const pending = ((await tx.store.get('outbox')) as Outbox | undefined) ?? {};
+  for (const e of entries) pending[e.id] = e.updatedAt;
+  await Promise.all([tx.store.put(pending, 'outbox'), tx.done]);
+}
+
+/** Retire de la file les versions envoyées (une saisie modifiée entre-temps y reste). */
+export async function clearOutbox(sent: Outbox): Promise<void> {
+  const tx = (await getDb()).transaction('kv', 'readwrite');
+  const pending = ((await tx.store.get('outbox')) as Outbox | undefined) ?? {};
+  for (const [id, updatedAt] of Object.entries(sent)) if (pending[id] === updatedAt) delete pending[id];
+  await Promise.all([tx.store.put(pending, 'outbox'), tx.done]);
+}
+
+export interface SyncState {
+  /** Code famille partagé par les deux parents ; null = pas de partage sur ce téléphone. */
+  family: string | null;
+  /** Repère serveur de la dernière réception. */
+  cursor: string | null;
+}
+
+export async function getSyncState(): Promise<SyncState> {
+  const saved = (await (await getDb()).get('kv', 'sync')) as SyncState | undefined;
+  return saved ?? { family: null, cursor: null };
+}
+
+export async function saveSyncState(state: SyncState): Promise<void> {
+  await (await getDb()).put('kv', state, 'sync');
 }
 
 /** Toutes les saisies, y compris supprimées : pour l'export. */

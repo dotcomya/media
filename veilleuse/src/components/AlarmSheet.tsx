@@ -15,8 +15,12 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
       title={`Alarme à ${time}`}
       onClose={onClose}
       footer={
+        <>
+        <button type="button" class="action" onClick={onClose}>
+          Plus tard
+        </button>
         <a
-          class="action action-primary action-wide"
+          class="action action-primary"
           href={alarmUrl(at)}
           onClick={() => {
             updateSettings({ alarmReady: true });
@@ -24,8 +28,9 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
           }}
         >
           <Icon name="alarm" size={22} />
-          C'est fait : régler l'alarme à {time}
+          C'est fait : alarme à {time}
         </a>
+        </>
       }
     >
       <p class="hint">
@@ -52,8 +57,8 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
         </li>
       </ol>
       <p class="hint">
-        Ensuite, un appui sur « Alarme » suffit : l'iPhone ouvre Raccourcis (confirmez la première fois) et l'alarme de{' '}
-        {time} apparaît dans Horloge.
+        Ensuite, c'est automatique : à chaque tétée ou biberon validé, l'iPhone ouvre Raccourcis (confirmez la première
+        fois) et l'alarme du prochain repas apparaît dans Horloge. Réglages permet de couper l'alarme automatique.
       </p>
     </Sheet>
   );

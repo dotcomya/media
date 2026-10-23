@@ -6,6 +6,7 @@ import { startOfDay } from '../lib/time';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { showToast, updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
+import { SharingSection } from './SharingSection';
 import { Sheet } from './Sheet';
 
 async function exportCsv(): Promise<void> {
@@ -56,8 +57,28 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
+      <SharingSection />
+
       <div class="field">
-        <span class="field-label">Alarme iPhone</span>
+        <span class="field-label">Alarme après chaque tétée ou biberon</span>
+        <div class="chips cols-2">
+          <button
+            type="button"
+            class={`chip chip-lg${settings.autoAlarm ? ' on' : ''}`}
+            aria-pressed={settings.autoAlarm}
+            onClick={() => updateSettings({ autoAlarm: true })}
+          >
+            <Icon name="alarm" size={22} /> Oui
+          </button>
+          <button
+            type="button"
+            class={`chip chip-lg${settings.autoAlarm ? '' : ' on'}`}
+            aria-pressed={!settings.autoAlarm}
+            onClick={() => updateSettings({ autoAlarm: false })}
+          >
+            Non
+          </button>
+        </div>
         <button
           type="button"
           class="action"

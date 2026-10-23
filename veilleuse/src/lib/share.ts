@@ -1,4 +1,4 @@
-import { TAGS, TAG_LABELS, describeTags, type Entry, type Tag } from '../model';
+import { TAGS, TAG_LABELS, describeEntry, type Entry, type Tag } from '../model';
 import { capitalize, formatClock, formatDate } from './format';
 import { entriesOfDay, summarizeDay, type DaySummary } from './summary';
 
@@ -19,7 +19,7 @@ export function daySummaryText(entries: Entry[], dayStart: number, babyName: str
       .join(' · '),
   ];
   const detail = entriesOfDay(entries, dayStart).reverse();
-  if (detail.length) lines.push('', 'Détail :', ...detail.map((e) => `${formatClock(e.at)}  ${describeTags(e.tags)}`));
+  if (detail.length) lines.push('', 'Détail :', ...detail.map((e) => `${formatClock(e.at)}  ${describeEntry(e)}`));
   return lines.join('\n');
 }
 

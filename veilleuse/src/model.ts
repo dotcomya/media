@@ -17,6 +17,8 @@ export interface Entry {
   at: number;
   /** Ce qui s'est passé, dans l'ordre de TAGS (ex. ['feed', 'pee']). */
   tags: Tag[];
+  /** Biberon : volume donné, en ml. */
+  ml?: number;
   createdAt: number;
   updatedAt: number;
   deletedAt: number | null;
@@ -26,9 +28,16 @@ export interface Settings {
   babyName: string;
   /** Le raccourci « Alarme tétée » est créé : le bouton Alarme le lance directement. */
   alarmReady: boolean;
+  /** Régler l'alarme à chaque tétée ou biberon validé. */
+  autoAlarm: boolean;
+  /** Volume proposé par défaut pour le prochain biberon. */
+  lastBottleMl: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = { babyName: '', alarmReady: false };
+export const DEFAULT_SETTINGS: Settings = { babyName: '', alarmReady: false, autoAlarm: true, lastBottleMl: 90 };
+
+/** Volumes proposés pour un biberon, en ml. */
+export const BOTTLE_VOLUMES = [30, 60, 90, 120, 150, 180];
 
 export function uuid(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -46,13 +55,21 @@ export const sortTags = (tags: Iterable<Tag>): Tag[] => {
   return TAGS.filter((tag) => set.has(tag));
 };
 
-export function createEntry(tags: Iterable<Tag>, at: number, now = Date.now()): Entry {
-  return { id: uuid(), at, tags: sortTags(tags), createdAt: now, updatedAt: now, deletedAt: null };
+/** Garde le volume seulement pour un biberon. */
+export function withVolume<T extends Pick<Entry, 'tags'>>(entry: T, ml: number | undefined): T & { ml?: number } {
+  const { ml: _previous, ...rest } = entry as T & { ml?: number };
+  return entry.tags.includes('bottle') && ml ? { ...(rest as T), ml } : (rest as T);
 }
 
-/** « Tétée, pipi » */
-export function describeTags(tags: Tag[]): string {
-  const text = tags.map((tag) => TAG_LABELS[tag].toLowerCase()).join(', ');
+export function createEntry(tags: Iterable<Tag>, at: number, ml?: number, now = Date.now()): Entry {
+  return withVolume({ id: uuid(), at, tags: sortTags(tags), createdAt: now, updatedAt: now, deletedAt: null }, ml);
+}
+
+/** « Tétée, biberon 90 ml, pipi » */
+export function describeEntry(entry: Pick<Entry, 'tags' | 'ml'>): string {
+  const text = entry.tags
+    .map((tag) => (tag === 'bottle' && entry.ml ? `biberon ${entry.ml} ml` : TAG_LABELS[tag].toLowerCase()))
+    .join(', ');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -77,7 +94,7 @@ export function fromLegacy(record: Record<string, unknown>): Entry | null {
   if (Array.isArray(record.tags)) return record as unknown as Entry;
   const tags = legacyTags(record);
   if (!tags.length || typeof record.id !== 'string' || typeof record.at !== 'number') return null;
-  return {
+  const entry: Entry = {
     id: record.id,
     at: record.at,
     tags,
@@ -85,4 +102,5 @@ export function fromLegacy(record: Record<string, unknown>): Entry | null {
     updatedAt: Number(record.updatedAt ?? record.at),
     deletedAt: record.deletedAt == null ? null : Number(record.deletedAt),
   };
+  return withVolume(entry, typeof record.ml === 'number' ? record.ml : undefined);
 }

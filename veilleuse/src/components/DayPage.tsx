@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'preact/hooks';
-import { alarmUrl } from '../lib/alarm';
+import { alarmUrl, openAlarm } from '../lib/alarm';
 import { formatClock, formatIn, formatSpan } from '../lib/format';
-import { nextFeedByEntry } from '../lib/summary';
-import { TAGS, type Entry } from '../model';
+import { FEED_INTERVAL_MS, nextFeedByEntry } from '../lib/summary';
+import { TAGS, isFeed, type Entry } from '../model';
 import { useAppState } from '../store';
 import { useDay } from '../useDay';
 import { AlarmSheet } from './AlarmSheet';
@@ -19,9 +19,10 @@ import { ToastSlot } from './Toast';
  */
 export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   const day = useDay();
-  const { settings } = useAppState();
+  const { settings, sync } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
-  const [alarmGuide, setAlarmGuide] = useState(false);
+  // Heure pour laquelle afficher le guide de l'alarme (premier réglage), sinon null.
+  const [guideAt, setGuideAt] = useState<number | null>(null);
   const nextById = useMemo(() => nextFeedByEntry(day.entries), [day.entries]);
   // La ligne la plus récente, tous jours confondus : c'est elle qui dit quand nourrir bébé maintenant.
   const latestId = useMemo(
@@ -32,12 +33,21 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   const nextAt = latestId ? nextById.get(latestId) : undefined;
   const alarmAt = nextAt !== undefined && nextAt > day.now ? nextAt : undefined;
 
+  // Après chaque tétée ou biberon : alarme au prochain repas, dans le même appui que « Valider ».
+  const onLogged = (entry: Entry) => {
+    if (!isFeed(entry) || !settings.autoAlarm) return;
+    const at = entry.at + FEED_INTERVAL_MS;
+    if (settings.alarmReady) openAlarm(at);
+    else setGuideAt(at);
+  };
+  const subtitle = [day.subtitle, sync.family ? 'partagé' : ''].filter(Boolean).join(' · ');
+
   return (
     <>
       <header class="topbar">
         <div class="topbar-title">
           <h1>{day.title}</h1>
-          {day.subtitle && <p class="topbar-sub">{day.subtitle}</p>}
+          {subtitle && <p class="topbar-sub">{subtitle}</p>}
         </div>
         {alarmAt !== undefined &&
           (settings.alarmReady ? (
@@ -46,7 +56,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
               Alarme {formatClock(alarmAt)}
             </a>
           ) : (
-            <button type="button" class="head-btn head-alarm" onClick={() => setAlarmGuide(true)}>
+            <button type="button" class="head-btn head-alarm" onClick={() => setGuideAt(alarmAt)}>
               <Icon name="alarm" size={20} />
               Alarme {formatClock(alarmAt)}
             </button>
@@ -83,6 +93,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
                     {TAGS.map((tag) => (
                       <span key={tag} class="slot">
                         {entry.tags.includes(tag) && <Emoji tag={tag} />}
+                        {tag === 'bottle' && entry.ml && <small class="slot-ml">{entry.ml}</small>}
                       </span>
                     ))}
                   </span>
@@ -112,7 +123,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           <ToastSlot />
         </div>
         {day.isToday ? (
-          <Composer now={day.now} />
+          <Composer now={day.now} onLogged={onLogged} />
         ) : (
           <button type="button" class="action action-wide" onClick={day.backToToday}>
             Revenir à aujourd'hui
@@ -122,7 +133,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
       </div>
 
       {editing && <EntrySheet entry={editing} onClose={() => setEditing(null)} />}
-      {alarmGuide && alarmAt !== undefined && <AlarmSheet at={alarmAt} onClose={() => setAlarmGuide(false)} />}
+      {guideAt !== null && <AlarmSheet at={guideAt} onClose={() => setGuideAt(null)} />}
     </>
   );
 }

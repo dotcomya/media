@@ -842,6 +842,80 @@ a.action {
   font-size: 1.05rem;
 }
 
+/* Volume du biberon : six volumes sur une ligne. */
+.volumes {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.chip-volume {
+  min-height: 46px;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 2px;
+}
+
+.chip-volume strong {
+  font-size: 1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip-volume small {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.chip-volume.on {
+  border-color: var(--bottle);
+  background: color-mix(in srgb, var(--bottle) 22%, var(--surface-2));
+}
+
+/* Volume affiché sous le 🍼 dans la liste. */
+.slot {
+  position: relative;
+}
+
+.slot-ml {
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.family-code {
+  margin: 0;
+  padding: 10px;
+  border: 1.5px dashed var(--line);
+  border-radius: 12px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  user-select: all;
+}
+
+.join {
+  display: flex;
+  gap: var(--gap);
+}
+
+.join .input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* Le sélecteur natif, invisible, couvre la puce « Choisir… » : il ouvre la roue de l'OS, pas le clavier. */
 .chip-picker {
   position: relative;
