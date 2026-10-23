@@ -103,6 +103,10 @@ Mise en place, une seule fois :
    l'en-tête `apikey` (et en `Authorization` seulement pour l'ancienne clé
    « anon »), comme le demande la documentation Supabase.
 
+Déjà fait pour Nous 3 : projet `veilleuse` (Irlande), schéma exécuté, clé
+publique dans `.env.production`. Elle n'a rien de secret : elle finit de toute
+façon dans le JavaScript publié ; ce sont les règles RLS qui protègent les données.
+
 À savoir : un projet Supabase gratuit est mis en pause après 7 jours sans
 aucune connexion ; l'usage quotidien de l'app suffit à l'éviter.
 
