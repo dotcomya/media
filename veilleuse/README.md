@@ -1,10 +1,14 @@
-# Veilleuse
+# Nous 3
 
-PWA de suivi d'un nouveau-né, pensée pour une maman épuisée, la nuit, d'une
+PWA de suivi d'un nouveau-né, pour deux parents, pensée pour la nuit et une
 seule main. Une seule page, très simple : **une ligne = un moment avec bébé**
 (l'heure, puis 🤱 tétée, 🍼 biberon, 💧 pipi, 💩 caca), et à côté de chaque
-ligne, **l'heure du prochain repas**. Aucun compte, aucun serveur, tout reste
-sur le téléphone et fonctionne en mode avion.
+ligne, **l'heure du prochain repas**. Tout reste sur le téléphone et fonctionne
+en mode avion ; le partage entre parents passe par un petit serveur.
+
+**Marque** : le logo réunit deux parents (terracotta, pêche) et un bébé (sauge),
+blottis ; tons chauds, titres en police arrondie (SF Pro Rounded sur iPhone).
+Le code vit dans le dossier `veilleuse/` (ancien nom de travail).
 
 **En ligne : https://dotcomya.github.io/media/** (GitHub Pages, branche `gh-pages`).
 
@@ -20,13 +24,14 @@ sur le téléphone et fonctionne en mode avion.
   + 2 h 30. La ligne la plus récente est mise en avant avec « dans 1 h 10 », en
   rouge si l'heure est passée.
 - **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
-  ensemble : on coche les deux), puis **Valider** ajoute la ligne à l'heure
-  actuelle. **Biberon** : une rangée de volumes (30 à 180 ml) apparaît, le
-  dernier volume donné déjà choisi ; il s'affiche ensuite sous le 🍼.
-- **⏰ Alarme, systématique** : chaque tétée ou biberon validé règle une vraie
-  alarme iPhone à l'heure du prochain repas (elle sonne même en mode
-  silencieux). Le bouton « ⏰ Alarme » en haut la règle aussi à la main ; on peut
-  couper l'alarme automatique dans Réglages. Voir ci-dessous.
+  ensemble : on coche les deux), puis **Valider**. **Biberon** : un curseur de
+  10 en 10 ml (10 à 250 ml), réglé sur le dernier volume donné ; le volume
+  s'affiche ensuite sous le 🍼. **Heure** : l'encart à gauche de Valider dit
+  « Maintenant » ; en cas de saisie en retard, on le touche pour choisir l'heure.
+- **⏰ Réveil, systématique** : chaque tétée ou biberon validé lance un minuteur
+  iPhone jusqu'au prochain repas. Le bouton « ⏰ Réveil 21:06 » en haut le lance
+  aussi à la main ; on peut couper le réveil automatique dans Réglages. Voir
+  ci-dessous.
 - **Partage maman / papa** : un code commun, et les deux téléphones voient et
   complètent les mêmes lignes. Voir « Synchronisation » ci-dessous.
 
@@ -47,25 +52,29 @@ sur le téléphone et fonctionne en mode avion.
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
   facultatif ; vibration à chaque saisie sur Android (Safari iOS ne la gère pas).
 
-## Alarme iPhone à l'heure du prochain repas
+## Réveil iPhone à l'heure du prochain repas
 
-Un site web ne peut pas créer d'alarme dans l'app Horloge, et une notification
-push demanderait un serveur et resterait discrète (son de notification, coupé
-en mode silencieux). Veilleuse passe donc par l'app **Raccourcis** d'Apple :
-le bouton « ⏰ Alarme 21:06 » lance le raccourci **Alarme tétée** en lui
-passant l'heure (`shortcuts://run-shortcut?name=Alarme%20t%C3%A9t%C3%A9e&input=text&text=21%3A06`),
-et ce raccourci crée l'alarme.
+Un site web ne peut pas régler l'app Horloge, et une notification push
+resterait discrète (son de notification, coupé en mode silencieux). Nous 3
+passe donc par l'app **Raccourcis** d'Apple : l'app lance le raccourci
+**Réveil tétée** en lui passant le nombre de minutes jusqu'au prochain repas
+(`shortcuts://run-shortcut?name=R%C3%A9veil%20t%C3%A9t%C3%A9e&input=text&text=150`),
+et ce raccourci démarre un **minuteur**.
 
-Le raccourci se crée une fois (le guide s'affiche au premier appui) :
+Pourquoi un minuteur plutôt qu'une alarme : Raccourcis sait créer une alarme,
+l'activer ou la lister, mais pas la supprimer ni changer son heure. Une alarme
+par repas finirait en dizaines d'alarmes mortes dans Horloge chaque semaine ;
+le minuteur, lui, sonne puis disparaît. Si un nouveau repas est saisi avant
+que l'ancien minuteur ait sonné, il faut arrêter l'ancien (écran verrouillé).
 
-1. App Raccourcis → **+** ; nommer le raccourci exactement **Alarme tétée**.
-2. Action « obtenir les dates à partir de l'entrée » (chercher « dates »),
-   entrée : **Entrée du raccourci**.
-3. Action **Créer une alarme** (chercher « alarme ») : heure = variable
-   **Dates**, libellé **Tétée**.
+Le raccourci se crée une fois (le guide s'affiche au premier réveil) :
 
-Les alarmes déjà sonnées restent dans Horloge, désactivées ; on les supprime
-d'un glissement. Le bouton n'apparaît que si le prochain repas est à venir.
+1. App Raccourcis → **+** ; nommer le raccourci exactement **Réveil tétée**.
+2. Action **Démarrer le minuteur** (chercher « minuteur »).
+3. Durée : variable **Entrée du raccourci**, unité **minutes**.
+
+Le bouton n'apparaît que si le prochain repas est à venir. Non encore vérifié
+sur un iPhone réel : faire un essai de jour avant de s'y fier la nuit.
 
 ## Synchronisation entre les deux parents
 
@@ -88,12 +97,11 @@ Mise en place, une seule fois :
 2. SQL Editor → coller [`supabase/schema.sql`](supabase/schema.sql) → Run.
 3. Project Settings → API : relever l'URL du projet et la clé **publique**
    (« anon public » ou « publishable »), jamais la clé secrète (service_role).
-4. Construire l'app avec ces deux valeurs :
-   ```bash
-   VITE_SYNC_URL=https://xxxx.supabase.co VITE_SYNC_KEY=<clé publique> npm run build
-   ```
-   (ou les mettre dans `veilleuse/.env.production`). Sans elles, l'app
-   fonctionne comme avant, sans partage.
+4. Renseigner ces deux valeurs dans `veilleuse/.env.production`
+   (`VITE_SYNC_URL`, `VITE_SYNC_KEY`), puis `npm run build`. Sans clé, l'app
+   fonctionne comme avant, sans partage. La clé publique est envoyée dans
+   l'en-tête `apikey` (et en `Authorization` seulement pour l'ancienne clé
+   « anon »), comme le demande la documentation Supabase.
 
 À savoir : un projet Supabase gratuit est mis en pause après 7 jours sans
 aucune connexion ; l'usage quotidien de l'app suffit à l'éviter.
@@ -135,7 +143,7 @@ une nouvelle version :
 cd veilleuse
 npm run build
 touch dist/.nojekyll
-cd dist && git init -b gh-pages && git add -A && git commit -m "Publie Veilleuse"
+cd dist && git init -b gh-pages && git add -A && git commit -m "Publie Nous 3"
 git push -f https://github.com/dotcomya/media gh-pages
 rm -rf .git
 ```
@@ -176,7 +184,7 @@ version est téléchargée en arrière-plan et prise au lancement suivant.
    bas de l'écran).
 3. Faire défiler et choisir **« Sur l'écran d'accueil »**. Si l'option
    n'apparaît pas, toucher « Modifier les actions… » pour l'ajouter.
-4. Garder le nom « Veilleuse » (et, si l'option « Ouvrir en tant qu'app web »
+4. Garder le nom « Nous 3 » (et, si l'option « Ouvrir en tant qu'app web »
    est proposée, la laisser activée), puis toucher **Ajouter**.
 5. Ouvrir l'app depuis la nouvelle icône : elle s'affiche en plein écran, sans
    barre Safari.
@@ -248,11 +256,12 @@ veilleuse/
     │   ├── summary.ts      résumé du jour, prochain repas ligne par ligne (+ summary.test.ts)
     │   ├── format.ts       formats FR, 24 h                (+ format.test.ts)
     │   ├── time.ts         bornes de journée (changement d'heure inclus)
-    │   ├── alarm.ts        lien vers le raccourci d'alarme (+ alarm.test.ts)
+    │   ├── alarm.ts        lien vers le raccourci « Réveil tétée » (+ alarm.test.ts)
     │   ├── csv.ts, share.ts, theme.ts, haptics.ts
     └── components/
         ├── App.tsx, DayPage.tsx   la page du jour : Heure | Quoi | Prochain repas
-        ├── AlarmSheet.tsx  guide du raccourci « Alarme tétée »
+        ├── AlarmSheet.tsx  guide du raccourci « Réveil tétée »
+        ├── Logo.tsx        logo et nom Nous 3
         ├── SharingSection.tsx  partage avec l'autre parent (Réglages)
         ├── VolumePicker.tsx    volume du biberon
         ├── DemoBanner.tsx  bandeau de l'aperçu privé
@@ -280,7 +289,7 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 24 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+- 25 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
   saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochain
   repas ligne par ligne (y compris d'un jour à l'autre), conversion des données
   de la première version (volume du biberon compris), lien du raccourci

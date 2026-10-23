@@ -18,7 +18,7 @@ const themeScript = pick(/<script>([\s\S]*?)<\/script>/, 'script du thème');
 // Dans le lecteur, la page est déjà décalée des bords du téléphone : elle occupe 100 % de la hauteur.
 const frame = `#app{height:100%}.app{height:100%;padding-top:0;background:none}.screen{padding-bottom:12px}`;
 
-const html = `<title>Veilleuse</title>
+const html = `<title>Nous 3</title>
 <style>${css}${frame}</style>
 <div id="app"></div>
 <script>${themeScript}</script>

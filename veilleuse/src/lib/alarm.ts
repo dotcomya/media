@@ -1,14 +1,20 @@
-// L'alarme de l'iPhone se règle par un raccourci de l'app Raccourcis, créé une fois par
-// le parent : un site web ne peut pas créer d'alarme lui-même, mais il peut lancer un
-// raccourci en lui passant l'heure (schéma d'URL documenté par Apple).
-import { formatClock } from './format';
+// Le réveil passe par un raccourci de l'app Raccourcis, créé une fois par le parent : un site web
+// ne peut pas régler l'app Horloge lui-même, mais il peut lancer un raccourci en lui passant une
+// valeur (schéma d'URL documenté par Apple). Le raccourci démarre un minuteur : il sonne comme une
+// alarme et ne laisse rien derrière lui, alors qu'une alarme créée par Raccourcis reste dans la
+// liste d'Horloge après avoir sonné (aucune action ne permet de la supprimer).
 
 /** Nom exact du raccourci à créer dans l'app Raccourcis. */
-export const ALARM_SHORTCUT = 'Alarme tétée';
+export const ALARM_SHORTCUT = 'Réveil tétée';
 
-/** « shortcuts://run-shortcut?name=Alarme%20t%C3%A9t%C3%A9e&input=text&text=21%3A06 » */
-export function alarmUrl(at: number): string {
-  const params = `name=${encodeURIComponent(ALARM_SHORTCUT)}&input=text&text=${encodeURIComponent(formatClock(at))}`;
+/** Minutes jusqu'à `at`, arrondies, au moins 1. */
+export function minutesUntil(at: number, now = Date.now()): number {
+  return Math.max(1, Math.round((at - now) / 60_000));
+}
+
+/** « shortcuts://run-shortcut?name=R%C3%A9veil%20t%C3%A9t%C3%A9e&input=text&text=150 » */
+export function alarmUrl(at: number, now = Date.now()): string {
+  const params = `name=${encodeURIComponent(ALARM_SHORTCUT)}&input=text&text=${minutesUntil(at, now)}`;
   return `shortcuts://run-shortcut?${params}`;
 }
 

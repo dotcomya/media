@@ -6,13 +6,14 @@ import { startOfDay } from '../lib/time';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { showToast, updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
+import { LogoMark, Wordmark } from './Logo';
 import { SharingSection } from './SharingSection';
 import { Sheet } from './Sheet';
 
 async function exportCsv(): Promise<void> {
   const csv = toCsv(await allEntries());
   const date = new Date().toISOString().slice(0, 10);
-  const file = new File([csv], `veilleuse-${date}.csv`, { type: 'text/csv' });
+  const file = new File([csv], `nous3-${date}.csv`, { type: 'text/csv' });
   const result = await shareFile(file);
   if (result === 'downloaded') showToast('Fichier CSV téléchargé');
 }
@@ -32,6 +33,14 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet title="Réglages" onClose={onClose}>
+      <div class="brand">
+        <LogoMark size={44} />
+        <div>
+          <Wordmark />
+          <p>Le carnet tout doux de notre trio.</p>
+        </div>
+      </div>
+
       <label class="field">
         <span class="field-label">Prénom du bébé (facultatif)</span>
         <input
@@ -60,7 +69,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <SharingSection />
 
       <div class="field">
-        <span class="field-label">Alarme après chaque tétée ou biberon</span>
+        <span class="field-label">Réveil après chaque tétée ou biberon</span>
         <div class="chips cols-2">
           <button
             type="button"
@@ -84,7 +93,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           class="action"
           onClick={() => {
             updateSettings({ alarmReady: false });
-            showToast('Le guide s’affichera au prochain appui sur Alarme');
+            showToast('Le guide s’affichera au prochain réveil');
           }}
         >
           <Icon name="alarm" />

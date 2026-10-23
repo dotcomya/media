@@ -26,9 +26,9 @@ export interface Entry {
 
 export interface Settings {
   babyName: string;
-  /** Le raccourci « Alarme tétée » est créé : le bouton Alarme le lance directement. */
+  /** Le raccourci « Réveil tétée » est créé : l'app le lance directement. */
   alarmReady: boolean;
-  /** Régler l'alarme à chaque tétée ou biberon validé. */
+  /** Lancer le réveil à chaque tétée ou biberon validé. */
   autoAlarm: boolean;
   /** Volume proposé par défaut pour le prochain biberon. */
   lastBottleMl: number;
@@ -36,8 +36,8 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = { babyName: '', alarmReady: false, autoAlarm: true, lastBottleMl: 90 };
 
-/** Volumes proposés pour un biberon, en ml. */
-export const BOTTLE_VOLUMES = [30, 60, 90, 120, 150, 180];
+/** Curseur du volume d'un biberon, en ml. */
+export const BOTTLE_ML = { min: 10, max: 250, step: 10 };
 
 export function uuid(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();

@@ -2,7 +2,7 @@
   "name": "veilleuse",
   "private": true,
   "version": "1.0.0",
-  "description": "PWA de suivi d'un nouveau-né : tétées, biberons, couches.",
+  "description": "Nous 3 — PWA de suivi d'un nouveau-né : tétées, biberons, couches, à deux.",
   "type": "module",
   "scripts": {
     "dev": "vite",

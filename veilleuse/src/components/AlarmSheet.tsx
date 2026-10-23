@@ -5,14 +5,14 @@ import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 
 /**
- * Premier appui sur « Alarme » : explique comment créer, une fois, le raccourci
- * qui règle l'alarme de l'iPhone. Les fois suivantes, le bouton le lance directement.
+ * Premier réveil : explique comment créer, une fois, le raccourci qui démarre le
+ * minuteur de l'iPhone. Les fois suivantes, l'app le lance directement.
  */
 export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void }) {
   const time = formatClock(at);
   return (
     <Sheet
-      title={`Alarme à ${time}`}
+      title={`Réveil à ${time}`}
       onClose={onClose}
       footer={
         <>
@@ -28,14 +28,15 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
           }}
         >
           <Icon name="alarm" size={22} />
-          C'est fait : alarme à {time}
+          C'est fait : réveil à {time}
         </a>
         </>
       }
     >
       <p class="hint">
-        L'alarme de l'iPhone sonne fort, même en mode silencieux. Pour que Veilleuse puisse la régler, créez une seule
-        fois ce raccourci (1 minute) :
+        Pour vous réveiller à l'heure du prochain repas, Nous 3 démarre un minuteur de l'iPhone : il sonne comme une
+        alarme, même en mode silencieux, et ne laisse aucune alarme en trop dans Horloge. Créez une seule fois ce
+        raccourci (1 minute) :
       </p>
       <ol class="steps">
         <li>
@@ -45,12 +46,12 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
           Touchez le nom en haut et appelez le raccourci exactement <strong>{ALARM_SHORTCUT}</strong>.
         </li>
         <li>
-          Touchez <strong>Ajouter une action</strong>, cherchez <strong>dates</strong> et choisissez l'action qui obtient
-          les dates à partir de l'entrée. Réglez son entrée sur <strong>Entrée du raccourci</strong>.
+          Touchez <strong>Ajouter une action</strong>, cherchez <strong>minuteur</strong> et choisissez{' '}
+          <strong>Démarrer le minuteur</strong>.
         </li>
         <li>
-          Ajoutez une deuxième action : cherchez <strong>alarme</strong> et choisissez <strong>Créer une alarme</strong>.
-          Pour l'heure, choisissez la variable <strong>Dates</strong> ; comme libellé, écrivez <strong>Tétée</strong>.
+          Touchez la durée, choisissez la variable <strong>Entrée du raccourci</strong>, et l'unité{' '}
+          <strong>minutes</strong>.
         </li>
         <li>
           Touchez <strong>OK</strong>, revenez ici et touchez le bouton ci-dessous.
@@ -58,7 +59,8 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
       </ol>
       <p class="hint">
         Ensuite, c'est automatique : à chaque tétée ou biberon validé, l'iPhone ouvre Raccourcis (confirmez la première
-        fois) et l'alarme du prochain repas apparaît dans Horloge. Réglages permet de couper l'alarme automatique.
+        fois) et le minuteur part jusqu'au prochain repas. Si un ancien minuteur tourne encore, arrêtez-le depuis
+        l'écran verrouillé. Réglages permet de couper le réveil automatique.
       </p>
     </Sheet>
   );

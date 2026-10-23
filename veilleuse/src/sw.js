@@ -1,4 +1,4 @@
-// Service worker de Veilleuse. Ce fichier est un modèle : au build, vite.config.ts
+// Service worker de Nous 3. Ce fichier est un modèle : au build, vite.config.ts
 // y injecte la version et la liste des fichiers de l'app (marqueurs en majuscules ci-dessous).
 const CACHE = 'veilleuse-__VERSION__';
 const PRECACHE = __PRECACHE__;

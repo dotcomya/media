@@ -1,12 +1,23 @@
-// Génère les icônes PNG et les écrans de lancement iOS, sans dépendance :
-// un croissant de lune ambre sur fond sombre, dessiné pixel par pixel.
+// Génère les icônes PNG et les écrans de lancement iOS de Nous 3, sans dépendance :
+// le logo (deux parents et un bébé, blottis) dessiné pixel par pixel.
 // Usage : npm run icons
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { crc32, deflateSync } from 'node:zlib';
 
-const BG = [0x17, 0x11, 0x0e];
-const TILE = [0x2a, 0x1d, 0x15];
-const MOON = [0xf2, 0xa2, 0x5c];
+const CREAM = [0xf6, 0xec, 0xe1]; // fond des icônes
+const CACAO = [0x17, 0x11, 0x0e]; // fond des écrans de lancement (même fond que l'app)
+const TERRACOTTA = [0xcf, 0x7a, 0x55];
+const PEACH = [0xeb, 0xa3, 0x83];
+const SAGE = [0x93, 0xa8, 0x85];
+
+// Même dessin que src/components/Logo.tsx, en unités de 64.
+const SHAPES = [
+  { cx: 24.6, cy: 27.5, r: 13.1, color: TERRACOTTA },
+  { cx: 39.4, cy: 27.5, r: 14.5, color: 'ground' },
+  { cx: 39.4, cy: 27.5, r: 13.1, color: PEACH },
+  { cx: 32, cy: 42.6, r: 9.4, color: 'ground' },
+  { cx: 32, cy: 42.6, r: 8, color: SAGE },
+];
 
 function chunk(type, data) {
   const out = Buffer.alloc(12 + data.length);
@@ -38,33 +49,35 @@ function png(width, height, pixel) {
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
-/** Croissant centré en (cx, cy), de rayon r (en pixels) : disque moins un disque décalé, plus une étoile. */
-function moonPixel(cx, cy, r, background) {
+/** Logo de `size` pixels de côté (carré de 64 unités), placé en (left, top), sur `ground`. */
+function logoPixel(left, top, size, ground) {
+  const unit = size / 64;
   return (x, y) => {
-    const dOuter = Math.hypot(x - cx, y - cy) - r;
-    const dInner = Math.hypot(x - (cx + 0.42 * r), y - (cy - 0.3 * r)) - 0.82 * r;
-    const crescent = Math.max(dOuter, -dInner); // distance signée au croissant
-    const star = Math.hypot(x - (cx + 0.62 * r), y - (cy + 0.1 * r)) - 0.11 * r;
-    const coverage = clamp01(0.5 - Math.min(crescent, star));
-    return mix(background(x, y), MOON, coverage);
+    let color = ground;
+    for (const shape of SHAPES) {
+      const distance = Math.hypot(x - (left + shape.cx * unit), y - (top + shape.cy * unit)) - shape.r * unit;
+      const coverage = clamp01(0.5 - distance); // anticrénelage sur un pixel
+      if (coverage > 0) color = mix(color, shape.color === 'ground' ? ground : shape.color, coverage);
+    }
+    return color;
   };
 }
 
-const solid = (color) => () => color;
-
-function icon(size, scale, background) {
-  return png(size, size, moonPixel(size * 0.53, size * 0.52, size * scale, background));
+/** Icône carrée : le logo centré, occupant `scale` du côté. */
+function icon(size, scale) {
+  const logo = size * scale;
+  return png(size, size, logoPixel((size - logo) / 2, (size - logo) / 2, logo, CREAM));
 }
 
 mkdirSync('public/icons', { recursive: true });
 mkdirSync('public/splash', { recursive: true });
-writeFileSync('public/icons/icon-192.png', icon(192, 0.34, solid(TILE)));
-writeFileSync('public/icons/icon-512.png', icon(512, 0.34, solid(TILE)));
+writeFileSync('public/icons/icon-192.png', icon(192, 0.92));
+writeFileSync('public/icons/icon-512.png', icon(512, 0.92));
 // Icône « maskable » : le dessin tient dans la zone sûre (cercle de 40 % du côté).
-writeFileSync('public/icons/icon-maskable-512.png', icon(512, 0.26, solid(TILE)));
-writeFileSync('public/icons/apple-touch-icon.png', icon(180, 0.34, solid(TILE)));
+writeFileSync('public/icons/icon-maskable-512.png', icon(512, 0.7));
+writeFileSync('public/icons/apple-touch-icon.png', icon(180, 0.92));
 
-// Écrans de lancement iOS (portrait) : sans eux, l'app installée s'ouvre sur un écran blanc.
+// Écrans de lancement iOS (portrait), sombres : l'app ne s'ouvre jamais sur un flash blanc.
 // [largeur CSS, hauteur CSS, densité]
 const SPLASH = [
   [375, 667, 2],
@@ -82,7 +95,8 @@ const SPLASH = [
 ];
 for (const [w, h, dpr] of SPLASH) {
   const [W, H] = [w * dpr, h * dpr];
-  writeFileSync(`public/splash/${W}x${H}.png`, png(W, H, moonPixel(W * 0.53, H * 0.47, 36 * dpr, solid(BG))));
+  const logo = 120 * dpr;
+  writeFileSync(`public/splash/${W}x${H}.png`, png(W, H, logoPixel((W - logo) / 2, H * 0.44 - logo / 2, logo, CACAO)));
 }
 
 console.log('Icônes et écrans de lancement générés.');

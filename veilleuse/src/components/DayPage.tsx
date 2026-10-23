@@ -10,6 +10,7 @@ import { Composer } from './Composer';
 import { DayStrip } from './DayStrip';
 import { EntrySheet } from './EntrySheet';
 import { Icon } from './Icon';
+import { LogoMark } from './Logo';
 import { Emoji } from './Tag';
 import { ToastSlot } from './Toast';
 
@@ -33,10 +34,11 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   const nextAt = latestId ? nextById.get(latestId) : undefined;
   const alarmAt = nextAt !== undefined && nextAt > day.now ? nextAt : undefined;
 
-  // Après chaque tétée ou biberon : alarme au prochain repas, dans le même appui que « Valider ».
+  // Après chaque tétée ou biberon : réveil au prochain repas, dans le même appui que « Valider ».
   const onLogged = (entry: Entry) => {
-    if (!isFeed(entry) || !settings.autoAlarm) return;
     const at = entry.at + FEED_INTERVAL_MS;
+    // Saisie en retard dont le prochain repas est déjà passé : pas de réveil.
+    if (!isFeed(entry) || !settings.autoAlarm || at <= Date.now()) return;
     if (settings.alarmReady) openAlarm(at);
     else setGuideAt(at);
   };
@@ -45,6 +47,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <>
       <header class="topbar">
+        <LogoMark size={30} />
         <div class="topbar-title">
           <h1>{day.title}</h1>
           {subtitle && <p class="topbar-sub">{subtitle}</p>}
@@ -53,12 +56,12 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           (settings.alarmReady ? (
             <a class="head-btn head-alarm" href={alarmUrl(alarmAt)}>
               <Icon name="alarm" size={20} />
-              Alarme {formatClock(alarmAt)}
+              Réveil {formatClock(alarmAt)}
             </a>
           ) : (
             <button type="button" class="head-btn head-alarm" onClick={() => setGuideAt(alarmAt)}>
               <Icon name="alarm" size={20} />
-              Alarme {formatClock(alarmAt)}
+              Réveil {formatClock(alarmAt)}
             </button>
           ))}
         <button type="button" class="head-btn" onClick={onOpenSettings}>
@@ -123,7 +126,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           <ToastSlot />
         </div>
         {day.isToday ? (
-          <Composer now={day.now} onLogged={onLogged} />
+          <Composer onLogged={onLogged} />
         ) : (
           <button type="button" class="action action-wide" onClick={day.backToToday}>
             Revenir à aujourd'hui

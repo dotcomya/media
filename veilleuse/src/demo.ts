@@ -20,11 +20,11 @@ const YESTERDAY: [string, Tag[], number?][] = [
 
 // Aujourd'hui : en minutes avant « maintenant ».
 const TODAY: [number, Tag[], number?][] = [
-  [70, ['feed', 'pee']],
-  [150, ['poop']],
-  [225, ['bottle'], 90],
-  [380, ['feed', 'pee']],
-  [530, ['feed']],
+  [35, ['feed', 'pee']],
+  [100, ['poop']],
+  [185, ['bottle'], 90],
+  [330, ['feed', 'pee']],
+  [480, ['feed']],
 ];
 
 export function startDemo(): void {

@@ -27,9 +27,9 @@ export function SharingSection() {
   };
 
   const sendCode = async (family: string) => {
-    const text = `Code de partage Veilleuse : ${family}\nDans Veilleuse : Réglages → « J'ai reçu un code ».`;
+    const text = `Code de partage Nous 3 : ${family}\nDans Nous 3 : Réglages → « J'ai reçu un code ».`;
     try {
-      if ((await shareText('Partager Veilleuse', text)) === 'copied') showToast('Code copié, prêt à envoyer');
+      if ((await shareText('Partager Nous 3', text)) === 'copied') showToast('Code copié, prêt à envoyer');
     } catch {
       showToast('Recopiez le code affiché');
     }

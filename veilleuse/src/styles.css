@@ -1,4 +1,4 @@
-/* Veilleuse — sombre et chaud par défaut, pensé pour une chambre dans le noir. */
+/* Nous 3 — doux et chaleureux, sombre par défaut pour une chambre dans le noir. */
 
 :root,
 :root[data-theme='dark'] {
@@ -9,14 +9,18 @@
   --line: #3e2f26;
   --text: #f6e8d8;
   --muted: #b9a18b;
-  --accent: #f2a25c;
-  --accent-ink: #1c1108;
-  --accent-soft: rgba(242, 162, 92, 0.15);
-  --feed: #f2a25c;
-  --bottle: #e3a0bd;
-  --pee: #ecc95e;
-  --poop: #cc9873;
+  --accent: #eda07c;
+  --accent-ink: #241309;
+  --accent-soft: rgba(237, 160, 124, 0.15);
+  --feed: #eda07c;
+  --bottle: #e7a9bb;
+  --pee: #e8cf7e;
+  --poop: #c79b7b;
   --danger: #f0928a;
+  /* Couleurs du logo : deux parents (terracotta, pêche) et un bébé (sauge). */
+  --brand-terracotta: #d9845e;
+  --brand-peach: #f0b08f;
+  --brand-sage: #a7b89b;
   --backdrop: rgba(6, 4, 2, 0.72);
   --shadow: rgba(0, 0, 0, 0.45);
   --statusbar: transparent;
@@ -30,11 +34,14 @@
   --line: #dcc8b3;
   --text: #24180f;
   --muted: #69543f;
-  --accent: #a8541a;
+  --accent: #b45e38;
   --accent-ink: #fffaf4;
-  --accent-soft: rgba(168, 84, 26, 0.12);
-  --feed: #a8541a;
-  --bottle: #a24c75;
+  --accent-soft: rgba(180, 94, 56, 0.12);
+  --feed: #b45e38;
+  --bottle: #a3506c;
+  --brand-terracotta: #cf7a55;
+  --brand-peach: #eba383;
+  --brand-sage: #93a885;
   --pee: #846500;
   --poop: #7c4f2c;
   --danger: #b3261e;
@@ -47,6 +54,8 @@
 :root {
   --radius: 14px;
   --gap: 8px;
+  /* Titres en police arrondie (SF Pro Rounded sur iPhone) : douce, sans rien télécharger. */
+  --font-round: ui-rounded, 'SF Pro Rounded', 'Nunito', 'Varela Round', system-ui, sans-serif;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   font-size: 16px;
   line-height: 1.25;
@@ -155,8 +164,51 @@ button:disabled {
   min-width: 0;
 }
 
+/* --- Marque Nous 3 ----------------------------------------------------- */
+
+.logo-mark {
+  flex: none;
+}
+
+.topbar > .logo-mark {
+  margin-right: 6px;
+}
+
+.wordmark {
+  font-family: var(--font-round);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.wordmark b {
+  color: var(--brand-terracotta);
+}
+
+.brand {
+  --logo-ground: var(--surface-2);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.brand .wordmark {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.brand p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .topbar h1 {
-  font-size: 1.4rem;
+  font-family: var(--font-round);
+  font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
@@ -205,7 +257,7 @@ a.action {
 
 .strip {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   margin: 0 -16px;
   padding: 2px 16px 10px;
   overflow-x: auto;
@@ -218,24 +270,24 @@ a.action {
 
 .strip-day {
   flex: none;
-  width: 48px;
-  height: 54px;
+  width: 40px;
+  height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1px;
   border: 2px solid transparent;
-  border-radius: var(--radius);
+  border-radius: 11px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.6rem;
   font-weight: 700;
 }
 
 .strip-day strong {
   color: var(--text);
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -255,8 +307,8 @@ a.action {
 }
 
 .dot {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -489,6 +541,7 @@ a.action {
 }
 
 .tag-text strong {
+  font-family: var(--font-round);
   font-weight: 800;
 }
 
@@ -535,6 +588,7 @@ a.action {
 }
 
 .tag-card .tag-text strong {
+  font-family: var(--font-round);
   font-size: 1.05rem;
 }
 
@@ -565,6 +619,7 @@ a.action {
 }
 
 .tag-cell .tag-text strong {
+  font-family: var(--font-round);
   font-size: 0.74rem;
 }
 
@@ -709,6 +764,7 @@ a.action {
 }
 
 .sheet-head h2 {
+  font-family: var(--font-round);
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -842,35 +898,117 @@ a.action {
   font-size: 1.05rem;
 }
 
-/* Volume du biberon : six volumes sur une ligne. */
-.volumes {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 6px;
+/* Volume du biberon : un curseur, de 10 en 10 ml. */
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 6px 2px 12px;
+  border: 2px solid color-mix(in srgb, var(--bottle) 45%, var(--line));
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
-.chip-volume {
-  min-height: 46px;
+.volume-value {
+  flex: none;
+  min-width: 72px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.volume-value strong {
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.volume input {
+  --fill: 0%;
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.volume input::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--bottle) var(--fill), var(--line) var(--fill));
+}
+
+.volume input::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--bottle) var(--fill), var(--line) var(--fill));
+}
+
+.volume input::-webkit-slider-thumb {
+  width: 30px;
+  height: 30px;
+  margin-top: -11px;
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  background: var(--bottle);
+  box-shadow: 0 2px 8px var(--shadow);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.volume input::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  background: var(--bottle);
+}
+
+/* Heure de la saisie (encart à gauche de Valider) : maintenant, ou une heure passée. */
+.composer-actions {
+  display: flex;
+  gap: var(--gap);
+}
+
+.composer-actions .action-validate {
+  flex: 1;
+  min-width: 0;
+}
+
+.when {
+  flex: none;
+  min-width: 96px;
+  display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 4px 2px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
 }
 
-.chip-volume strong {
-  font-size: 1rem;
+.when small {
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.when strong {
+  font-size: 0.95rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
-.chip-volume small {
-  color: var(--muted);
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-.chip-volume.on {
-  border-color: var(--bottle);
-  background: color-mix(in srgb, var(--bottle) 22%, var(--surface-2));
+.when.is-set {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* Volume affiché sous le 🍼 dans la liste. */
@@ -957,7 +1095,7 @@ a.action {
     padding: 6px 0 6px;
   }
   .strip-day {
-    height: 50px;
+    height: 42px;
   }
   .tag-card {
     min-height: 50px;
