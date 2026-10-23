@@ -10,7 +10,7 @@ import { Composer } from './Composer';
 import { DayStrip } from './DayStrip';
 import { EntrySheet } from './EntrySheet';
 import { Icon } from './Icon';
-import { LogoMark } from './Logo';
+import { LogoMark, Wordmark } from './Logo';
 import { Emoji } from './Tag';
 import { ToastSlot } from './Toast';
 
@@ -47,28 +47,36 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   return (
     <>
       <header class="topbar">
-        <LogoMark size={30} />
-        <div class="topbar-title">
-          <h1>{day.title}</h1>
-          {subtitle && <p class="topbar-sub">{subtitle}</p>}
+        <div class="topbar-brand">
+          <LogoMark size={34} />
+          <Wordmark />
         </div>
         {alarmAt !== undefined &&
           (settings.alarmReady ? (
-            <a class="head-btn head-alarm" href={alarmUrl(alarmAt)}>
-              <Icon name="alarm" size={20} />
-              Réveil {formatClock(alarmAt)}
+            <a class="head-pill head-alarm" href={alarmUrl(alarmAt)} aria-label={`Réveil à ${formatClock(alarmAt)}`}>
+              <Icon name="alarm" size={17} />
+              {formatClock(alarmAt)}
             </a>
           ) : (
-            <button type="button" class="head-btn head-alarm" onClick={() => setGuideAt(alarmAt)}>
-              <Icon name="alarm" size={20} />
-              Réveil {formatClock(alarmAt)}
+            <button
+              type="button"
+              class="head-pill head-alarm"
+              aria-label={`Réveil à ${formatClock(alarmAt)}`}
+              onClick={() => setGuideAt(alarmAt)}
+            >
+              <Icon name="alarm" size={17} />
+              {formatClock(alarmAt)}
             </button>
           ))}
-        <button type="button" class="head-btn" onClick={onOpenSettings}>
-          <Icon name="settings" size={20} />
-          Réglages
+        <button type="button" class="head-icon" aria-label="Réglages" onClick={onOpenSettings}>
+          <Icon name="settings" size={18} />
         </button>
       </header>
+
+      <div class="day-title">
+        <h1>{day.title}</h1>
+        {subtitle && <span class="day-sub">{subtitle}</span>}
+      </div>
 
       <DayStrip {...day.strip} />
 

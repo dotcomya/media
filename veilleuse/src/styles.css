@@ -150,28 +150,10 @@ button:disabled {
   --tone: var(--poop);
 }
 
-/* --- En-tête : le jour affiché ------------------------------------------ */
-
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 0 8px;
-}
-
-.topbar-title {
-  flex: 1;
-  min-width: 0;
-}
-
 /* --- Marque Nous 3 ----------------------------------------------------- */
 
 .logo-mark {
   flex: none;
-}
-
-.topbar > .logo-mark {
-  margin-right: 6px;
 }
 
 .wordmark {
@@ -206,51 +188,99 @@ button:disabled {
   font-size: 0.85rem;
 }
 
-.topbar h1 {
-  font-family: var(--font-round);
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
+/* --- En-tête : la marque, le réveil, les réglages ----------------------- */
 
-.topbar-sub {
-  margin-top: 1px;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.88rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.head-btn {
-  min-width: 60px;
-  min-height: 44px;
+.topbar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 2px 4px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
+  gap: 8px;
+  padding: 12px 0 8px;
 }
 
-a.head-btn,
+.topbar-brand {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topbar-brand .wordmark {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.head-pill,
+.head-icon {
+  position: relative;
+  height: 34px;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+/* Zone tactile de 44 px autour des petites pastilles. */
+.head-pill::after,
+.head-icon::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+.head-pill:active,
+.head-icon:active {
+  opacity: 0.7;
+}
+
+/* Le réveil : une pastille à la couleur du prochain repas. */
+.head-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px 0 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--feed);
+  font-size: 0.9rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Réglages : une simple icône ronde, discrète. */
+.head-icon {
+  width: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+a.head-pill,
 a.action {
   text-decoration: none;
 }
 
-/* L'alarme : même forme que Réglages, à la couleur du prochain repas. */
-.head-alarm {
-  color: var(--feed);
+/* Le jour affiché, juste au-dessus du bandeau des jours. */
+.day-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 0 8px;
 }
 
-.head-btn:active {
-  background: var(--surface);
+.day-title h1 {
+  flex: none;
+  font-family: var(--font-round);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.day-sub {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- Bandeau des jours ------------------------------------------------- */
@@ -1381,7 +1411,10 @@ a.action {
 
 @media (max-height: 760px) {
   .topbar {
-    padding: 6px 0 6px;
+    padding: 8px 0 6px;
+  }
+  .day-title {
+    padding-bottom: 6px;
   }
   .strip-day {
     height: 42px;
