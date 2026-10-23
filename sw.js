@@ -1,7 +1,7 @@
 // Service worker de Veilleuse. Ce fichier est un modèle : au build, vite.config.ts
 // y injecte la version et la liste des fichiers de l'app (marqueurs en majuscules ci-dessous).
-const CACHE = 'veilleuse-55693ec710bd';
-const PRECACHE = ["./","assets/index-DQklkRhS.js","assets/index-rmSqAgTY.css","icons/apple-touch-icon.png","icons/favicon.svg","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest"];
+const CACHE = 'veilleuse-a550695379fe';
+const PRECACHE = ["./","assets/index-yYb1NAZM.js","assets/index-C6FhNUx1.css","icons/apple-touch-icon.png","icons/favicon.svg","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest"];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
