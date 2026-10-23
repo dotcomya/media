@@ -40,7 +40,7 @@ export function SharingSection() {
       <span class="field-label">Partage avec l'autre parent</span>
       {!syncAvailable ? (
         <p class="hint">
-          Le partage entre parents n'est pas encore branché sur cette version : il reste à créer le serveur gratuit.
+          Bientôt : maman et papa verront les mêmes lignes, chacun sur son téléphone. En attendant, tout reste sur ce téléphone.
         </p>
       ) : sync.family ? (
         <>
