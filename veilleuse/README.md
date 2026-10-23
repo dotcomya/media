@@ -1,46 +1,47 @@
 # Veilleuse
 
-PWA de suivi d'un nouveau-né : tétées, biberons et couches. Pensée pour une
-maman épuisée, la nuit, d'une seule main : chaque saisie prend une ou deux
-pressions, sans jamais ouvrir de clavier. Aucun compte, aucun serveur, tout
-reste sur le téléphone et fonctionne en mode avion.
+PWA de suivi d'un nouveau-né, pensée pour une maman épuisée, la nuit, d'une
+seule main. Une seule page, centrée sur la journée : ce qui s'est passé
+aujourd'hui, et quatre étiquettes à cocher (Tétée, Biberon, Pipi, Caca). Aucun
+compte, aucun serveur, tout reste sur le téléphone et fonctionne en mode avion.
 
 **En ligne : https://dotcomya.github.io/media/** (GitHub Pages, branche `gh-pages`).
 
-| Accueil | Tétée en cours | Biberon | Journée | Correction |
-|---|---|---|---|---|
-| ![Accueil](docs/accueil.png) | ![Tétée en cours](docs/tetee.png) | ![Biberon](docs/biberon.png) | ![Journée](docs/journee.png) | ![Correction](docs/modifier.png) |
+| Aujourd'hui | Cocher puis valider | Un jour passé | Corriger |
+|---|---|---|---|
+| ![Aujourd'hui](docs/aujourdhui.png) | ![Cocher puis valider](docs/cocher.png) | ![Hier](docs/hier.png) | ![Corriger](docs/corriger.png) |
 
 ## Ce que fait l'app
 
+- **Une page = un jour.** En haut, le jour affiché (« Aujourd'hui · vendredi
+  23 octobre ») et le bandeau des jours : un appui sur une date, ou un balayage
+  sur la liste, pour passer aux jours précédents. Un point sous la date indique
+  qu'il y a des saisies ce jour-là.
+- **Résumé du jour** : « 6 tétées · 2 biberons · 5 pipis · 2 cacas ».
+- **Liste du jour**, de la plus récente à la plus ancienne : l'heure et les
+  étiquettes. À partir de 9 saisies, elle passe sur deux colonnes compactes
+  (icônes seules, légende dans le résumé) pour que la journée tienne sans
+  défiler.
+- **Saisir** (aujourd'hui, en bas de l'écran) : on coche ce qui vient de se
+  passer, puis **Valider** crée une saisie horodatée. Pipi et caca en même
+  temps : on coche les deux. Chaque étiquette rappelle la dernière fois
+  (« il y a 2 h 10 »).
+
 | Action | Pressions |
 |---|---|
-| Pipi, caca ou « Pipi + caca » | 1 (toast « Enregistré · Annuler » pendant 5 s) |
-| Biberon à la quantité habituelle | 2 (Biberon → Valider ; la dernière quantité est présélectionnée) |
-| Démarrer une tétée | 1 (Sein G ou Sein D ; le sein opposé au dernier utilisé porte la mention « Prochain ») |
-| Changer de sein | 1 |
-| Pause (rot, change) / Reprendre | 1 |
-| Terminer | 1 (au-delà de 60 min, l'app propose d'ajuster la durée) |
-| Tétée oubliée | 2 (Journée → « Oubli sein G » ou « Oubli sein D » → « Il y a 30 min »…) |
+| Une chose (ex. pipi) | 2 : Pipi → Valider |
+| Plusieurs (ex. tétée + pipi + caca) | une par étiquette, puis Valider |
+| Annuler la dernière saisie | 1 : « Annuler » dans le message affiché 5 s |
+| Corriger ou supprimer | toucher la ligne → décocher / « −15 min »… → Enregistrer |
 
-- **Bandeau d'état** en haut de l'accueil, rafraîchi en continu : dernière
-  tétée (comptée depuis son **début**), dernier biberon, dernière couche.
-- **Chrono fiable** : il ne repose que sur des horodatages enregistrés en base.
-  App fermée, téléphone verrouillé ou redémarré : à la réouverture, la tétée en
-  cours reprend avec le bon temps.
-- **Journée** : résumé (tétées, temps au sein, ml de biberon, pipis, cacas,
-  couches), puis timeline. Navigation par balayage ou par les boutons
-  Veille / Lendemain.
-- **Correction** : toucher une entrée pour la modifier ou la supprimer. L'heure
-  se règle par puces (« Maintenant », « −5 min », « −15 min », « −30 min »,
-  « −1 h », cumulables), avec la roue native du téléphone en dernier recours.
-  Tétée oubliée : « Oubli sein G » / « Oubli sein D », puis l'heure (« Il y a
-  15 min » à « Il y a 2 h », ou « Autre heure… ») ; la durée reste « non
-  notée » et peut être complétée en touchant l'entrée. « Autre oubli » pour un
-  biberon ou une couche.
-- **Partage** (en haut de la Journée) : résumé texte du jour via la feuille de partage du téléphone,
-  pour le pédiatre ou la sage-femme. Export CSV de toutes les données dans
-  Réglages (séparateur `;`, s'ouvre directement dans Excel en français).
+- **Correction** : l'heure se règle par puces (« Maintenant », « −5 min »,
+  « −15 min », « −30 min », « −1 h », cumulables), avec la roue native du
+  téléphone en dernier recours (« Choisir… »). Un oubli se saisit maintenant,
+  puis on recule l'heure.
+- **Partager** (en haut) : résumé texte du jour affiché, via la feuille de
+  partage du téléphone, pour le pédiatre ou la sage-femme. Export CSV de toutes
+  les données dans Réglages (séparateur `;`, s'ouvre directement dans Excel en
+  français).
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
   facultatif ; vibration à chaque saisie sur Android (Safari iOS ne la gère pas).
 
@@ -52,7 +53,7 @@ Prérequis : Node.js 22.12 ou plus.
 cd veilleuse
 npm install
 npm run dev        # serveur de développement : http://localhost:5173
-npm test           # tests unitaires (chrono, résumé journalier, formats)
+npm test           # tests unitaires (résumé journalier, conversion des données, formats)
 npm run build      # vérification TypeScript + build de production dans dist/
 npm run preview    # sert dist/ : http://localhost:4173 (service worker actif)
 ```
@@ -144,24 +145,22 @@ Ouvrir le site dans Chrome, puis menu **⋮ → Installer l'application** (ou
 Stockage local IndexedDB (base `veilleuse`, via [`idb`](https://github.com/jakearchibald/idb)),
 avec demande de stockage persistant (`navigator.storage.persist()`).
 
-**Store `events`**, clé `id`, index `at` et `updatedAt` :
+**Store `events`**, clé `id`, index `at` et `updatedAt`. Une saisie :
 
 | Champ | Type | Rôle |
 |---|---|---|
 | `id` | UUID v4 | identifiant stable, prêt pour une synchro |
-| `type` | `'breast'` \| `'bottle'` \| `'diaper'` | |
-| `at` | ms epoch | heure de l'événement (début pour une tétée) |
+| `at` | ms epoch | heure de la saisie |
+| `tags` | `('feed' \| 'bottle' \| 'pee' \| 'poop')[]` | ce qui s'est passé : tétée, biberon, pipi, caca |
 | `createdAt`, `updatedAt` | ms epoch | traçabilité, résolution de conflits |
 | `deletedAt` | ms epoch \| `null` | suppression logique |
-| `sides` | `('L' \| 'R')[]` | tétée : seins dans l'ordre d'usage ; le dernier détermine le « Prochain » |
-| `leftMs`, `rightMs`, `durationMs` | ms | tétée : durée par sein et totale, pauses exclues |
-| `ml` | nombre | biberon |
-| `pee`, `poop` | booléens | couche (les deux à `true` pour une couche mixte) |
 
-**Store `kv`** : `activeFeed` (tétée en cours : sein actuel, seins utilisés,
-début du segment en cours ou `null` en pause, temps cumulés par sein) et
-`settings` (prénom, dernière quantité de biberon). Le thème est gardé dans
-`localStorage` pour s'appliquer avant le premier affichage.
+**Store `kv`** : `settings` (prénom). Le thème est gardé dans `localStorage`
+pour s'appliquer avant le premier affichage.
+
+Les données de la première version (tétées chronométrées, biberons en ml,
+couches) sont converties automatiquement à l'ouverture (base en version 2) :
+une tétée devient « Tétée », une couche mixte « Pipi + Caca ».
 
 ## Arborescence
 
@@ -176,30 +175,28 @@ veilleuse/
 └── src/
     ├── main.tsx            montage, enregistrement du service worker
     ├── sw.js               service worker (modèle complété au build)
-    ├── model.ts            types, UUID, création d'événements
-    ├── db.ts               accès IndexedDB
-    ├── store.ts            état de l'app et actions (enregistrer, annuler…)
+    ├── model.ts            saisie, étiquettes, conversion des anciennes données (+ model.test.ts)
+    ├── db.ts               accès IndexedDB et migration
+    ├── store.ts            état de l'app et actions (ajouter, annuler, corriger…)
     ├── hooks.ts            useNow : horloge rafraîchie
     ├── styles.css
     ├── lib/
-    │   ├── feeding.ts      logique pure du chrono          (+ feeding.test.ts)
-    │   ├── summary.ts      résumé journalier               (+ summary.test.ts)
+    │   ├── summary.ts      résumé du jour, dernière fois par étiquette (+ summary.test.ts)
     │   ├── format.ts       formats FR, 24 h                (+ format.test.ts)
     │   ├── time.ts         bornes de journée (changement d'heure inclus)
     │   ├── csv.ts, share.ts, theme.ts, haptics.ts
     └── components/
-        ├── App.tsx         onglets Accueil / Journée
-        ├── Home.tsx        bandeau d'état + grille de gros boutons
-        ├── FeedMode.tsx    tétée en cours, ajustement au-delà de 60 min
-        ├── ForgottenFeedSheet.tsx  tétée oubliée : sein puis heure
-        ├── BottleSheet.tsx, DayView.tsx, EditSheet.tsx, SettingsSheet.tsx
-        └── BottlePicker, DurationPicker, TimeChips, Sheet, Toast, TopBar, Icon
+        ├── App.tsx, DayPage.tsx   la page du jour
+        ├── DayStrip.tsx    bandeau des jours
+        ├── Composer.tsx    étiquettes à cocher + Valider
+        ├── EntrySheet.tsx  corriger ou supprimer une saisie
+        ├── SettingsSheet.tsx, TimeChips, Tag, Sheet, Toast, Icon
 ```
 
 ## Choix techniques
 
 - **Preact** plutôt que React : même API pour ~4 ko. Seules dépendances
-  d'exécution : `preact` et `idb`. Bundle complet : environ 17 ko compressé.
+  d'exécution : `preact` et `idb`. Bundle complet : environ 14 ko compressé.
 - **Service worker sans Workbox** : un petit plugin Vite (`vite.config.ts`)
   injecte la liste des fichiers à précharger et une version calculée à partir
   de leur contenu. Stratégie « cache d'abord » : l'app s'ouvre instantanément
@@ -207,22 +204,23 @@ veilleuse/
 - **Pas de flash blanc** : fond sombre posé dans `index.html` avant tout
   chargement, `background_color` du manifeste et écrans de lancement iOS
   sombres pour les iPhone récents.
-- Toutes les actions principales sont dans la moitié basse de l'écran ; les
-  actions destructrices (« Abandonner ») sont en haut, et toujours annulables.
+- Toutes les actions de saisie sont dans la moitié basse de l'écran ; la page
+  ne défile jamais (seule la liste pourrait défiler, au-delà d'une vingtaine de
+  saisies dans la journée).
 
 ## Vérifications effectuées
 
-- 22 tests unitaires (`npm test`) : chrono (changements de sein, pauses,
-  reprise après fermeture, horloge remise en arrière, détection > 60 min, sein
-  suggéré) et résumé journalier (bornes de minuit, entrées supprimées, jour de
-  25 h du passage à l'heure d'hiver).
+- 14 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), dernière fois
+  par étiquette, conversion des données de la première version, formats.
 - Scénario de bout en bout dans Chromium (Playwright, émulation mobile) :
-  nombre de pressions de chaque critère d'acceptation, annulation, reprise du
-  chrono après rechargement, ajustement d'une tétée oubliée, fonctionnement
-  hors ligne, données conservées après fermeture complète du navigateur.
-- Rendu contrôlé en **390 × 844** et **360 × 740**, sans défilement sur
-  l'accueil, le mode tétée (y compris en pause) et la journée. Capture en
-  360 × 740 : [docs/accueil-360.png](docs/accueil-360.png).
+  cocher puis valider, annulation, résumé, changement de jour par le bandeau et
+  par balayage, correction, conversion d'une base de la première version,
+  fonctionnement hors ligne, données conservées après fermeture complète du
+  navigateur.
+- Rendu contrôlé en **390 × 844** et **360 × 740** : la page ne défile pas, et
+  une journée de 20 saisies tient entière à l'écran. Capture en 360 × 740 :
+  [docs/aujourdhui-360.png](docs/aujourdhui-360.png).
 
 Ces vérifications ont été faites sur un Chromium émulé, pas sur un iPhone ou
 un téléphone Android physique : un essai réel (installation, mode avion,

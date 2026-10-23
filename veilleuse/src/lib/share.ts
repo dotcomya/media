@@ -1,37 +1,25 @@
-import type { AppEvent } from '../model';
-import { capitalize, diaperLabel, formatClock, formatDate, formatDuration, sideLetter } from './format';
-import { eventsOfDay, summarizeDay } from './summary';
+import { TAGS, TAG_LABELS, describeTags, type Entry, type Tag } from '../model';
+import { capitalize, formatClock, formatDate } from './format';
+import { entriesOfDay, summarizeDay, type DaySummary } from './summary';
 
 const plural = (n: number, word: string): string => `${n} ${word}${n > 1 ? 's' : ''}`;
 
-function describe(e: AppEvent): string {
-  switch (e.type) {
-    case 'breast': {
-      if (e.durationMs === 0) return `Tétée ${e.sides.map(sideLetter).join(' puis ')} (durée non notée)`;
-      const parts = e.sides.length === 1
-        ? [sideLetter(e.sides[0])]
-        : [`G ${formatDuration(e.leftMs)}`, `D ${formatDuration(e.rightMs)}`];
-      return `Tétée ${parts.join(', ')} — ${formatDuration(e.durationMs)}`;
-    }
-    case 'bottle':
-      return `Biberon ${e.ml} ml`;
-    case 'diaper':
-      return diaperLabel(e.pee, e.poop);
-  }
+/** « 6 tétées · 2 biberons · 5 pipis · 2 cacas » */
+export function summaryParts(summary: DaySummary): { tag: Tag; text: string }[] {
+  return TAGS.map((tag) => ({ tag, text: plural(summary[tag], TAG_LABELS[tag].toLowerCase()) }));
 }
 
 /** Résumé texte d'une journée, à envoyer au pédiatre ou à la sage-femme. */
-export function daySummaryText(events: AppEvent[], dayStart: number, babyName: string): string {
-  const s = summarizeDay(events, dayStart);
+export function daySummaryText(entries: Entry[], dayStart: number, babyName: string): string {
   const date = formatDate(dayStart, true);
   const lines = [
     babyName ? `${babyName} — ${capitalize(date)}` : `Résumé du ${date}`,
-    `Tétées : ${s.feeds}${s.feeds ? ` (${formatDuration(s.breastMs)} au sein)` : ''}`,
-    `Biberons : ${s.bottles}${s.bottles ? ` (${s.bottleMl} ml)` : ''}`,
-    `Couches : ${s.diapers} — ${plural(s.pees, 'pipi')}, ${plural(s.poops, 'caca')}`,
+    summaryParts(summarizeDay(entries, dayStart))
+      .map((part) => part.text)
+      .join(' · '),
   ];
-  const detail = eventsOfDay(events, dayStart).reverse();
-  if (detail.length) lines.push('', 'Détail :', ...detail.map((e) => `${formatClock(e.at)}  ${describe(e)}`));
+  const detail = entriesOfDay(entries, dayStart).reverse();
+  if (detail.length) lines.push('', 'Détail :', ...detail.map((e) => `${formatClock(e.at)}  ${describeTags(e.tags)}`));
   return lines.join('\n');
 }
 

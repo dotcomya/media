@@ -1,53 +1,27 @@
-// Modèle de données. Pensé pour une synchronisation future :
-// UUID, createdAt / updatedAt sur chaque entrée, suppression logique (deletedAt).
+// Modèle de données : une saisie = un instant + ce qui s'est passé (étiquettes).
+// Pensé pour une synchronisation future : UUID, createdAt / updatedAt, suppression logique.
 
-export type Side = 'L' | 'R';
+export const TAGS = ['feed', 'bottle', 'pee', 'poop'] as const;
+export type Tag = (typeof TAGS)[number];
 
-interface BaseEvent {
+export const TAG_LABELS: Record<Tag, string> = { feed: 'Tétée', bottle: 'Biberon', pee: 'Pipi', poop: 'Caca' };
+
+export interface Entry {
   id: string;
-  /** Heure de l'événement (début pour une tétée), en ms depuis l'epoch. */
+  /** Heure de la saisie, en ms depuis l'epoch. */
   at: number;
+  /** Ce qui s'est passé, dans l'ordre de TAGS (ex. ['feed', 'pee']). */
+  tags: Tag[];
   createdAt: number;
   updatedAt: number;
   deletedAt: number | null;
 }
 
-export interface BreastEvent extends BaseEvent {
-  type: 'breast';
-  /** Seins utilisés dans l'ordre, ex. ['L', 'R'] ; le dernier élément est le dernier sein donné. */
-  sides: Side[];
-  leftMs: number;
-  rightMs: number;
-  /** Durée totale au sein, pauses exclues (= leftMs + rightMs). */
-  durationMs: number;
-}
-
-export interface BottleEvent extends BaseEvent {
-  type: 'bottle';
-  ml: number;
-}
-
-export interface DiaperEvent extends BaseEvent {
-  type: 'diaper';
-  pee: boolean;
-  poop: boolean;
-}
-
-export type AppEvent = BreastEvent | BottleEvent | DiaperEvent;
-export type EventType = AppEvent['type'];
-
-/** Champs propres à chaque type, sans les métadonnées. */
-export type EventData =
-  | Omit<BreastEvent, keyof BaseEvent>
-  | Omit<BottleEvent, keyof BaseEvent>
-  | Omit<DiaperEvent, keyof BaseEvent>;
-
 export interface Settings {
   babyName: string;
-  lastBottleMl: number;
 }
 
-export const DEFAULT_SETTINGS: Settings = { babyName: '', lastBottleMl: 60 };
+export const DEFAULT_SETTINGS: Settings = { babyName: '' };
 
 export function uuid(): string {
   if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -59,15 +33,49 @@ export function uuid(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-/** Crée un événement complet à partir de ses données propres. */
-export function createEvent<T extends EventData>(data: T, at: number, now = Date.now()): T & BaseEvent {
-  return { ...data, id: uuid(), at, createdAt: now, updatedAt: now, deletedAt: null };
+/** Étiquettes sans doublon, toujours dans le même ordre. */
+export const sortTags = (tags: Iterable<Tag>): Tag[] => {
+  const set = new Set(tags);
+  return TAGS.filter((tag) => set.has(tag));
+};
+
+export function createEntry(tags: Iterable<Tag>, at: number, now = Date.now()): Entry {
+  return { id: uuid(), at, tags: sortTags(tags), createdAt: now, updatedAt: now, deletedAt: null };
 }
 
-export function breastData(sides: Side[], leftMs: number, rightMs: number): Omit<BreastEvent, keyof BaseEvent> {
-  return { type: 'breast', sides, leftMs, rightMs, durationMs: leftMs + rightMs };
+/** « Tétée, pipi » */
+export function describeTags(tags: Tag[]): string {
+  const text = tags.map((tag) => TAG_LABELS[tag].toLowerCase()).join(', ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-export function lastSide(e: BreastEvent): Side | null {
-  return e.sides[e.sides.length - 1] ?? null;
+function legacyTags(record: Record<string, unknown>): Tag[] {
+  switch (record.type) {
+    case 'breast':
+      return ['feed'];
+    case 'bottle':
+      return ['bottle'];
+    case 'diaper':
+      return TAGS.filter((tag) => (tag === 'pee' && record.pee) || (tag === 'poop' && record.poop));
+    default:
+      return [];
+  }
+}
+
+/**
+ * Convertit une saisie de la première version (tétée chronométrée, biberon en ml,
+ * couche) en saisie étiquetée. Renvoie null pour un enregistrement inconnu.
+ */
+export function fromLegacy(record: Record<string, unknown>): Entry | null {
+  if (Array.isArray(record.tags)) return record as unknown as Entry;
+  const tags = legacyTags(record);
+  if (!tags.length || typeof record.id !== 'string' || typeof record.at !== 'number') return null;
+  return {
+    id: record.id,
+    at: record.at,
+    tags,
+    createdAt: Number(record.createdAt ?? record.at),
+    updatedAt: Number(record.updatedAt ?? record.at),
+    deletedAt: record.deletedAt == null ? null : Number(record.deletedAt),
+  };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAgo, formatChrono, formatClock, formatDayTitle, formatDuration, formatSides } from './format';
+import { formatAgo, formatClock, formatDayTitle } from './format';
 import { addDays, startOfDay } from './time';
 
 const min = (n: number) => n * 60_000;
@@ -17,18 +17,6 @@ describe('formats', () => {
   it('heures en 24 h', () => {
     expect(formatClock(new Date(2026, 9, 21, 3, 7).getTime())).toBe('03:07');
     expect(formatClock(new Date(2026, 9, 21, 22, 45).getTime())).toBe('22:45');
-  });
-
-  it('durées et chrono', () => {
-    expect(formatDuration(min(12.4))).toBe('12 min');
-    expect(formatDuration(min(65))).toBe('1 h 05');
-    expect(formatChrono(442_000)).toBe('07:22');
-    expect(formatChrono(3_723_000)).toBe('1:02:03');
-  });
-
-  it('seins', () => {
-    expect(formatSides(['R'])).toBe('sein droit');
-    expect(formatSides(['L', 'R'])).toBe('gauche puis droit');
   });
 
   it('titres de journée', () => {

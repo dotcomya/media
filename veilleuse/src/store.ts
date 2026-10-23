@@ -3,20 +3,9 @@
 
 import { useEffect, useState } from 'preact/hooks';
 import * as db from './db';
-import { finishFeed, isPaused, pauseFeed, resumeFeed, startFeed, switchSide, type ActiveFeed } from './lib/feeding';
-import { diaperLabel, formatDuration } from './lib/format';
+import { formatClock } from './lib/format';
 import { vibrate } from './lib/haptics';
-import {
-  DEFAULT_SETTINGS,
-  breastData,
-  createEvent,
-  uuid,
-  type AppEvent,
-  type BreastEvent,
-  type EventData,
-  type Settings,
-  type Side,
-} from './model';
+import { DEFAULT_SETTINGS, createEntry, sortTags, type Entry, type Settings, type Tag } from './model';
 
 export interface Toast {
   id: number;
@@ -26,23 +15,15 @@ export interface Toast {
 
 interface State {
   ready: boolean;
-  /** Événements non supprimés. */
-  events: AppEvent[];
-  activeFeed: ActiveFeed | null;
+  /** Saisies non supprimées. */
+  entries: Entry[];
   settings: Settings;
   toast: Toast | null;
   /** Le navigateur s'est-il engagé à conserver les données ? null = inconnu. */
   persisted: boolean | null;
 }
 
-let state: State = {
-  ready: false,
-  events: [],
-  activeFeed: null,
-  settings: DEFAULT_SETTINGS,
-  toast: null,
-  persisted: null,
-};
+let state: State = { ready: false, entries: [], settings: DEFAULT_SETTINGS, toast: null, persisted: null };
 const listeners = new Set<() => void>();
 
 function setState(patch: Partial<State>): void {
@@ -82,7 +63,7 @@ function persist(write: Promise<unknown>): void {
   });
 }
 
-// --- Toast « Enregistré · Annuler » ---------------------------------------
+// --- Toast « Ajouté · Annuler » --------------------------------------------
 
 const TOAST_MS = 5000;
 let toastSeq = 0;
@@ -104,103 +85,37 @@ export function undoToast(): void {
   vibrate();
 }
 
-// --- Événements -----------------------------------------------------------
+// --- Saisies --------------------------------------------------------------
 
-function upsert(event: AppEvent): void {
-  const others = state.events.filter((e) => e.id !== event.id);
-  setState({ events: event.deletedAt === null ? [...others, event] : others });
-  persist(db.putEvent(event));
+function upsert(entry: Entry): void {
+  const others = state.entries.filter((e) => e.id !== entry.id);
+  setState({ entries: entry.deletedAt === null ? [...others, entry] : others });
+  persist(db.putEntry(entry));
 }
 
-function softDelete(event: AppEvent): void {
+function softDelete(entry: Entry): void {
   const now = Date.now();
-  upsert({ ...event, deletedAt: now, updatedAt: now });
+  upsert({ ...entry, deletedAt: now, updatedAt: now });
 }
 
-function restore(event: AppEvent): void {
-  upsert({ ...event, deletedAt: null, updatedAt: Date.now() });
+/** Enregistre ce qui a été coché, horodaté maintenant. */
+export function addEntry(tags: Tag[], at = Date.now()): void {
+  const entry = createEntry(tags, at);
+  upsert(entry);
+  vibrate([15, 40, 15]);
+  showToast(`Ajouté à ${formatClock(at)}`, () => softDelete(entry));
 }
 
-export function addEvent(data: EventData, at: number, message = 'Enregistré'): void {
-  const event = createEvent(data, at) as AppEvent;
-  upsert(event);
-  vibrate();
-  showToast(message, () => softDelete(event));
-}
-
-export function saveEvent(event: AppEvent): void {
-  upsert({ ...event, updatedAt: Date.now() });
+export function saveEntry(entry: Entry): void {
+  upsert({ ...entry, tags: sortTags(entry.tags), updatedAt: Date.now() });
   vibrate();
   showToast('Modifié');
 }
 
-export function deleteEvent(event: AppEvent): void {
-  softDelete(event);
+export function deleteEntry(entry: Entry): void {
+  softDelete(entry);
   vibrate();
-  showToast('Supprimé', () => restore(event));
-}
-
-export function logDiaper(pee: boolean, poop: boolean): void {
-  addEvent({ type: 'diaper', pee, poop }, Date.now(), `${diaperLabel(pee, poop)} enregistré`);
-}
-
-export function logBottle(ml: number): void {
-  addEvent({ type: 'bottle', ml }, Date.now(), `Biberon de ${ml} ml enregistré`);
-  updateSettings({ lastBottleMl: ml });
-}
-
-// --- Tétée en cours -------------------------------------------------------
-
-function setFeed(feed: ActiveFeed | null): void {
-  setState({ activeFeed: feed });
-  persist(db.saveActiveFeed(feed));
-}
-
-export function startFeedOn(side: Side): void {
-  // Un « Annuler » encore affiché viserait la tétée précédente : on le retire.
-  setState({ toast: null });
-  setFeed(startFeed(side, Date.now(), uuid()));
-  vibrate();
-}
-
-export function switchFeedSide(): void {
-  if (!state.activeFeed) return;
-  setFeed(switchSide(state.activeFeed, Date.now()));
-  vibrate();
-}
-
-export function toggleFeedPause(): void {
-  const feed = state.activeFeed;
-  if (!feed) return;
-  setFeed(isPaused(feed) ? resumeFeed(feed, Date.now()) : pauseFeed(feed, Date.now()));
-  vibrate();
-}
-
-/** Termine la tétée. `durations` remplace les durées mesurées (chrono oublié). */
-export function finishActiveFeed(durations?: { leftMs: number; rightMs: number }): void {
-  const feed = state.activeFeed;
-  if (!feed) return;
-  const now = Date.now();
-  let data = finishFeed(feed, now);
-  if (durations) data = { ...data, ...breastData(data.sides, durations.leftMs, durations.rightMs) };
-  const event: BreastEvent = { ...data, id: feed.id, createdAt: now, updatedAt: now, deletedAt: null };
-
-  setState({ activeFeed: null, events: [...state.events, event] });
-  persist(db.commitFeed(event));
-  vibrate([20, 60, 20]);
-  showToast(`Tétée enregistrée · ${formatDuration(event.durationMs)}`, () => {
-    // La tétée n'était pas finie : on l'efface et le chrono reprend là où il en était.
-    softDelete(event);
-    setFeed(feed);
-  });
-}
-
-export function discardActiveFeed(): void {
-  const feed = state.activeFeed;
-  if (!feed) return;
-  setFeed(null);
-  vibrate();
-  showToast('Tétée abandonnée', () => setFeed(feed));
+  showToast('Supprimé', () => upsert({ ...entry, deletedAt: null, updatedAt: Date.now() }));
 }
 
 // --- Réglages -------------------------------------------------------------

@@ -1,37 +1,26 @@
-import type { AppEvent } from '../model';
+import { TAGS, type Entry, type Tag } from '../model';
 import { isInDay } from './time';
 
-export interface DaySummary {
-  /** Tétées au sein. */
-  feeds: number;
-  breastMs: number;
-  bottles: number;
-  bottleMl: number;
-  diapers: number;
-  pees: number;
-  poops: number;
+/** Nombre de saisies de la journée contenant chaque étiquette. */
+export type DaySummary = Record<Tag, number>;
+
+/** Saisies non supprimées d'une journée, de la plus récente à la plus ancienne. */
+export function entriesOfDay(entries: Entry[], dayStart: number): Entry[] {
+  return entries.filter((e) => e.deletedAt === null && isInDay(e.at, dayStart)).sort((a, b) => b.at - a.at);
 }
 
-/** Événements non supprimés d'une journée, du plus récent au plus ancien. */
-export function eventsOfDay<T extends AppEvent>(events: T[], dayStart: number): T[] {
-  return events.filter((e) => e.deletedAt === null && isInDay(e.at, dayStart)).sort((a, b) => b.at - a.at);
-}
-
-/** Résumé d'une journée. Une tétée compte pour le jour où elle a commencé. */
-export function summarizeDay(events: AppEvent[], dayStart: number): DaySummary {
-  const summary: DaySummary = { feeds: 0, breastMs: 0, bottles: 0, bottleMl: 0, diapers: 0, pees: 0, poops: 0 };
-  for (const e of eventsOfDay(events, dayStart)) {
-    if (e.type === 'breast') {
-      summary.feeds++;
-      summary.breastMs += e.durationMs;
-    } else if (e.type === 'bottle') {
-      summary.bottles++;
-      summary.bottleMl += e.ml;
-    } else {
-      summary.diapers++;
-      if (e.pee) summary.pees++;
-      if (e.poop) summary.poops++;
-    }
-  }
+export function summarizeDay(entries: Entry[], dayStart: number): DaySummary {
+  const summary = Object.fromEntries(TAGS.map((tag) => [tag, 0])) as DaySummary;
+  for (const entry of entriesOfDay(entries, dayStart)) for (const tag of entry.tags) summary[tag]++;
   return summary;
+}
+
+/** Heure de la dernière saisie de chaque étiquette, tous jours confondus. */
+export function lastByTag(entries: Entry[]): Partial<Record<Tag, number>> {
+  const last: Partial<Record<Tag, number>> = {};
+  for (const entry of entries) {
+    if (entry.deletedAt !== null) continue;
+    for (const tag of entry.tags) if ((last[tag] ?? -Infinity) < entry.at) last[tag] = entry.at;
+  }
+  return last;
 }

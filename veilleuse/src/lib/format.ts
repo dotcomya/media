@@ -1,6 +1,5 @@
 // Formats d'affichage en français, heures en 24 h.
 
-import type { Side } from '../model';
 import { MINUTE, addDays, startOfDay } from './time';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -21,21 +20,6 @@ export function formatAgo(ms: number): string {
   if (h < 24) return m ? `il y a ${h} h ${pad(m)}` : `il y a ${h} h`;
   const days = Math.floor(h / 24);
   return h % 24 ? `il y a ${days} j ${h % 24} h` : `il y a ${days} j`;
-}
-
-/** Durée arrondie à la minute : « 12 min », « 1 h 05 ». */
-export function formatDuration(ms: number): string {
-  const minutes = Math.round(Math.max(0, ms) / MINUTE);
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${pad(minutes % 60)}`;
-}
-
-/** Chrono : « 07:22 », « 1:02:03 ». */
-export function formatChrono(ms: number): string {
-  const s = Math.floor(Math.max(0, ms) / 1000);
-  const h = Math.floor(s / 3600);
-  const mmss = `${pad(Math.floor((s % 3600) / 60))}:${pad(s % 60)}`;
-  return h ? `${h}:${mmss}` : mmss;
 }
 
 export const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
@@ -66,16 +50,3 @@ export function formatRelativeDay(ts: number, now = Date.now()): string {
   if (day === addDays(today, -1)) return 'hier';
   return new Date(ts).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
 }
-
-export const sideName = (side: Side): string => (side === 'L' ? 'gauche' : 'droit');
-export const sideLetter = (side: Side): string => (side === 'L' ? 'G' : 'D');
-
-/** « sein droit », « gauche puis droit » */
-export function formatSides(sides: Side[]): string {
-  if (sides.length === 1) return `sein ${sideName(sides[0])}`;
-  return sides.map(sideName).join(' puis ');
-}
-
-
-export const diaperLabel = (pee: boolean, poop: boolean): string =>
-  pee && poop ? 'Pipi + caca' : poop ? 'Caca' : 'Pipi';

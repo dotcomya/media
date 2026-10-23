@@ -1,7 +1,7 @@
-import type { AppEvent } from '../model';
+import { TAGS, TAG_LABELS, type Entry } from '../model';
 import { formatClock } from './format';
 
-const HEADER = ['date', 'heure', 'type', 'seins', 'gauche_min', 'droit_min', 'total_min', 'biberon_ml', 'pipi', 'caca', 'id', 'cree_le', 'modifie_le'];
+const HEADER = ['date', 'heure', ...TAGS.map((tag) => TAG_LABELS[tag].toLowerCase()), 'id', 'cree_le', 'modifie_le'];
 
 const pad = (n: number): string => String(n).padStart(2, '0');
 const isoDate = (ts: number): string => {
@@ -9,37 +9,21 @@ const isoDate = (ts: number): string => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 const localDateTime = (ts: number): string => `${isoDate(ts)} ${formatClock(ts)}:${pad(new Date(ts).getSeconds())}`;
-// Virgule décimale : le CSV s'ouvre directement dans un tableur réglé en français.
-const minutes = (ms: number): string => (ms / 60_000).toFixed(1).replace('.', ',');
-const yes = (b: boolean): string => (b ? 'oui' : '');
 
-function cell(value: string | number): string {
-  const s = String(value);
-  return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function row(e: AppEvent): (string | number)[] {
-  const common = [isoDate(e.at), formatClock(e.at)];
-  const meta = [e.id, localDateTime(e.createdAt), localDateTime(e.updatedAt)];
-  switch (e.type) {
-    case 'breast': {
-      const sides = e.sides.map((s) => (s === 'L' ? 'G' : 'D')).join(' puis ');
-      // Tétée oubliée sans durée : cellules vides plutôt que « 0 ».
-      const durations = e.durationMs === 0 ? ['', '', ''] : [minutes(e.leftMs), minutes(e.rightMs), minutes(e.durationMs)];
-      return [...common, 'tétée', sides, ...durations, '', '', '', ...meta];
-    }
-    case 'bottle':
-      return [...common, 'biberon', '', '', '', '', e.ml, '', '', ...meta];
-    case 'diaper':
-      return [...common, 'couche', '', '', '', '', '', yes(e.pee), yes(e.poop), ...meta];
-  }
-}
-
-/** CSV séparé par des points-virgules, avec BOM UTF-8 pour Excel. */
-export function toCsv(events: AppEvent[]): string {
-  const rows = events
+/** CSV séparé par des points-virgules, avec BOM UTF-8 : s'ouvre directement dans Excel en français. */
+export function toCsv(entries: Entry[]): string {
+  const rows = entries
     .filter((e) => e.deletedAt === null)
     .sort((a, b) => a.at - b.at)
-    .map((e) => row(e).map(cell).join(';'));
+    .map((e) =>
+      [
+        isoDate(e.at),
+        formatClock(e.at),
+        ...TAGS.map((tag) => (e.tags.includes(tag) ? 'oui' : '')),
+        e.id,
+        localDateTime(e.createdAt),
+        localDateTime(e.updatedAt),
+      ].join(';'),
+    );
   return '﻿' + [HEADER.join(';'), ...rows].join('\r\n') + '\r\n';
 }

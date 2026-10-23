@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { allEvents } from '../db';
+import { allEntries } from '../db';
 import { toCsv } from '../lib/csv';
 import { shareFile } from '../lib/share';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
@@ -8,7 +8,7 @@ import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 
 async function exportCsv(): Promise<void> {
-  const csv = toCsv(await allEvents());
+  const csv = toCsv(await allEntries());
   const date = new Date().toISOString().slice(0, 10);
   const file = new File([csv], `veilleuse-${date}.csv`, { type: 'text/csv' });
   const result = await shareFile(file);
@@ -16,7 +16,7 @@ async function exportCsv(): Promise<void> {
 }
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const { settings, events, persisted } = useAppState();
+  const { settings, entries, persisted } = useAppState();
   const [theme, setThemeState] = useState(getTheme);
   const chooseTheme = (value: Theme) => {
     setTheme(value);
@@ -61,7 +61,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           Exporter tout en CSV
         </button>
         <p class="hint">
-          {events.length} entrée{events.length > 1 ? 's' : ''}, gardée{events.length > 1 ? 's' : ''} sur ce téléphone uniquement.{' '}
+          {entries.length} entrée{entries.length > 1 ? 's' : ''}, gardée{entries.length > 1 ? 's' : ''} sur ce téléphone uniquement.{' '}
           {persisted
             ? 'Stockage protégé : le navigateur ne l’effacera pas pour faire de la place.'
             : 'Installez l’app sur l’écran d’accueil pour protéger ce stockage.'}

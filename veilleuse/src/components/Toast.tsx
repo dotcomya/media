@@ -1,7 +1,7 @@
 import { undoToast, useAppState } from '../store';
 import { Icon } from './Icon';
 
-/** Emplacement du toast « Enregistré · Annuler », placé par chaque écran juste au-dessus de ses boutons. */
+/** Toast « Ajouté à 03:12 · Annuler », affiché juste au-dessus de la zone de saisie. */
 export function ToastSlot() {
   const { toast } = useAppState();
   if (!toast) return null;

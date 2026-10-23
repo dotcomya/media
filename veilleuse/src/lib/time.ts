@@ -1,5 +1,6 @@
 export const MINUTE = 60_000;
 export const HOUR = 60 * MINUTE;
+export const DAY = 24 * HOUR;
 
 /** Minuit (heure locale) du jour contenant `ts`. */
 export function startOfDay(ts: number): number {
