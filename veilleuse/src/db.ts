@@ -6,7 +6,9 @@ interface Schema extends DBSchema {
   kv: { key: string; value: unknown };
 }
 
-const dbPromise = openDB<Schema>('veilleuse', 2, {
+// Ouverte au premier accès seulement (l'aperçu de démonstration n'y touche jamais).
+let dbPromise: ReturnType<typeof openDB<Schema>> | undefined;
+const getDb = () => (dbPromise ??= openDB<Schema>('veilleuse', 2, {
   async upgrade(db, oldVersion, _newVersion, tx) {
     if (oldVersion < 1) {
       const events = db.createObjectStore('events', { keyPath: 'id' });
@@ -32,7 +34,7 @@ const dbPromise = openDB<Schema>('veilleuse', 2, {
       await kv.delete('activeFeed');
     }
   },
-});
+}));
 
 export interface Snapshot {
   entries: Entry[];
@@ -41,7 +43,7 @@ export interface Snapshot {
 
 /** Charge tout : quelques milliers de saisies au plus, cela tient sans peine en mémoire. */
 export async function loadAll(): Promise<Snapshot> {
-  const db = await dbPromise;
+  const db = await getDb();
   const [entries, settings] = await Promise.all([db.getAllFromIndex('events', 'at'), db.get('kv', 'settings')]);
   return {
     entries: entries.filter((e) => e.deletedAt === null),
@@ -51,16 +53,16 @@ export async function loadAll(): Promise<Snapshot> {
 
 /** Écrit une saisie (création, modification ou suppression logique). */
 export async function putEntry(entry: Entry): Promise<void> {
-  await (await dbPromise).put('events', entry);
+  await (await getDb()).put('events', entry);
 }
 
 /** Toutes les saisies, y compris supprimées : pour l'export. */
 export async function allEntries(): Promise<Entry[]> {
-  return (await dbPromise).getAllFromIndex('events', 'at');
+  return (await getDb()).getAllFromIndex('events', 'at');
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
-  await (await dbPromise).put('kv', settings, 'settings');
+  await (await getDb()).put('kv', settings, 'settings');
 }
 
 /** Demande au navigateur de ne pas effacer les données en cas de manque d'espace. */

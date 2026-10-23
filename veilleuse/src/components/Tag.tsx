@@ -16,8 +16,8 @@ interface ButtonProps {
   onClick: () => void;
   /** Petite ligne sous le libellé, ex. « il y a 2 h 10 ». */
   sub?: string;
-  /** Forme : carte (emoji à gauche), case (emoji au-dessus) ou rond. */
-  shape?: 'card' | 'cell' | 'round';
+  /** Forme : carte (emoji à gauche) ou case (emoji au-dessus). */
+  shape?: 'card' | 'cell';
 }
 
 /** Étiquette à cocher : on coche ce qui s'est passé, puis on valide. */

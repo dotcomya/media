@@ -1,7 +1,8 @@
 import { useState } from 'preact/hooks';
 import { allEntries } from '../db';
 import { toCsv } from '../lib/csv';
-import { shareFile } from '../lib/share';
+import { daySummaryText, shareFile, shareText } from '../lib/share';
+import { startOfDay } from '../lib/time';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { showToast, updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
@@ -13,6 +14,11 @@ async function exportCsv(): Promise<void> {
   const file = new File([csv], `veilleuse-${date}.csv`, { type: 'text/csv' });
   const result = await shareFile(file);
   if (result === 'downloaded') showToast('Fichier CSV téléchargé');
+}
+
+async function shareToday(entries: Parameters<typeof daySummaryText>[0], babyName: string): Promise<void> {
+  const result = await shareText('Résumé de la journée', daySummaryText(entries, startOfDay(Date.now()), babyName));
+  if (result === 'copied') showToast('Résumé copié, prêt à coller');
 }
 
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
@@ -52,6 +58,14 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
       <div class="field">
         <span class="field-label">Données</span>
+        <button
+          type="button"
+          class="action"
+          onClick={() => shareToday(entries, settings.babyName.trim()).catch(() => showToast('Partage indisponible'))}
+        >
+          <Icon name="share" />
+          Partager le résumé d'aujourd'hui
+        </button>
         <button
           type="button"
           class="action"

@@ -47,14 +47,20 @@ function serviceWorker(): Plugin {
   };
 }
 
-export default defineConfig({
+// Mode « apercu » (npm run build:apercu) : un seul fichier HTML avec des données
+// d'exemple, pour prévisualiser une version sans la publier. Ni service worker, ni découpage.
+export default defineConfig(({ mode }) => ({
   base: './',
   oxc: { jsx: { runtime: 'automatic', importSource: 'preact' } },
-  plugins: [serviceWorker()],
-  build: { target: 'es2020' },
+  plugins: mode === 'apercu' ? [] : [serviceWorker()],
+  build: {
+    target: 'es2020',
+    outDir: mode === 'apercu' ? 'dist-apercu' : 'dist',
+    rollupOptions: mode === 'apercu' ? { output: { inlineDynamicImports: true } } : {},
+  },
   test: {
     environment: 'node',
     // Les tests de bornes de journée supposent le fuseau de Paris (changement d'heure inclus).
     env: { TZ: 'Europe/Paris' },
   },
-});
+}));

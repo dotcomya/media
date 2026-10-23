@@ -21,15 +21,28 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Cache d'abord : l'app entière est préchargée, elle s'ouvre donc en mode avion.
-// Une nouvelle version est installée en arrière-plan et prise au lancement suivant.
+// Page : réseau d'abord, pour qu'une nouvelle version s'affiche dès l'ouverture.
+// Hors ligne, ou si le réseau ne répond pas en 3 s, on sert la copie préchargée.
+const NETWORK_TIMEOUT_MS = 3000;
+
+function fromNetwork(request) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(reject, NETWORK_TIMEOUT_MS);
+    fetch(request).then((response) => {
+      clearTimeout(timer);
+      response.ok ? resolve(response) : reject(response);
+    }, reject);
+  });
+}
+
+// Le reste (scripts, styles, icônes, aux noms versionnés) : cache d'abord.
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
     const shell = new URL('./', self.location).href;
-    event.respondWith(caches.match(shell).then((cached) => cached || fetch(request)));
+    event.respondWith(fromNetwork(request).catch(() => caches.match(shell).then((cached) => cached || fetch(request))));
     return;
   }
   event.respondWith(caches.match(request, { ignoreSearch: true }).then((cached) => cached || fetch(request)));

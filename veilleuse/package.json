@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "build:apercu": "vite build --mode apercu && node scripts/apercu.mjs"
   },
   "dependencies": {
     "idb": "^8.0.4",

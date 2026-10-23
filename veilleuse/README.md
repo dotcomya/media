@@ -1,39 +1,27 @@
 # Veilleuse
 
 PWA de suivi d'un nouveau-né, pensée pour une maman épuisée, la nuit, d'une
-seule main. Une seule page, centrée sur la journée : ce qui s'est passé
-aujourd'hui, et quatre étiquettes à cocher (Tétée, Biberon, Pipi, Caca). Aucun
-compte, aucun serveur, tout reste sur le téléphone et fonctionne en mode avion.
+seule main. Une seule page, très simple : **une ligne = un moment avec bébé**
+(l'heure, puis 🤱 tétée, 🍼 biberon, 💧 pipi, 💩 caca), et à côté de chaque
+ligne, **l'heure du prochain repas**. Aucun compte, aucun serveur, tout reste
+sur le téléphone et fonctionne en mode avion.
 
 **En ligne : https://dotcomya.github.io/media/** (GitHub Pages, branche `gh-pages`).
 
-### Trois propositions de design, à comparer
-
-Un sélecteur en haut de l'app permet de passer de l'une à l'autre avec ses
-vraies données ; chacune a aussi son lien direct.
-
-| [1 · Tableau](https://dotcomya.github.io/media/#1) | [2 · Fil](https://dotcomya.github.io/media/#2) | [3 · Cadran](https://dotcomya.github.io/media/#3) |
-|---|---|---|
-| ![Proposition 1 : tableau](docs/proposition-1.png) | ![Proposition 2 : fil du temps](docs/proposition-2.png) | ![Proposition 3 : cadran](docs/proposition-3.png) |
-| Carnet de suivi : une colonne par emoji, totaux du jour en tête, cases à cocher alignées sous les mêmes colonnes. | Fil du temps : l'heure à gauche, les emojis toujours à la même place, la prochaine tétée en tête du fil. | La prochaine tétée en grand, avec un anneau qui se remplit pendant les 2 h 30 ; la journée en liste sobre. |
+![Une ligne par moment, et l'heure du prochain repas à droite](docs/journee.png)
 
 ## Ce que fait l'app
 
-- **Une page = un jour.** En haut, le jour affiché (« Aujourd'hui · vendredi
-  23 octobre ») et le bandeau des jours : un appui sur une date, ou un balayage
-  sur la liste, pour passer aux jours précédents. Un point sous la date indique
-  qu'il y a des saisies ce jour-là.
-- **Prochaine tétée** : heure du dernier repas (tétée 🤱 ou biberon 🍼) + 2 h 30,
-  affichée en clair (« vers 18:05 · dans 1 h 12 »), en rouge en cas de retard.
-- **Résumé du jour** : nombre de 🤱 tétées, 🍼 biberons, 💧 pipis, 💩 cacas.
-- **Liste du jour**, de la plus récente à la plus ancienne : l'heure dans la
-  colonne de gauche, puis les emojis, chacun toujours à la même position.
-  La page ne défile pas ; au-delà d'environ 15 saisies dans la journée, seule la
-  liste défile.
-- **Saisir** (aujourd'hui, en bas de l'écran) : on coche ce qui vient de se
-  passer, puis **Valider** crée une saisie horodatée. Pipi et caca en même
-  temps : on coche les deux. Chaque étiquette rappelle la dernière fois
-  (« il y a 2 h 10 »).
+- **Une page = un jour** : « Aujourd'hui · vendredi 23 octobre », et le bandeau
+  des jours pour passer aux jours précédents (ou un balayage sur la liste).
+- **La liste du jour**, en trois colonnes : **Heure**, **Quoi** (les emojis,
+  chacun toujours à la même place), **Prochain repas**.
+- **Prochain repas** = dernière tétée ou dernier biberon jusqu'à cette ligne
+  + 2 h 30. La ligne la plus récente est mise en avant avec « dans 1 h 10 », en
+  rouge si l'heure est passée.
+- **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
+  ensemble : on coche les deux), puis **Valider** ajoute la ligne à l'heure
+  actuelle.
 
 | Action | Pressions |
 |---|---|
@@ -46,10 +34,9 @@ vraies données ; chacune a aussi son lien direct.
   « −15 min », « −30 min », « −1 h », cumulables), avec la roue native du
   téléphone en dernier recours (« Choisir… »). Un oubli se saisit maintenant,
   puis on recule l'heure.
-- **Partager** (en haut) : résumé texte du jour affiché, via la feuille de
-  partage du téléphone, pour le pédiatre ou la sage-femme. Export CSV de toutes
-  les données dans Réglages (séparateur `;`, s'ouvre directement dans Excel en
-  français).
+- **Réglages** : partager le résumé d'aujourd'hui (pour le pédiatre ou la
+  sage-femme), export CSV de toutes les données (séparateur `;`, s'ouvre
+  directement dans Excel en français), prénom, thème.
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
   facultatif ; vibration à chaque saisie sur Android (Safari iOS ne la gère pas).
 
@@ -64,7 +51,11 @@ npm run dev        # serveur de développement : http://localhost:5173
 npm test           # tests unitaires (résumé, prochaine tétée, conversion des données, formats)
 npm run build      # vérification TypeScript + build de production dans dist/
 npm run preview    # sert dist/ : http://localhost:4173 (service worker actif)
+npm run build:apercu  # aperçu autonome (données d'exemple) : dist-apercu/veilleuse-apercu.html
 ```
+
+`build:apercu` produit un seul fichier HTML, sans stockage ni service worker,
+pour montrer une version avant de la publier (par exemple en artefact Claude).
 
 Le service worker n'est enregistré qu'en production : testez le mode hors
 ligne avec `npm run build && npm run preview`.
@@ -186,20 +177,20 @@ veilleuse/
     ├── model.ts            saisie, étiquettes, conversion des anciennes données (+ model.test.ts)
     ├── db.ts               accès IndexedDB et migration
     ├── store.ts            état de l'app et actions (ajouter, annuler, corriger…)
-    ├── useDay.ts           jour affiché, navigation, résumé : commun aux 3 pages
+    ├── useDay.ts           jour affiché et navigation entre les jours
+    ├── demo.ts             données d'exemple de l'aperçu
     ├── hooks.ts            useNow : horloge rafraîchie
     ├── styles.css
     ├── lib/
-    │   ├── summary.ts      résumé du jour, prochaine tétée, écarts (+ summary.test.ts)
+    │   ├── summary.ts      résumé du jour, prochain repas ligne par ligne (+ summary.test.ts)
     │   ├── format.ts       formats FR, 24 h                (+ format.test.ts)
     │   ├── time.ts         bornes de journée (changement d'heure inclus)
     │   ├── csv.ts, share.ts, theme.ts, haptics.ts
     └── components/
-        ├── App.tsx         sélecteur des trois propositions
-        ├── TablePage.tsx, ThreadPage.tsx, DialPage.tsx   propositions 1, 2, 3
-        ├── NextFeed.tsx    prochaine tétée (dernier repas + 2 h 30)
+        ├── App.tsx, DayPage.tsx   la page du jour : Heure | Quoi | Prochain repas
+        ├── DemoBanner.tsx  bandeau de l'aperçu privé
         ├── DayStrip.tsx    bandeau des jours
-        ├── Composer.tsx    étiquettes à cocher + Valider (3 dispositions)
+        ├── Composer.tsx    les 4 cases à cocher + Valider
         ├── EntrySheet.tsx  corriger ou supprimer une saisie
         ├── SettingsSheet.tsx, TimeChips, Tag, Sheet, Toast, Icon
 ```
@@ -210,8 +201,9 @@ veilleuse/
   d'exécution : `preact` et `idb`. Bundle complet : environ 14 ko compressé.
 - **Service worker sans Workbox** : un petit plugin Vite (`vite.config.ts`)
   injecte la liste des fichiers à précharger et une version calculée à partir
-  de leur contenu. Stratégie « cache d'abord » : l'app s'ouvre instantanément
-  et hors ligne.
+  de leur contenu. La page est chargée depuis le réseau d'abord (une nouvelle
+  version s'affiche dès l'ouverture, et au retour dans l'app), avec repli sur la
+  copie locale hors ligne ; le reste est servi depuis le cache.
 - **Pas de flash blanc** : fond sombre posé dans `index.html` avant tout
   chargement, `background_color` du manifeste et écrans de lancement iOS
   sombres pour les iPhone récents.
@@ -221,17 +213,17 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 18 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
-  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochaine
-  tétée (dernier repas + 2 h 30), écart entre repas, conversion des données de
-  la première version, formats.
-- Scénarios de bout en bout dans Chromium (Playwright, émulation mobile), sur
-  chacune des trois propositions : cocher puis valider, prochaine tétée
-  affichée à la bonne heure, retard signalé, annulation, changement de jour,
-  correction ; plus conversion d'une base de la première version,
-  fonctionnement hors ligne, données conservées après fermeture du navigateur.
+- 17 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochain
+  repas ligne par ligne (y compris d'un jour à l'autre), conversion des données
+  de la première version, formats.
+- Scénario de bout en bout dans Chromium (Playwright, émulation mobile) :
+  cocher puis valider, prochain repas affiché à la bonne heure sur chaque ligne,
+  annulation, changement de jour, correction, conversion d'une base de la
+  première version, fonctionnement hors ligne, données conservées après
+  fermeture du navigateur.
 - Rendu contrôlé en **390 × 844** et **360 × 740** : la page ne défile pas ;
-  une journée complète (11 saisies) tient entière à l'écran.
+  une journée complète (12 lignes) tient entière à l'écran.
 
 Ces vérifications ont été faites sur un Chromium émulé, pas sur un iPhone ou
 un téléphone Android physique : un essai réel (installation, mode avion,

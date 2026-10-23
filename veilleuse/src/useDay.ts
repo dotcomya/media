@@ -1,14 +1,13 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useNow } from './hooks';
 import { formatDate, formatDayTitle } from './lib/format';
-import { daySummaryText, shareText } from './lib/share';
-import { entriesOfDay, nextFeed, summarizeDay } from './lib/summary';
+import { entriesOfDay } from './lib/summary';
 import { DAY, addDays, startOfDay } from './lib/time';
-import { showToast, useAppState } from './store';
+import { useAppState } from './store';
 
 const SWIPE_PX = 60;
 
-/** Tout ce dont une page « jour » a besoin : jour affiché, navigation, saisies, prochaine tétée. */
+/** Tout ce dont la page du jour a besoin : jour affiché, navigation entre les jours, saisies. */
 export function useDay() {
   const { entries, settings } = useAppState();
   const now = useNow(15_000);
@@ -18,8 +17,6 @@ export function useDay() {
   const today = startOfDay(now);
   const day = addDays(today, offset);
   const list = useMemo(() => entriesOfDay(entries, day), [entries, day]);
-  const summary = useMemo(() => summarizeDay(entries, day), [entries, day]);
-  const next = useMemo(() => nextFeed(entries), [entries]);
   const { oldest, marked } = useMemo(() => {
     const marked = new Set<number>();
     let oldest = today;
@@ -49,15 +46,6 @@ export function useDay() {
     },
   };
 
-  const share = async () => {
-    try {
-      const result = await shareText('Résumé de la journée', daySummaryText(entries, day, settings.babyName.trim()));
-      if (result === 'copied') showToast('Résumé copié, prêt à coller');
-    } catch {
-      showToast('Partage indisponible sur ce navigateur');
-    }
-  };
-
   return {
     entries,
     now,
@@ -65,10 +53,7 @@ export function useDay() {
     isToday: offset === 0,
     backToToday: () => setOffset(0),
     list,
-    summary,
-    next,
     swipe,
-    share,
     title: formatDayTitle(day, now),
     // « Aujourd'hui » et « Hier » gagnent la date en sous-titre ; les autres jours l'ont déjà dans le titre.
     subtitle: [offset > -2 ? formatDate(day) : '', settings.babyName.trim()].filter(Boolean).join(' · '),

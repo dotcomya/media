@@ -24,6 +24,8 @@ interface State {
 }
 
 let state: State = { ready: false, entries: [], settings: DEFAULT_SETTINGS, toast: null, persisted: null };
+/** Aperçu de démonstration : données d'exemple en mémoire, rien n'est enregistré. */
+let demo = false;
 const listeners = new Set<() => void>();
 
 function setState(patch: Partial<State>): void {
@@ -56,8 +58,15 @@ export async function init(): Promise<void> {
   setState({ persisted: await db.requestPersistence().catch(() => false) });
 }
 
-function persist(write: Promise<unknown>): void {
-  write.catch((error) => {
+/** Lance l'app sur des données d'exemple, sans rien lire ni écrire sur le téléphone. */
+export function initDemo(entries: Entry[], settings: Settings): void {
+  demo = true;
+  setState({ entries, settings, ready: true });
+}
+
+function persist(write: () => Promise<unknown>): void {
+  if (demo) return;
+  write().catch((error) => {
     console.error(error);
     showToast("Échec de l'enregistrement sur le téléphone");
   });
@@ -90,7 +99,7 @@ export function undoToast(): void {
 function upsert(entry: Entry): void {
   const others = state.entries.filter((e) => e.id !== entry.id);
   setState({ entries: entry.deletedAt === null ? [...others, entry] : others });
-  persist(db.putEntry(entry));
+  persist(() => db.putEntry(entry));
 }
 
 function softDelete(entry: Entry): void {
@@ -123,5 +132,5 @@ export function deleteEntry(entry: Entry): void {
 export function updateSettings(patch: Partial<Settings>): void {
   const settings = { ...state.settings, ...patch };
   setState({ settings });
-  persist(db.saveSettings(settings));
+  persist(() => db.saveSettings(settings));
 }
