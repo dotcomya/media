@@ -67,11 +67,19 @@ par repas finirait en dizaines d'alarmes mortes dans Horloge chaque semaine ;
 le minuteur, lui, sonne puis disparaît. Si un nouveau repas est saisi avant
 que l'ancien minuteur ait sonné, il faut arrêter l'ancien (écran verrouillé).
 
-Le raccourci se crée une fois (le guide s'affiche au premier réveil) :
+Le raccourci se crée une fois. Au premier réveil, un guide en 6 étapes montre
+chaque écran de Raccourcis et entoure l'endroit à toucher ; il reprend à la même
+étape si on fait des allers-retours entre les deux apps :
 
-1. App Raccourcis → **+** ; nommer le raccourci exactement **Réveil tétée**.
-2. Action **Démarrer le minuteur** (chercher « minuteur »).
-3. Durée : variable **Entrée du raccourci**, unité **minutes**.
+1. Ouvrir Raccourcis (bouton du guide) → **+** en haut à droite.
+2. **Nouveau raccourci** → **Renommer** → coller **Réveil tétée** (bouton
+   « Copier le nom »), puis OK.
+3. Barre de recherche en bas → « minuteur » → **Lancer un minuteur**.
+4. Toucher **Durée**, ne pas taper de chiffre : dans la barre au-dessus du
+   clavier, glisser vers la gauche → **Entrée du raccourci**. Unité : minute.
+   (À défaut, taper 150 : le minuteur fera toujours 2 h 30.)
+5. Vérifier, puis **‹** en haut à gauche pour enregistrer.
+6. **Essayer** : un minuteur d'1 minute doit démarrer et sonner.
 
 Le bouton n'apparaît que si le prochain repas est à venir. Non encore vérifié
 sur un iPhone réel : faire un essai de jour avant de s'y fier la nuit.

@@ -825,18 +825,307 @@ a.action {
   text-transform: uppercase;
 }
 
-.steps {
+/* --- Guide du raccourci, étape par étape ---------------------------------- */
+
+.guide-progress {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 0 0 14px;
-  padding-left: 22px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.guide-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.guide-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.guide-dots i.on {
+  background: var(--accent);
+}
+
+.guide-title {
+  margin: 0 0 8px;
+  font-family: var(--font-round);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.guide-text {
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.guide-tip {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
   line-height: 1.35;
 }
 
-.steps li::marker {
-  color: var(--accent);
+.guide-tip strong {
+  color: var(--text);
+}
+
+.guide-intro {
+  margin-bottom: 10px;
+}
+
+.guide-btn {
+  width: 100%;
+  margin: 0 0 10px;
+}
+
+.action-stack {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.1;
+}
+
+.action-stack small {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+/* Dessins de l'app Raccourcis : toujours en clair, comme sur l'iPhone. */
+.ios {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px;
+  border-radius: 16px;
+  background: #f2f2f7;
+  color: #000;
+  font: 500 13px/1.25 -apple-system, system-ui, sans-serif;
+  --tap: #e2703f;
+}
+
+.ios-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ios-bar-center {
+  justify-content: center;
+}
+
+.ios-big {
+  font-size: 20px;
   font-weight: 800;
+}
+
+.ios-title {
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.ios-round {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.ios-plus {
+  color: #007aff;
+}
+
+.ios-spacer {
+  width: 30px;
+}
+
+.ios-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ios-tiles span {
+  height: 34px;
+  border-radius: 10px;
+  background: #d8d8de;
+}
+
+.ios-menu {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  min-width: 70%;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ios-menu span {
+  padding: 6px 12px;
+  border-radius: 10px;
+}
+
+.ios-menu span + span {
+  border-top: 1px solid #e5e5ea;
+  color: #8e8e93;
+}
+
+.ios-search {
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: #e3e3e8;
+}
+
+.ios-card {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ios-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ios-params {
+  margin-top: 6px;
+  gap: 6px;
+}
+
+.ios-clock {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border: 1.5px solid #c7c7cc;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 25%, #fff 25% 100%), #f2a33a;
+}
+
+.ios-chip {
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: #e9e9ee;
+  color: #8e8e93;
+  font-size: 14px;
+}
+
+.ios-token {
+  background: rgba(0, 122, 255, 0.12);
+  color: #007aff;
+}
+
+.ios-varbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  overflow: hidden;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.ios-varbar span {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.ios-varbar span + span {
+  border-left: 1px solid #e5e5ea;
+}
+
+.ios-swipe {
+  margin: -2px 0 0;
+  color: var(--tap);
+  font-size: 12px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.ios-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.ios-keys span {
+  padding: 4px 0;
+  border-radius: 6px;
+  background: #fff;
+  color: #8e8e93;
+  text-align: center;
+}
+
+.ios-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: center;
+  width: 80%;
+  padding: 12px 12px 8px;
+  border-radius: 14px;
+  background: #fff;
+  text-align: center;
+}
+
+.ios-alert-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  color: #007aff;
+}
+
+.ios-alert-actions span {
+  padding: 5px 0;
+  border-radius: 8px;
+}
+
+/* Numéro de l'endroit à toucher, dans le dessin comme dans le texte. */
+.n {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #e2703f;
+  color: #fff;
+  font: 800 11px/1 system-ui, sans-serif;
+  vertical-align: 2px;
+}
+
+/* L'endroit à toucher : entouré, avec une pulsation douce. */
+.tap {
+  outline: 3px solid var(--tap);
+  outline-offset: 2px;
+  animation: tap 1.6s ease-in-out infinite;
+}
+
+@keyframes tap {
+  50% {
+    box-shadow: 0 0 0 7px rgba(226, 112, 63, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap {
+    animation: none;
+  }
 }
 
 .field .hint {
