@@ -32,9 +32,23 @@ export interface Settings {
   autoAlarm: boolean;
   /** Volume proposé par défaut pour le prochain biberon. */
   lastBottleMl: number;
+  /** Temps entre deux repas, en minutes : sert à afficher le prochain repas et à régler le réveil. */
+  feedIntervalMin: number;
+  /** Fin du dernier minuteur lancé depuis ce téléphone (l'app ne peut pas l'arrêter elle-même). */
+  timerUntil: number | null;
 }
 
-export const DEFAULT_SETTINGS: Settings = { babyName: '', alarmReady: false, autoAlarm: true, lastBottleMl: 90 };
+export const DEFAULT_SETTINGS: Settings = {
+  babyName: '',
+  alarmReady: false,
+  autoAlarm: true,
+  lastBottleMl: 90,
+  feedIntervalMin: 150,
+  timerUntil: null,
+};
+
+/** Choix proposés pour le temps entre deux repas, en minutes. */
+export const FEED_INTERVALS_MIN = [120, 150, 180, 210, 240];
 
 /** Curseur du volume d'un biberon, en ml. */
 export const BOTTLE_ML = { min: 10, max: 250, step: 10 };

@@ -16,12 +16,19 @@ Le code vit dans le dossier `veilleuse/` (ancien nom de travail).
 
 ## Ce que fait l'app
 
-- **Une page = un jour** : « Aujourd'hui · vendredi 23 octobre », et le bandeau
-  des jours pour passer aux jours précédents (ou un balayage sur la liste).
+- **En-tête** : le logo et « nous3 », la pastille ⏰ du prochain réveil, et
+  Réglages en petite icône (point vert quand le partage fonctionne, jaune si le
+  serveur est injoignable).
+- **Une page = un jour** : « Aujourd'hui » et son **bilan** d'un coup d'œil
+  (🤱 4 🍼 2 210 ml 💧 5 💩 2), puis le bandeau des jours pour passer aux jours
+  précédents (ou un balayage sur la liste). Toucher le bilan ouvre les
+  **7 derniers jours** : moyennes par jour (repas, lait, pipis, cacas), temps
+  moyen et plus longue pause entre deux repas, détail jour par jour avec une
+  fine barre par colonne, et « Envoyer au pédiatre » (texte prêt à envoyer).
 - **La liste du jour**, en trois colonnes : **Heure**, **Quoi** (les emojis,
   chacun toujours à la même place), **Prochain repas**.
 - **Prochain repas** = dernière tétée ou dernier biberon jusqu'à cette ligne
-  + 2 h 30. La ligne la plus récente est mise en avant avec « dans 1 h 10 », en
+  + 2 h 30 par défaut (2 h à 4 h, réglable dans Réglages, sur chaque téléphone). La ligne la plus récente est mise en avant avec « dans 1 h 10 », en
   rouge si l'heure est passée.
 - **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
   ensemble : on coche les deux), puis **Valider**. **Biberon** : un curseur de
@@ -30,8 +37,10 @@ Le code vit dans le dossier `veilleuse/` (ancien nom de travail).
   « Maintenant » ; en cas de saisie en retard, on le touche pour choisir l'heure.
 - **⏰ Réveil, systématique** : chaque tétée ou biberon validé lance un minuteur
   iPhone jusqu'au prochain repas. Le bouton « ⏰ Réveil 21:06 » en haut le lance
-  aussi à la main ; on peut couper le réveil automatique dans Réglages. Voir
-  ci-dessous.
+  aussi à la main ; on peut couper le réveil automatique dans Réglages. Si un
+  minuteur lancé plus tôt tourne encore (bébé a mangé avant l'heure), l'app le
+  signale avant d'en lancer un autre et montre comment l'arrêter : l'iPhone ne
+  permet pas à une app d'arrêter un minuteur. Voir ci-dessous.
 - **Partage maman / papa** : un code commun, et les deux téléphones voient et
   complètent les mêmes lignes. Voir « Synchronisation » ci-dessous.
 
@@ -301,9 +310,10 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 25 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
-  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), prochain
-  repas ligne par ligne (y compris d'un jour à l'autre), conversion des données
+- 31 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+  saisies supprimées, jour de 25 h du passage à l'heure d'hiver), bilan du jour
+  et des 7 jours (moyennes, pauses entre repas), prochain repas ligne par ligne
+  (y compris d'un jour à l'autre, intervalle réglable), conversion des données
   de la première version (volume du biberon compris), lien du raccourci
   d'alarme, fusion entre téléphones, code famille, formats.
 - Synchronisation testée avec deux téléphones simulés et un faux serveur

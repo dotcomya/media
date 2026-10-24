@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useNow } from './hooks';
-import { formatDate, formatDayTitle } from './lib/format';
+import { formatDayTitle } from './lib/format';
 import { entriesOfDay } from './lib/summary';
 import { DAY, addDays, startOfDay } from './lib/time';
 import { useAppState } from './store';
@@ -9,7 +9,7 @@ const SWIPE_PX = 60;
 
 /** Tout ce dont la page du jour a besoin : jour affiché, navigation entre les jours, saisies. */
 export function useDay() {
-  const { entries, settings } = useAppState();
+  const { entries } = useAppState();
   const now = useNow(15_000);
   // Décalage en jours par rapport à aujourd'hui : reste juste si l'app reste ouverte après minuit.
   const [offset, setOffset] = useState(0);
@@ -55,8 +55,6 @@ export function useDay() {
     list,
     swipe,
     title: formatDayTitle(day, now),
-    // « Aujourd'hui » et « Hier » gagnent la date en sous-titre ; les autres jours l'ont déjà dans le titre.
-    subtitle: [offset > -2 ? formatDate(day) : '', settings.babyName.trim()].filter(Boolean).join(' · '),
     strip: {
       today,
       selected: day,

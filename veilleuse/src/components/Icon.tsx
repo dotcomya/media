@@ -20,6 +20,7 @@ const PATHS = {
   ),
   next: <path d="m9 5 7 7-7 7" />,
   back: <path d="m15 5-7 7 7 7" />,
+  chart: <path d="M5 20v-8M12 20V5M19 20v-5" />,
   copy: (
     <>
       <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5" />

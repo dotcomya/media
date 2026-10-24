@@ -254,33 +254,82 @@ button:disabled {
   border-radius: 50%;
 }
 
+/* Partage avec l'autre parent : point vert s'il fonctionne, jaune si le serveur est injoignable. */
+.head-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-sage);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.head-dot.is-warn {
+  background: var(--pee);
+}
+
 a.head-pill,
 a.action {
   text-decoration: none;
 }
 
-/* Le jour affiché, juste au-dessus du bandeau des jours. */
+/* Le jour affiché et son bilan, juste au-dessus du bandeau des jours. */
 .day-title {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px 8px;
   padding: 0 0 8px;
 }
 
 .day-title h1 {
-  flex: none;
   font-family: var(--font-round);
   font-size: 1.1rem;
   font-weight: 800;
 }
 
-.day-sub {
-  overflow: hidden;
+/* Bilan : les quatre compteurs dans l'ordre des colonnes ; un appui ouvre les 7 jours. */
+.bilan {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  margin-right: -6px;
+  padding: 0 4px 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.bilan:active {
+  background: var(--surface);
+}
+
+.bilan-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.bilan-item small {
   color: var(--muted);
-  font-size: 0.85rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.bilan-item.is-zero {
+  opacity: 0.45;
+}
+
+.bilan .icon {
+  color: var(--muted);
 }
 
 /* --- Bandeau des jours ------------------------------------------------- */
@@ -714,6 +763,113 @@ a.action {
   color: var(--danger);
 }
 
+/* --- 7 derniers jours ------------------------------------------------- */
+
+.kpis {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.kpi strong {
+  color: var(--text);
+  font-family: var(--font-round);
+  font-size: 1.35rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-gaps {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(4, 1fr);
+  align-items: center;
+  min-height: 40px;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.week.with-milk .week-row {
+  grid-template-columns: 1.4fr repeat(5, 1fr);
+}
+
+.week-row + .week-row {
+  border-top: 1px solid var(--line);
+}
+
+.week-row > span:not(.week-day) {
+  text-align: center;
+}
+
+.week-head {
+  min-height: 34px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  font-weight: 750;
+}
+
+.week-day small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.week-row.is-empty {
+  color: var(--muted);
+}
+
+.week-cell {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  font-weight: 750;
+}
+
+/* Barre fine, une seule couleur : plus elle est longue, plus il y en a eu ce jour-là. */
+.week-cell i {
+  align-self: flex-start;
+  height: 4px;
+  margin-left: 15%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
 /* --- Toast « Ajouté · Annuler » ---------------------------------------- */
 
 .toast-anchor {
@@ -1125,6 +1281,43 @@ a.action {
   border-radius: 8px;
 }
 
+/* Écran verrouillé : les minuteurs en cours, comme sur l'iPhone. */
+.ios-lock {
+  background: linear-gradient(160deg, #3b3550, #1d1b26);
+}
+
+.ios-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: rgba(20, 20, 24, 0.82);
+  color: #fff;
+}
+
+.ios-live-icon {
+  font-size: 16px;
+}
+
+.ios-live-time {
+  flex: 1;
+  color: #ffa53a;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-live-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 13px;
+}
+
 /* Numéro de l'endroit à toucher, dans le dessin comme dans le texte. */
 .n {
   display: inline-grid;
@@ -1184,6 +1377,14 @@ a.action {
 }
 .cols-3 {
   grid-template-columns: repeat(3, 1fr);
+}
+.cols-5 {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.cols-5 .chip {
+  padding: 4px 2px;
+  font-size: 0.88rem;
 }
 
 .chip {

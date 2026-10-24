@@ -1,9 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { ALARM_SHORTCUT, alarmUrl } from '../lib/alarm';
-import { formatClock } from '../lib/format';
+import { formatClock, formatSpan } from '../lib/format';
 import { MINUTE } from '../lib/time';
-import { updateSettings } from '../store';
+import { updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { N, ScreenDone, ScreenNew, ScreenOpen, ScreenRename, ScreenSearch, ScreenVariable } from './ShortcutScreens';
@@ -43,6 +43,17 @@ function CopyName() {
       <Icon name={copied ? 'check' : 'copy'} size={20} />
       {copied ? 'Nom copié' : `Copier le nom « ${ALARM_SHORTCUT} »`}
     </button>
+  );
+}
+
+/** Repli si la variable reste introuvable : une durée fixe, celle réglée entre deux repas. */
+function FixedDuration() {
+  const { feedIntervalMin } = useAppState().settings;
+  return (
+    <p class="guide-tip">
+      Introuvable ? Tapez <strong>{feedIntervalMin}</strong> à la place : le réveil sonnera{' '}
+      {formatSpan(feedIntervalMin * MINUTE)} après chaque saisie (un peu tard si vous notez un repas en retard).
+    </p>
   );
 }
 
@@ -105,10 +116,7 @@ const STEPS: Step[] = [
           <strong>ne tapez pas de chiffre</strong>. <N n={2} /> Faites glisser la barre juste au-dessus du clavier vers
           la gauche, et touchez <strong>Entrée du raccourci</strong>.
         </p>
-        <p class="guide-tip">
-          Introuvable ? Tapez <strong>150</strong> à la place : le réveil sonnera 2 h 30 après chaque saisie (un peu
-          tard si vous notez un repas en retard).
-        </p>
+        <FixedDuration />
       </>
     ),
   },
@@ -159,7 +167,7 @@ export function AlarmSheet({ at, onClose }: { at: number; onClose: () => void })
   const upcoming = at > Date.now();
 
   const finish = () => {
-    updateSettings({ alarmReady: true });
+    updateSettings(upcoming ? { alarmReady: true, timerUntil: at } : { alarmReady: true });
     saveStep(0);
     onClose();
   };

@@ -1,30 +1,37 @@
 import { useMemo, useState } from 'preact/hooks';
 import { alarmUrl, openAlarm } from '../lib/alarm';
 import { formatClock, formatIn, formatSpan } from '../lib/format';
-import { FEED_INTERVAL_MS, nextFeedByEntry } from '../lib/summary';
+import { dayStats, nextFeedByEntry } from '../lib/summary';
+import { MINUTE } from '../lib/time';
 import { TAGS, isFeed, type Entry } from '../model';
-import { useAppState } from '../store';
+import { updateSettings, useAppState } from '../store';
 import { useDay } from '../useDay';
 import { AlarmSheet } from './AlarmSheet';
+import { DayBilan } from './DayBilan';
 import { Composer } from './Composer';
 import { DayStrip } from './DayStrip';
 import { EntrySheet } from './EntrySheet';
 import { Icon } from './Icon';
 import { LogoMark, Wordmark } from './Logo';
 import { Emoji } from './Tag';
+import { TimerSheet } from './TimerSheet';
 import { ToastSlot } from './Toast';
 
 /**
  * Une ligne = un moment avec bébé : l'heure, ce qui s'est passé, et l'heure du
  * prochain repas à ce moment-là (dernière tétée ou dernier biberon + 2 h 30).
  */
-export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function DayPage({ onOpenSettings, onOpenWeek }: { onOpenSettings: () => void; onOpenWeek: () => void }) {
   const day = useDay();
   const { settings, sync } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
   // Heure pour laquelle afficher le guide de l'alarme (premier réglage), sinon null.
   const [guideAt, setGuideAt] = useState<number | null>(null);
-  const nextById = useMemo(() => nextFeedByEntry(day.entries), [day.entries]);
+  // Un minuteur lancé plus tôt tourne encore : on montre comment l'arrêter avant d'en lancer un autre.
+  const [conflict, setConflict] = useState<{ previous: number; at: number } | null>(null);
+  const interval = settings.feedIntervalMin * MINUTE;
+  const nextById = useMemo(() => nextFeedByEntry(day.entries, interval), [day.entries, interval]);
+  const stats = useMemo(() => dayStats(day.entries, day.day), [day.entries, day.day]);
   // La ligne la plus récente, tous jours confondus : c'est elle qui dit quand nourrir bébé maintenant.
   const latestId = useMemo(
     () => day.entries.reduce<Entry | null>((latest, e) => (!latest || e.at > latest.at ? e : latest), null)?.id,
@@ -34,15 +41,27 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
   const nextAt = latestId ? nextById.get(latestId) : undefined;
   const alarmAt = nextAt !== undefined && nextAt > day.now ? nextAt : undefined;
 
+  // Le minuteur précédent sonnera encore (à une autre heure) : il faudra l'arrêter à la main.
+  const pendingTimer = (at: number): number | null => {
+    const previous = settings.timerUntil;
+    return previous !== null && previous > Date.now() + MINUTE && Math.abs(previous - at) > MINUTE ? previous : null;
+  };
+  const startAlarm = (at: number) => {
+    if (!settings.alarmReady) return setGuideAt(at);
+    const previous = pendingTimer(at);
+    if (previous !== null) return setConflict({ previous, at });
+    openAlarm(at);
+    updateSettings({ timerUntil: at });
+  };
+
   // Après chaque tétée ou biberon : réveil au prochain repas, dans le même appui que « Valider ».
   const onLogged = (entry: Entry) => {
-    const at = entry.at + FEED_INTERVAL_MS;
+    const at = entry.at + interval;
     // Saisie en retard dont le prochain repas est déjà passé : pas de réveil.
     if (!isFeed(entry) || !settings.autoAlarm || at <= Date.now()) return;
-    if (settings.alarmReady) openAlarm(at);
-    else setGuideAt(at);
+    startAlarm(at);
   };
-  const subtitle = [day.subtitle, sync.family ? 'partagé' : ''].filter(Boolean).join(' · ');
+  const syncWarn = sync.status === 'offline' || sync.status === 'error';
 
   return (
     <>
@@ -52,8 +71,14 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           <Wordmark />
         </div>
         {alarmAt !== undefined &&
-          (settings.alarmReady ? (
-            <a class="head-pill head-alarm" href={alarmUrl(alarmAt)} aria-label={`Réveil à ${formatClock(alarmAt)}`}>
+          (settings.alarmReady && pendingTimer(alarmAt) === null ? (
+            // Lien direct : sur iPhone, c'est le plus sûr pour ouvrir Raccourcis.
+            <a
+              class="head-pill head-alarm"
+              href={alarmUrl(alarmAt)}
+              aria-label={`Réveil à ${formatClock(alarmAt)}`}
+              onClick={() => updateSettings({ timerUntil: alarmAt })}
+            >
               <Icon name="alarm" size={17} />
               {formatClock(alarmAt)}
             </a>
@@ -62,7 +87,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
               type="button"
               class="head-pill head-alarm"
               aria-label={`Réveil à ${formatClock(alarmAt)}`}
-              onClick={() => setGuideAt(alarmAt)}
+              onClick={() => startAlarm(alarmAt)}
             >
               <Icon name="alarm" size={17} />
               {formatClock(alarmAt)}
@@ -70,12 +95,14 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
           ))}
         <button type="button" class="head-icon" aria-label="Réglages" onClick={onOpenSettings}>
           <Icon name="settings" size={18} />
+          {/* Partage actif : point vert ; serveur injoignable : point jaune (détail dans Réglages). */}
+          {sync.family && <span class={`head-dot${syncWarn ? ' is-warn' : ''}`} />}
         </button>
       </header>
 
       <div class="day-title">
         <h1>{day.title}</h1>
-        {subtitle && <span class="day-sub">{subtitle}</span>}
+        <DayBilan stats={stats} onOpen={onOpenWeek} />
       </div>
 
       <DayStrip {...day.strip} />
@@ -145,6 +172,7 @@ export function DayPage({ onOpenSettings }: { onOpenSettings: () => void }) {
 
       {editing && <EntrySheet entry={editing} onClose={() => setEditing(null)} />}
       {guideAt !== null && <AlarmSheet at={guideAt} onClose={() => setGuideAt(null)} />}
+      {conflict && <TimerSheet {...conflict} onClose={() => setConflict(null)} />}
     </>
   );
 }

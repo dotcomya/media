@@ -2,7 +2,9 @@ import { useState } from 'preact/hooks';
 import { allEntries } from '../db';
 import { toCsv } from '../lib/csv';
 import { daySummaryText, shareFile, shareText } from '../lib/share';
-import { startOfDay } from '../lib/time';
+import { MINUTE, startOfDay } from '../lib/time';
+import { formatSpan } from '../lib/format';
+import { FEED_INTERVALS_MIN } from '../model';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
 import { showToast, updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
@@ -23,8 +25,8 @@ async function shareToday(entries: Parameters<typeof daySummaryText>[0], babyNam
   if (result === 'copied') showToast('Résumé copié, prêt à coller');
 }
 
-export function SettingsSheet({ onClose }: { onClose: () => void }) {
-  const { settings, entries, persisted } = useAppState();
+export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; onOpenWeek: () => void }) {
+  const { settings, entries, persisted, sync } = useAppState();
   const [theme, setThemeState] = useState(getTheme);
   const chooseTheme = (value: Theme) => {
     setTheme(value);
@@ -69,6 +71,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <SharingSection />
 
       <div class="field">
+        <span class="field-label">Temps entre deux repas</span>
+        <div class="chips cols-5">
+          {FEED_INTERVALS_MIN.map((min) => (
+            <button
+              type="button"
+              key={min}
+              class={`chip${settings.feedIntervalMin === min ? ' on' : ''}`}
+              aria-pressed={settings.feedIntervalMin === min}
+              onClick={() => updateSettings({ feedIntervalMin: min })}
+            >
+              {formatSpan(min * MINUTE)}
+            </button>
+          ))}
+        </div>
+        <p class="hint">
+          Sert à l'heure du prochain repas et au réveil.
+          {sync.family ? ' Choisissez la même durée sur le téléphone de l’autre parent.' : ''}
+        </p>
+      </div>
+
+      <div class="field">
         <span class="field-label">Réveil après chaque tétée ou biberon</span>
         <div class="chips cols-2">
           <button
@@ -103,6 +126,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
       <div class="field">
         <span class="field-label">Données</span>
+        <button type="button" class="action" onClick={onOpenWeek}>
+          <Icon name="chart" />
+          Bilan des 7 derniers jours
+        </button>
         <button
           type="button"
           class="action"
@@ -120,7 +147,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           Exporter tout en CSV
         </button>
         <p class="hint">
-          {entries.length} entrée{entries.length > 1 ? 's' : ''}, gardée{entries.length > 1 ? 's' : ''} sur ce téléphone uniquement.{' '}
+          {entries.length} entrée{entries.length > 1 ? 's' : ''}, gardée{entries.length > 1 ? 's' : ''} sur ce téléphone
+          {sync.family ? ' et partagée' + (entries.length > 1 ? 's' : '') + ' avec l’autre parent.' : ' uniquement.'}{' '}
           {persisted
             ? 'Stockage protégé : le navigateur ne l’effacera pas pour faire de la place.'
             : 'Installez l’app sur l’écran d’accueil pour protéger ce stockage.'}
