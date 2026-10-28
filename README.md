@@ -11,6 +11,7 @@ urbaine. L'ambition : occuper à Paris la place que Dojo occupait à Londres en
 | `prototype/index.html` | Prototype navigable — 20 écrans, mode « Écran » (interactif) et mode « Planche » (contact sheet pour captures d'agence). Fichier unique, aucune dépendance, aucun build. |
 | `docs/CONCEPT.md` | Le concept, le moteur de contenu, le modèle économique, la douve, les risques et le plan à 18 mois. |
 | `veilleuse/` | Projet indépendant : PWA de suivi d'un nouveau-né (tétées, biberons, couches). Voir `veilleuse/README.md`. |
+| `yallayum/` | Projet indépendant : refonte de YallaYum, le GPS de la restauration halal (prototype mobile, back-office, socle métier, schéma PostGIS, API, recette, dossier produit). Voir `yallayum/README.md`. |
 
 ## Lancer le prototype
 

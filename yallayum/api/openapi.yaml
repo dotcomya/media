@@ -1,0 +1,2027 @@
+openapi: 3.1.0
+info:
+  title: YallaYum API
+  version: 1.0.0
+  summary: Découverte de restaurants halal, confiance explicable, fidélité.
+  description: |
+    Contrat de l'API publique (applications iOS, Android, web) et de l'API
+    d'administration (back-office, espace restaurateur).
+
+    Principes :
+    - **Explorer sans compte** : toute la découverte est accessible sans
+      authentification. Le compte ne sert qu'aux favoris synchronisés, aux
+      collections partagées, à la carte de fidélité.
+    - **Vocabulaire unique** : les statuts et niveaux reprennent exactement
+      `src/domain/types.ts` et `db/schema.sql`.
+    - **Le badge halal est dérivé**, jamais saisi : `halal.level` est recalculé à
+      chaque lecture à partir des preuves validées et de leurs dates.
+    - **Distances à vol d'oiseau** : `distance_m` est géodésique et n'est jamais
+      un temps de trajet. Un temps de trajet n'apparaît que s'il vient d'un
+      service de routage (`eta`), avec sa source.
+    - **Erreurs** : RFC 9457 (`application/problem+json`), messages en français.
+    - **Pagination** : par curseur opaque (`next_cursor`), jamais par numéro de page.
+    - **Limitation de débit** : en-têtes `RateLimit-Limit`, `RateLimit-Remaining`,
+      `RateLimit-Reset` (draft IETF) sur chaque réponse ; 429 au-delà.
+      Public anonyme : 120 req/min par IP ; utilisateur connecté : 300 req/min ;
+      contributions : 10/heure par appareil ; scan commerçant : 30/min par
+      appareil commerçant ; admin : 600 req/min par compte.
+    - **Versionnement** : `/v1` dans le chemin ; ajouts de champs non cassants,
+      tout retrait passe par `/v2` avec six mois de recouvrement.
+
+    Toutes les données d'exemple sont fictives.
+  contact:
+    name: YallaYum
+    url: https://yallayum.app
+security: []
+servers:
+  - url: https://api.yallayum.app
+    description: Production
+  - url: https://api.staging.yallayum.app
+    description: Préproduction
+tags:
+  - name: Découverte
+  - name: Recherche
+  - name: Contenus
+  - name: Contributions
+  - name: Compte
+  - name: Fidélité
+  - name: Commerçant
+  - name: Admin — établissements
+  - name: Admin — halal
+  - name: Admin — modération
+  - name: Admin — imports
+  - name: Admin — audit
+
+paths:
+  /v1/restaurants:
+    get:
+      tags: [Découverte]
+      operationId: searchRestaurants
+      summary: Restaurants d'une zone, filtres stricts, classés
+      description: |
+        Les filtres sont des contraintes : une adresse qui n'en remplit pas un
+        ne sort pas. Avec `open_now` ou `open_at`, les adresses aux horaires
+        inconnus ou anciens sont renvoyées à part dans `uncertain`, jamais
+        mêlées aux résultats comme si elles étaient ouvertes. Une seule
+        insertion sponsorisée possible par page, marquée `sponsored: true`,
+        uniquement si elle respecte déjà tous les filtres.
+      parameters:
+        - $ref: '#/components/parameters/Bbox'
+        - $ref: '#/components/parameters/OriginLat'
+        - $ref: '#/components/parameters/OriginLng'
+        - name: q
+          in: query
+          description: Texte libre (« burger à Saint-Denis ouvert après 23h »). Interprété côté serveur ; voir `interpretation`.
+          schema: { type: string, maxLength: 120 }
+        - $ref: '#/components/parameters/Cuisines'
+        - $ref: '#/components/parameters/Occasions'
+        - $ref: '#/components/parameters/PriceMax'
+        - $ref: '#/components/parameters/OpenNow'
+        - $ref: '#/components/parameters/OpenAt'
+        - $ref: '#/components/parameters/HalalMin'
+        - $ref: '#/components/parameters/Certifiers'
+        - $ref: '#/components/parameters/Amenities'
+        - $ref: '#/components/parameters/AlcoholFree'
+        - name: radius
+          in: query
+          description: Rayon à vol d'oiseau autour de l'origine, en mètres.
+          schema: { type: integer, minimum: 100, maximum: 50000 }
+        - name: collection
+          in: query
+          description: Slug d'une collection éditoriale à afficher sur la carte.
+          schema: { type: string }
+        - name: sort
+          in: query
+          schema: { type: string, enum: [relevance, distance, price, newest], default: relevance }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Résultats de la zone.
+          headers:
+            RateLimit-Limit: { $ref: '#/components/headers/RateLimitLimit' }
+            RateLimit-Remaining: { $ref: '#/components/headers/RateLimitRemaining' }
+            RateLimit-Reset: { $ref: '#/components/headers/RateLimitReset' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResponse' }
+              examples:
+                ouvertMaintenant:
+                  $ref: '#/components/examples/SearchOpenNow'
+                zeroResultat:
+                  $ref: '#/components/examples/SearchZero'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/restaurants/{slug}:
+    get:
+      tags: [Découverte]
+      operationId: getRestaurant
+      summary: Fiche détaillée (résolution des liens profonds)
+      description: |
+        Un lien partagé doit toujours mener quelque part d'utile :
+        - 200 : fiche (y compris fermée temporairement, `open.reason`) ;
+        - 301 : fiche renommée ou établissement déménagé, `Location` vers la nouvelle fiche ;
+        - 410 : fermé définitivement, avec jusqu'à trois adresses proches ;
+        - 404 : introuvable ou indisponible (aucune raison exposée).
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$' }
+        - $ref: '#/components/parameters/OriginLat'
+        - $ref: '#/components/parameters/OriginLng'
+      responses:
+        '200':
+          description: Fiche.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Restaurant' }
+              examples:
+                fiche: { $ref: '#/components/examples/RestaurantLesBraises' }
+        '301':
+          description: Fiche renommée ou établissement déménagé.
+          headers:
+            Location:
+              schema: { type: string, format: uri }
+              example: https://api.yallayum.app/v1/restaurants/les-braises-de-belleville
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LinkRedirect' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '410':
+          description: Fermé définitivement.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClosedRestaurant' }
+
+  /v1/clusters:
+    get:
+      tags: [Découverte]
+      operationId: getClusters
+      summary: Regroupements pour la carte dézoomée
+      description: Grille d'environ 64 px par cellule au zoom demandé. Mêmes filtres que la recherche.
+      parameters:
+        - $ref: '#/components/parameters/Bbox'
+        - name: zoom
+          in: query
+          required: true
+          schema: { type: integer, minimum: 0, maximum: 20 }
+        - $ref: '#/components/parameters/Cuisines'
+        - $ref: '#/components/parameters/OpenNow'
+        - $ref: '#/components/parameters/HalalMin'
+      responses:
+        '200':
+          description: Cellules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [clusters]
+                properties:
+                  clusters:
+                    type: array
+                    items: { $ref: '#/components/schemas/Cluster' }
+              example:
+                clusters:
+                  - { lat: 48.8687, lng: 2.3712, count: 14 }
+                  - { lat: 48.8839, lng: 2.3501, count: 1, restaurant_id: 3f1c2d4e-7a1b-4c9d-9e2f-0a1b2c3d4e5f }
+
+  /v1/search/interpret:
+    get:
+      tags: [Recherche]
+      operationId: interpretQuery
+      summary: Ce que la recherche a compris
+      description: Lieu, cuisines, envies, budget, horaires reconnus dans la saisie, à afficher en puces modifiables.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, maxLength: 120 }
+        - $ref: '#/components/parameters/OriginLat'
+        - $ref: '#/components/parameters/OriginLng'
+      responses:
+        '200':
+          description: Interprétation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Interpretation' }
+              example:
+                raw: burger à Saint-Denis ouvert après 23h
+                place: { id: saint-denis-93, name: Saint-Denis, context: Seine-Saint-Denis }
+                place_alternatives: [{ id: saint-denis-974, name: Saint-Denis, context: La Réunion }]
+                near_me: false
+                cuisines: [burger]
+                occasions: []
+                amenities: []
+                open_now: false
+                open_at: '23:00'
+                text: ''
+                chips:
+                  - { kind: place, label: Saint-Denis, id: saint-denis-93 }
+                  - { kind: cuisine, label: Burger, id: burger }
+                  - { kind: open_at, label: Ouvert à 23h }
+
+  /v1/search/suggest:
+    get:
+      tags: [Recherche]
+      operationId: suggest
+      summary: Autocomplétion groupée par type
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 60 }
+        - $ref: '#/components/parameters/OriginLat'
+        - $ref: '#/components/parameters/OriginLng'
+      responses:
+        '200':
+          description: Suggestions.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuggestionGroups' }
+              example:
+                places: [{ type: place, id: saint-denis-93, label: Saint-Denis, detail: Seine-Saint-Denis }]
+                restaurants: [{ type: restaurant, id: les-braises-de-belleville, label: Les Braises de Belleville, detail: Belleville }]
+                cuisines: [{ type: cuisine, id: burger, label: Burger }]
+                occasions: []
+
+  /v1/taxonomies:
+    get:
+      tags: [Recherche]
+      operationId: getTaxonomies
+      summary: Cuisines, envies, équipements, organismes
+      parameters:
+        - $ref: '#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Taxonomies en vigueur (cache 1 h).
+          headers:
+            Cache-Control: { schema: { type: string }, example: 'public, max-age=3600' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Taxonomies' }
+
+  /v1/collections:
+    get:
+      tags: [Contenus]
+      operationId: listCollections
+      summary: Sélections et guides publiés
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Collections.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CollectionSummary' }
+                  next_cursor: { type: [string, 'null'] }
+
+  /v1/collections/{slug}:
+    get:
+      tags: [Contenus]
+      operationId: getCollection
+      summary: Une collection, ses critères et ses adresses
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Collection.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Collection' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/contributions:
+    post:
+      tags: [Contributions]
+      operationId: createContribution
+      summary: Proposer une adresse ou signaler une information
+      description: |
+        Jamais appliquée directement : la contribution entre en file de
+        modération. Possible sans compte (limité à 10 par heure et par appareil).
+        Le `receipt_token` permet de suivre le traitement sans compte.
+      security:
+        - {}
+        - userAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ContributionCreate' }
+            examples:
+              signalementHoraires:
+                value:
+                  kind: hours
+                  restaurant_id: 3f1c2d4e-7a1b-4c9d-9e2f-0a1b2c3d4e5f
+                  payload: { hours: 'Fermé le lundi depuis septembre' }
+                  message: Panneau sur la porte.
+              nouvelleAdresse:
+                value:
+                  kind: new_restaurant
+                  payload: { name: Chez Mounir, address: 12 rue Fictive, 75019 Paris, cuisines: [algerienne] }
+                  halal_source: Certificat affiché en vitrine
+      responses:
+        '202':
+          description: Reçue, en file de modération.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContributionReceipt' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /v1/contributions/{id}:
+    get:
+      tags: [Contributions]
+      operationId: getContributionStatus
+      summary: Suivi d'une contribution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: receipt_token
+          in: query
+          description: Requis sans compte.
+          schema: { type: string }
+      responses:
+        '200':
+          description: Statut public (sans les notes internes).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ContributionReceipt' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /v1/me:
+    get:
+      tags: [Compte]
+      operationId: getMe
+      security: [{ userAuth: [] }]
+      summary: Profil (données minimales)
+      responses:
+        '200':
+          description: Profil.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [Compte]
+      operationId: deleteMe
+      security: [{ userAuth: [] }]
+      summary: Supprimer le compte
+      description: |
+        Effacement immédiat du profil, des favoris, collections, préférences,
+        historique et appareils ; contributions anonymisées ; carte de fidélité
+        désactivée ; transactions conservées détachées de la personne pour les
+        obligations comptables (voir `src/domain/privacy.ts`). La réponse
+        détaille ce qui est effacé, anonymisé et conservé, avec les durées.
+      responses:
+        '202':
+          description: Suppression effectuée ou planifiée.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeletionPlan' }
+
+  /v1/me/export:
+    get:
+      tags: [Compte]
+      operationId: exportMe
+      security: [{ userAuth: [] }]
+      summary: Portabilité (JSON)
+      responses:
+        '200':
+          description: Toutes les données liées au compte.
+          content:
+            application/json:
+              schema: { type: object }
+
+  /v1/me/consents:
+    put:
+      tags: [Compte]
+      operationId: putConsents
+      security: [{ userAuth: [] }]
+      summary: Enregistrer des choix de consentement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text_version, choices]
+              properties:
+                text_version: { type: string, example: '2026-10' }
+                choices:
+                  type: object
+                  additionalProperties: { type: boolean }
+                  example: { analytics: false, search_history: true, push: false }
+      responses:
+        '204': { description: Enregistré. }
+
+  /v1/me/favorites:
+    get:
+      tags: [Compte]
+      operationId: listFavorites
+      security: [{ userAuth: [] }]
+      summary: Favoris
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Favoris.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/RestaurantSummary' }
+                  next_cursor: { type: [string, 'null'] }
+
+  /v1/me/favorites:merge:
+    post:
+      tags: [Compte]
+      operationId: mergeGuestFavorites
+      security: [{ userAuth: [] }]
+      summary: Rattacher les favoris enregistrés en invité
+      description: Appelé après la connexion ; idempotent (union, sans doublon).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [restaurant_ids]
+              properties:
+                restaurant_ids:
+                  type: array
+                  maxItems: 500
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Résultat de la fusion.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  added: { type: integer }
+                  already_saved: { type: integer }
+                  unavailable: { type: integer, description: 'Fiches fermées ou retirées, non ajoutées.' }
+
+  /v1/me/favorites/{restaurant_id}:
+    put:
+      tags: [Compte]
+      operationId: addFavorite
+      security: [{ userAuth: [] }]
+      summary: Enregistrer (idempotent)
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      responses:
+        '204': { description: Enregistré. }
+    delete:
+      tags: [Compte]
+      operationId: removeFavorite
+      security: [{ userAuth: [] }]
+      summary: Retirer (idempotent)
+      parameters:
+        - $ref: '#/components/parameters/RestaurantId'
+      responses:
+        '204': { description: Retiré. }
+
+  /v1/me/collections:
+    get:
+      tags: [Compte]
+      operationId: listMyCollections
+      security: [{ userAuth: [] }]
+      summary: Collections personnelles
+      responses:
+        '200':
+          description: Collections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/UserCollection' }
+    post:
+      tags: [Compte]
+      operationId: createMyCollection
+      security: [{ userAuth: [] }]
+      summary: Créer une collection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title]
+              properties:
+                title: { type: string, minLength: 1, maxLength: 80, example: À tester }
+      responses:
+        '201':
+          description: Créée.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserCollection' }
+
+  /v1/me/collections/{id}/share:
+    post:
+      tags: [Compte]
+      operationId: shareMyCollection
+      security: [{ userAuth: [] }]
+      summary: Créer (ou renouveler) le lien de partage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Lien.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url: { type: string, format: uri, example: 'https://yallayum.app/c/k3J9xQ2p' }
+    delete:
+      tags: [Compte]
+      operationId: revokeShare
+      security: [{ userAuth: [] }]
+      summary: Révoquer le lien de partage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Lien révoqué. }
+
+  /v1/loyalty/card:
+    get:
+      tags: [Fidélité]
+      operationId: getLoyaltyCard
+      security: [{ userAuth: [] }]
+      summary: Ma carte
+      description: |
+        Module à auditer : le programme peut être désactivé (`program.status =
+        disabled`) ou en pilote avec des paramètres provisoires
+        (`program.provisional = true`), que l'application affiche comme tels.
+      responses:
+        '200':
+          description: Carte et programme.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoyaltyCard' }
+        '404':
+          description: Pas encore de carte (proposer l'activation).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+    post:
+      tags: [Fidélité]
+      operationId: activateLoyaltyCard
+      security: [{ userAuth: [] }]
+      summary: Activer la carte
+      description: |
+        Renvoie une seule fois le secret de génération des QR tournants, à
+        stocker dans le trousseau (Keychain / Android Keystore). Le QR change
+        toutes les `qr_step_seconds` et fonctionne hors ligne.
+      responses:
+        '201':
+          description: Carte activée.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/LoyaltyCard'
+                  - type: object
+                    required: [token_secret]
+                    properties:
+                      token_secret: { type: string, description: 'Secret de signature, transmis une fois.' }
+
+  /v1/loyalty/transactions:
+    get:
+      tags: [Fidélité]
+      operationId: listMyTransactions
+      security: [{ userAuth: [] }]
+      summary: Historique de ma carte
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Transactions, de la plus récente à la plus ancienne.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/LoyaltyTransaction' }
+                  next_cursor: { type: [string, 'null'] }
+
+  /v1/loyalty/vouchers:
+    post:
+      tags: [Fidélité]
+      operationId: redeemReward
+      security: [{ userAuth: [] }]
+      summary: Échanger des points contre un bon
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reward_id]
+              properties:
+                reward_id: { type: string, example: boisson }
+      responses:
+        '201':
+          description: Bon émis.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Voucher' }
+        '409':
+          description: Solde insuffisant.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+              example:
+                type: https://api.yallayum.app/problems/solde-insuffisant
+                title: Solde insuffisant
+                status: 409
+                detail: Il manque 40 points pour cette récompense.
+                missing: 40
+
+  /v1/loyalty/merchant/scan:
+    post:
+      tags: [Commerçant]
+      operationId: merchantScan
+      security: [{ adminAuth: [] }]
+      summary: Créditer un passage (le commerçant scanne la carte du client)
+      description: |
+        Rejouable sans risque : la clé d'idempotence (en-tête) et le jeton QR
+        (`earn:<partenaire>:<jeton>`) garantissent un seul crédit. Un second
+        appel identique renvoie la transaction d'origine (200,
+        `Idempotent-Replayed: true`). Les refus sont tracés pour la détection
+        de fraude. Réservé aux comptes restaurateurs rattachés au partenaire.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScanRequest' }
+            example:
+              token: YY1.card-7f3a.59102345.0k2m9xa
+              amount_cents: 2450
+      responses:
+        '201':
+          description: Crédité.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanResult' }
+              example: { status: credited, transaction: { id: 9b2e4c1a-5d6f-4a7b-8c9d-0e1f2a3b4c5d, kind: earn, points: 10, at: '2026-10-27T19:04:00Z' } }
+        '200':
+          description: Déjà enregistré (rejeu) — aucun nouveau crédit.
+          headers:
+            Idempotent-Replayed:
+              schema: { type: boolean }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScanResult' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422':
+          description: Refus métier (QR expiré, délai entre deux passages, plafond…).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ScanRejected' }
+              example:
+                type: https://api.yallayum.app/problems/fidelite-refus
+                title: Passage refusé
+                status: 422
+                detail: QR expiré. Le client doit afficher le nouveau code.
+                reason: expired_token
+
+  /admin/v1/dashboard:
+    get:
+      tags: [Admin — établissements]
+      operationId: adminDashboard
+      security: [{ adminAuth: [] }]
+      summary: Santé du catalogue et files de travail
+      responses:
+        '200':
+          description: Indicateurs (définitions dans docs/09-analytics.md).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dashboard' }
+
+  /admin/v1/restaurants:
+    get:
+      tags: [Admin — établissements]
+      operationId: adminListRestaurants
+      security: [{ adminAuth: [] }]
+      summary: Recherche avancée
+      description: Un restaurateur ne reçoit que ses établissements (sécurité au niveau des lignes).
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: publication
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/PublicationStatus' } }
+          style: form
+          explode: false
+        - name: operating
+          in: query
+          schema: { type: array, items: { $ref: '#/components/schemas/OperatingStatus' } }
+          style: form
+          explode: false
+        - name: halal_level
+          in: query
+          schema: { $ref: '#/components/schemas/TrustLevel' }
+        - name: missing
+          in: query
+          description: Fiches incomplètes.
+          schema: { type: string, enum: [photo, hours, price, description, contact] }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Fiches.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminRestaurant' }
+                  next_cursor: { type: [string, 'null'] }
+    post:
+      tags: [Admin — établissements]
+      operationId: adminCreateRestaurant
+      security: [{ adminAuth: [] }]
+      summary: Créer une fiche (en brouillon)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminRestaurantInput' }
+      responses:
+        '201':
+          description: Créée en brouillon.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminRestaurant' }
+        '409':
+          description: Adresse web déjà prise ou doublon probable (même enseigne à moins de 25 m).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /admin/v1/restaurants/{id}:
+    get:
+      tags: [Admin — établissements]
+      operationId: adminGetRestaurant
+      security: [{ adminAuth: [] }]
+      summary: Fiche complète, avec version
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Fiche.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminRestaurant' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Admin — établissements]
+      operationId: adminPatchRestaurant
+      security: [{ adminAuth: [] }]
+      summary: Modifier (verrouillage optimiste)
+      description: |
+        `If-Match` est obligatoire et porte la version lue (`"v12"`). Si la
+        fiche a changé entre-temps : 412, rien n'est écrit, et la réponse
+        propose une fusion champ par champ (champs repris automatiquement,
+        champs à arbitrer).
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
+        - $ref: '#/components/parameters/ChangeReason'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema: { $ref: '#/components/schemas/AdminRestaurantInput' }
+      responses:
+        '200':
+          description: Enregistré.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminRestaurant' }
+        '412':
+          description: Version périmée.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/VersionConflict' }
+              example:
+                type: https://api.yallayum.app/problems/conflit-de-version
+                title: La fiche a été modifiée depuis son ouverture
+                status: 412
+                detail: Une autre personne a enregistré la version 13. Rien n'a été écrasé.
+                current_version: 13
+                conflicts: [description]
+                auto_merged: [name]
+        '428':
+          description: If-Match manquant.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /admin/v1/restaurants/{id}/transitions:
+    post:
+      tags: [Admin — établissements]
+      operationId: adminTransition
+      security: [{ adminAuth: [] }]
+      summary: Changer le statut de publication
+      description: |
+        Transitions fermées (src/domain/publication.ts). Publier, suspendre et
+        archiver exigent le droit `restaurant.publish` et une session MFA ;
+        suspendre, archiver et restaurer exigent un motif, inscrit au journal.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: { $ref: '#/components/schemas/PublicationStatus' }
+                reason: { type: string, maxLength: 500 }
+            example: { to: suspended, reason: 'Doute sérieux sur l''information halal, revérification en cours' }
+      responses:
+        '200':
+          description: Statut changé.
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminRestaurant' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Transition impossible depuis le statut actuel.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '412':
+          description: Version périmée.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/VersionConflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /admin/v1/restaurants/{id}/halal-claims:
+    get:
+      tags: [Admin — halal]
+      operationId: adminListClaims
+      security: [{ adminAuth: [] }]
+      summary: Déclarations halal d'une fiche et statut dérivé
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Déclarations et badge calculé aujourd'hui.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { $ref: '#/components/schemas/HalalStatus' }
+                  claims:
+                    type: array
+                    items: { $ref: '#/components/schemas/HalalClaim' }
+    post:
+      tags: [Admin — halal]
+      operationId: adminCreateClaim
+      security: [{ adminAuth: [] }]
+      summary: Ajouter une déclaration (en attente de revue)
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/HalalClaimInput' }
+      responses:
+        '201':
+          description: Créée en `pending`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HalalClaim' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /admin/v1/halal-claims/{id}/review:
+    post:
+      tags: [Admin — halal]
+      operationId: adminReviewClaim
+      security: [{ adminAuth: [] }]
+      summary: Décision du vérificateur
+      description: Droit `halal.review` et session MFA requis. Décision et note inscrites au journal.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approved, rejected, revoked] }
+                note: { type: string, maxLength: 1000 }
+                under_review: { type: boolean, description: Affiche publiquement « Vérification en cours ». }
+      responses:
+        '200':
+          description: Décision enregistrée.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HalalClaim' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/v1/halal-claims/{id}/evidence:
+    post:
+      tags: [Admin — halal]
+      operationId: adminUploadEvidence
+      security: [{ adminAuth: [] }]
+      summary: Déposer une pièce justificative
+      description: Renvoie une URL de dépôt signée (5 min) vers le stockage privé chiffré. L'empreinte SHA-256 est vérifiée à réception.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mime_type, size_bytes, sha256]
+              properties:
+                mime_type: { type: string, enum: [application/pdf, image/jpeg, image/png, image/heic] }
+                size_bytes: { type: integer, maximum: 20000000 }
+                sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+      responses:
+        '201':
+          description: URL de dépôt.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id: { type: string, format: uuid }
+                  upload_url: { type: string, format: uri }
+                  expires_at: { type: string, format: date-time }
+    get:
+      tags: [Admin — halal]
+      operationId: adminListEvidence
+      security: [{ adminAuth: [] }]
+      summary: Consulter les pièces (droit halal.evidence.read, MFA)
+      description: Chaque consultation produit une URL de lecture signée de 60 s et une ligne au journal d'audit.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Pièces.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string, format: uuid }
+                    mime_type: { type: string }
+                    uploaded_at: { type: string, format: date-time }
+                    read_url: { type: string, format: uri }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/v1/contributions:
+    get:
+      tags: [Admin — modération]
+      operationId: adminListContributions
+      security: [{ adminAuth: [] }]
+      summary: File de modération
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/ContributionStatus' }
+        - name: kind
+          in: query
+          schema: { $ref: '#/components/schemas/ContributionKind' }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Contributions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Contribution' }
+                  next_cursor: { type: [string, 'null'] }
+
+  /admin/v1/contributions/{id}/decision:
+    post:
+      tags: [Admin — modération]
+      operationId: adminDecideContribution
+      security: [{ adminAuth: [] }]
+      summary: Faire avancer une contribution
+      description: |
+        Accepter crée une proposition de modification (jamais une publication).
+        Si elle touche au halal, seul un vérificateur pourra l'appliquer.
+        Refuser ou demander des précisions exige une note.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: { $ref: '#/components/schemas/ContributionStatus' }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        '200':
+          description: Contribution mise à jour, et proposition créée si acceptée.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contribution: { $ref: '#/components/schemas/Contribution' }
+                  proposal: { $ref: '#/components/schemas/ChangeProposal' }
+        '409':
+          description: Transition impossible.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  /admin/v1/change-proposals/{id}/apply:
+    post:
+      tags: [Admin — modération]
+      operationId: adminApplyProposal
+      security: [{ adminAuth: [] }]
+      summary: Appliquer une proposition au brouillon de la fiche
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Appliquée ; la fiche reste à republier.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChangeProposal' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '412':
+          description: La fiche a changé depuis la proposition.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/VersionConflict' }
+
+  /admin/v1/imports:
+    post:
+      tags: [Admin — imports]
+      operationId: adminImport
+      security: [{ adminAuth: [] }]
+      summary: Importer un CSV (essai à blanc par défaut)
+      description: Format et règles dans db/MIGRATION.md. Droit `import.run` et MFA requis.
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: true }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, contentMediaType: text/csv }
+      responses:
+        '200':
+          description: Rapport (essai à blanc ou import en brouillon).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ImportReport' }
+
+  /admin/v1/audit:
+    get:
+      tags: [Admin — audit]
+      operationId: adminAudit
+      security: [{ adminAuth: [] }]
+      summary: Journal d'audit (lecture seule)
+      parameters:
+        - name: entity
+          in: query
+          schema: { type: string, enum: [restaurant, halal_claim, contribution, loyalty_transaction, user, content] }
+        - name: entity_id
+          in: query
+          schema: { type: string }
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Entrées, des plus récentes aux plus anciennes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AuditEntry' }
+                  next_cursor: { type: [string, 'null'] }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    userAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Jeton d'accès utilisateur (connexion e-mail, Apple ou Google), 15 min, rafraîchi par jeton de rotation.
+    adminAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Jeton du back-office portant `role` et `amr` (méthodes d'authentification).
+        Les droits sensibles exigent `mfa` dans `amr` pour les rôles internes.
+
+  headers:
+    ETag:
+      description: Version de la fiche (`"v<version>"`), à renvoyer dans If-Match.
+      schema: { type: string, example: '"v12"' }
+    RateLimitLimit:
+      schema: { type: integer, example: 120 }
+    RateLimitRemaining:
+      schema: { type: integer, example: 117 }
+    RateLimitReset:
+      description: Secondes avant la remise à zéro.
+      schema: { type: integer, example: 42 }
+
+  parameters:
+    Bbox:
+      name: bbox
+      in: query
+      required: true
+      description: Zone cherchée « ouest,sud,est,nord » (WGS 84). La carte au moment où la recherche est lancée.
+      schema: { type: string, pattern: '^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}$', example: '2.355,48.862,2.372,48.873' }
+    OriginLat:
+      name: lat
+      in: query
+      description: Position (si partagée) ou centre de la carte, arrondie à 3 décimales côté client. Jamais conservée.
+      schema: { type: number, minimum: -90, maximum: 90 }
+    OriginLng:
+      name: lng
+      in: query
+      schema: { type: number, minimum: -180, maximum: 180 }
+    Cuisines:
+      name: cuisines
+      in: query
+      description: Identifiants de cuisine ; un parent inclut ses descendants (« asiatique » ⊃ « japonaise »).
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    Occasions:
+      name: occasions
+      in: query
+      description: Envies ; il suffit d'en satisfaire une.
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    Amenities:
+      name: amenities
+      in: query
+      description: Équipements confirmés ; tous requis.
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    Certifiers:
+      name: certifiers
+      in: query
+      description: Organismes ; implique le niveau « certifié ».
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    PriceMax:
+      name: price_max
+      in: query
+      description: Niveau de prix maximal ; un prix inconnu est écarté.
+      schema: { type: integer, minimum: 1, maximum: 4 }
+    OpenNow:
+      name: open_now
+      in: query
+      schema: { type: boolean, default: false }
+    OpenAt:
+      name: open_at
+      in: query
+      description: Ouvert à cette heure locale aujourd'hui (« 23:00 ») ; avant 06:00, vise la nuit qui vient.
+      schema: { type: string, pattern: '^([01]\d|2[0-3]):[0-5]\d$' }
+    HalalMin:
+      name: halal_min
+      in: query
+      description: Niveau de preuve minimal.
+      schema: { type: string, enum: [declared, team_verified, certified] }
+    AlcoholFree:
+      name: alcohol_free
+      in: query
+      description: Seulement les établissements qui confirment ne pas servir d'alcool.
+      schema: { type: boolean, default: false }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      schema: { type: string, example: fr-FR }
+    RestaurantId:
+      name: restaurant_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema: { type: string, example: '"v12"' }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID généré par le client, conservé 24 h côté serveur.
+      schema: { type: string, format: uuid }
+    ChangeReason:
+      name: X-Change-Reason
+      in: header
+      description: Motif inscrit à l'historique et au journal (obligatoire pour les changements sensibles).
+      schema: { type: string, maxLength: 500 }
+
+  responses:
+    BadRequest:
+      description: Paramètres invalides.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example:
+            type: https://api.yallayum.app/problems/parametres-invalides
+            title: Paramètres invalides
+            status: 400
+            detail: « bbox » doit contenir quatre nombres (ouest, sud, est, nord).
+            errors: [{ pointer: '#/bbox', detail: 'Quatre nombres attendus' }]
+    Unauthorized:
+      description: Connexion requise.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example: { type: https://api.yallayum.app/problems/connexion-requise, title: Connexion requise, status: 401, detail: Connecte-toi pour synchroniser tes favoris. }
+    Forbidden:
+      description: Droit insuffisant.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example: { type: https://api.yallayum.app/problems/droit-insuffisant, title: Droit insuffisant, status: 403, detail: Seul un vérificateur peut valider une information halal. }
+    NotFound:
+      description: Introuvable.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example: { type: https://api.yallayum.app/problems/introuvable, title: Adresse introuvable, status: 404, detail: Cette fiche n'existe pas ou n'est plus disponible. }
+    Unprocessable:
+      description: Requête valide mais refusée par une règle métier.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example: { type: https://api.yallayum.app/problems/motif-obligatoire, title: Motif obligatoire, status: 422, detail: Indique pourquoi tu suspends cette fiche ; le motif sera inscrit au journal. }
+    TooManyRequests:
+      description: Trop de requêtes.
+      headers:
+        Retry-After: { schema: { type: integer } }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+          example: { type: https://api.yallayum.app/problems/trop-de-requetes, title: Trop de requêtes, status: 429, detail: Réessaie dans 42 secondes. }
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457.
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              pointer: { type: string }
+              detail: { type: string }
+      additionalProperties: true
+
+    PublicationStatus: { type: string, enum: [draft, in_review, published, suspended, archived] }
+    OperatingStatus: { type: string, enum: [operating, temporarily_closed, permanently_closed, moved] }
+    TrustLevel:
+      type: string
+      enum: [certified, team_verified, declared, unconfirmed]
+      description: |
+        - certified : un organisme atteste, certificat contrôlé par l'équipe ;
+        - team_verified : justificatifs contrôlés par l'équipe, sans organisme ;
+        - declared : déclaration du restaurant, sans justificatif contrôlé ;
+        - unconfirmed : référencé sans preuve récente.
+    HalalScope: { type: string, enum: [whole_menu, meat_poultry, partial] }
+    HalalClaimKind: { type: string, enum: [certification, team_verification, establishment_declaration] }
+    EvidenceMethod: { type: string, enum: [certificate_check, on_site_visit, supplier_documents, phone, email, legacy_import] }
+    ContributionKind: { type: string, enum: [new_restaurant, closed_permanently, moved, hours, halal_info, photos, contact, duplicate, other] }
+    ContributionStatus: { type: string, enum: [received, in_review, needs_info, accepted, rejected, duplicate] }
+    AlcoholPolicy: { type: string, enum: [not_served, served, unknown] }
+
+    LatLng:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number }
+        lng: { type: number }
+
+    Address:
+      type: object
+      required: [street, postcode, city, district, country]
+      properties:
+        street: { type: string }
+        postcode: { type: string }
+        city: { type: string }
+        district: { type: string }
+        neighbourhood: { type: string }
+        country: { type: string, minLength: 2, maxLength: 2 }
+
+    HalalStatus:
+      type: object
+      required: [level, label, freshness, under_review]
+      properties:
+        level: { $ref: '#/components/schemas/TrustLevel' }
+        label: { type: string, example: Certifié par Organisme Alpha (fictif) }
+        explanation: { type: string }
+        certifier: { $ref: '#/components/schemas/Certifier' }
+        scope: { $ref: '#/components/schemas/HalalScope' }
+        scope_note: { type: string }
+        method: { $ref: '#/components/schemas/EvidenceMethod' }
+        last_checked_at: { type: string, format: date }
+        valid_until: { type: string, format: date }
+        freshness: { type: string, enum: [fresh, aging, none] }
+        under_review: { type: boolean, description: '« Vérification en cours », décidée par l''équipe.' }
+
+    OpenStatus:
+      type: object
+      required: [state, confidence, label]
+      properties:
+        state: { type: string, enum: [open, closed, unknown] }
+        confidence: { type: string, enum: [confirmed, stale, none] }
+        reason: { type: string, enum: [permanently_closed, moved, temporarily_closed, not_published, special_day, outside_hours] }
+        closes_at: { type: string, example: '02:00' }
+        closing_soon: { type: boolean }
+        next_opening: { type: object, properties: { day_offset: { type: integer }, time: { type: string } } }
+        label: { type: string, example: Ouvert · jusqu'à 02:00 }
+
+    Media:
+      type: object
+      required: [id, kind, alt]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [photo, illustration], description: Une illustration est générique et toujours signalée comme telle. }
+        subject: { type: string, enum: [dish, room, facade, generic] }
+        url: { type: string, format: uri }
+        srcset: { type: array, items: { type: object, properties: { width: { type: integer }, url: { type: string, format: uri } } } }
+        alt: { type: string }
+        credit: { type: string }
+        width: { type: integer }
+        height: { type: integer }
+
+    Certifier:
+      type: object
+      required: [id, name, short_name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        short_name: { type: string }
+        website: { type: string, format: uri }
+
+    Eta:
+      type: object
+      description: Temps de trajet fourni par un service de routage, jamais calculé à vol d'oiseau.
+      required: [mode, minutes, source]
+      properties:
+        mode: { type: string, enum: [walking, transit, driving, cycling] }
+        minutes: { type: integer }
+        source: { type: string, example: routage }
+
+    RestaurantSummary:
+      type: object
+      required: [id, slug, name, cuisines, location, address, halal, open, sponsored]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        cuisines: { type: array, items: { type: string } }
+        occasions: { type: array, items: { type: object, properties: { id: { type: string }, strength: { type: integer, enum: [1, 2] } } } }
+        location: { $ref: '#/components/schemas/LatLng' }
+        address: { $ref: '#/components/schemas/Address' }
+        price_level: { type: [integer, 'null'], minimum: 1, maximum: 4 }
+        distance_m: { type: [number, 'null'], description: 'Géodésique, à vol d''oiseau.' }
+        eta: { $ref: '#/components/schemas/Eta' }
+        halal: { $ref: '#/components/schemas/HalalStatus' }
+        open: { $ref: '#/components/schemas/OpenStatus' }
+        cover: { $ref: '#/components/schemas/Media' }
+        editorial_pick: { type: boolean }
+        sponsored: { type: boolean, description: 'Si vrai, afficher « Sponsorisé ».' }
+        reasons:
+          type: array
+          description: « Pourquoi ce résultat ? » — signaux de classement lisibles.
+          items:
+            type: object
+            properties:
+              signal: { type: string, enum: [text, proximity, occasion, openness, completeness, freshness, editorial] }
+              text: { type: string }
+
+    Restaurant:
+      allOf:
+        - $ref: '#/components/schemas/RestaurantSummary'
+        - type: object
+          required: [description, timezone, amenities, alcohol, media, contact, hours]
+          properties:
+            description: { type: string }
+            brand: { type: object, properties: { id: { type: string, format: uuid }, name: { type: string } } }
+            timezone: { type: string, example: Europe/Paris }
+            operating: { $ref: '#/components/schemas/OperatingStatus' }
+            temporarily_closed_until: { type: string, format: date }
+            amenities: { type: array, items: { type: string } }
+            alcohol: { $ref: '#/components/schemas/AlcoholPolicy' }
+            price: { type: object, properties: { level: { type: integer }, min: { type: number }, max: { type: number }, observed_at: { type: string, format: date } } }
+            hours:
+              type: object
+              properties:
+                weekly: { type: array, items: { type: object, properties: { day: { type: integer, minimum: 1, maximum: 7 }, opens: { type: string }, closes: { type: string } } } }
+                upcoming_exceptions: { type: array, items: { type: object, properties: { date: { type: string, format: date }, label: { type: string }, text: { type: string } } } }
+                verified_at: { type: string, format: date }
+                source: { type: string }
+            contact:
+              type: object
+              properties:
+                phone: { type: string }
+                website: { type: string, format: uri }
+                instagram: { type: string }
+                booking_url: { type: string, format: uri }
+                menu_url: { type: string, format: uri }
+                menu_checked_at: { type: string, format: date }
+            media: { type: array, items: { $ref: '#/components/schemas/Media' } }
+            loyalty_partner:
+              type: [object, 'null']
+              description: Présent seulement pour un partenaire actif ; affiché à part du contenu éditorial.
+              properties:
+                benefits: { type: string }
+                terms_url: { type: string, format: uri }
+            similar:
+              type: array
+              description: Adresses proches et comparables, dédupliquées, avec la raison.
+              items:
+                type: object
+                properties:
+                  restaurant: { $ref: '#/components/schemas/RestaurantSummary' }
+                  why: { type: string, example: 'Même cuisine, à 400 m' }
+            share_url: { type: string, format: uri }
+
+    SearchResponse:
+      type: object
+      required: [items, uncertain, area_empty]
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/RestaurantSummary' } }
+        uncertain:
+          type: array
+          description: Ouverture non confirmée (filtre d'ouverture actif) ; à présenter repliées.
+          items: { $ref: '#/components/schemas/RestaurantSummary' }
+        area_empty: { type: boolean, description: 'Aucune adresse référencée dans la zone, filtres ou pas.' }
+        interpretation: { $ref: '#/components/schemas/Interpretation' }
+        diagnosis: { $ref: '#/components/schemas/Diagnosis' }
+        next_cursor: { type: [string, 'null'] }
+
+    Diagnosis:
+      type: object
+      description: Corrections chiffrées quand rien ne sort.
+      properties:
+        impossible: { type: boolean, description: Combinaison absente de tout le catalogue. }
+        fixes:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            required: [kind, label, count]
+            properties:
+              kind: { type: string, enum: [remove, expand, show_uncertain] }
+              key: { type: string }
+              label: { type: string }
+              count: { type: integer }
+
+    Interpretation:
+      type: object
+      properties:
+        raw: { type: string }
+        place: { type: object, properties: { id: { type: string }, name: { type: string }, context: { type: string } } }
+        place_alternatives: { type: array, items: { type: object, properties: { id: { type: string }, name: { type: string }, context: { type: string } } } }
+        near_me: { type: boolean }
+        cuisines: { type: array, items: { type: string } }
+        occasions: { type: array, items: { type: string } }
+        amenities: { type: array, items: { type: string } }
+        price_max: { type: integer }
+        open_now: { type: boolean }
+        open_at: { type: string }
+        text: { type: string }
+        chips: { type: array, items: { type: object, properties: { kind: { type: string }, label: { type: string }, id: { type: string } } } }
+
+    SuggestionGroups:
+      type: object
+      properties:
+        places: { type: array, items: { $ref: '#/components/schemas/Suggestion' } }
+        restaurants: { type: array, items: { $ref: '#/components/schemas/Suggestion' } }
+        cuisines: { type: array, items: { $ref: '#/components/schemas/Suggestion' } }
+        occasions: { type: array, items: { $ref: '#/components/schemas/Suggestion' } }
+
+    Suggestion:
+      type: object
+      required: [type, id, label]
+      properties:
+        type: { type: string, enum: [place, restaurant, cuisine, occasion] }
+        id: { type: string }
+        label: { type: string }
+        detail: { type: string }
+
+    Cluster:
+      type: object
+      required: [lat, lng, count]
+      properties:
+        lat: { type: number }
+        lng: { type: number }
+        count: { type: integer }
+        restaurant_id: { type: string, format: uuid, description: Présent si la cellule ne contient qu'une adresse. }
+
+    LinkRedirect:
+      type: object
+      required: [resolution, location]
+      properties:
+        resolution: { type: string, enum: [renamed, moved] }
+        location: { type: string, format: uri }
+        message: { type: string, example: Ce restaurant a déménagé. Voici sa nouvelle adresse. }
+
+    ClosedRestaurant:
+      type: object
+      required: [resolution, name, message, alternatives]
+      properties:
+        resolution: { type: string, const: permanently_closed }
+        name: { type: string }
+        message: { type: string, example: Ce restaurant a fermé définitivement. Voici des adresses proches dans la même cuisine. }
+        alternatives: { type: array, maxItems: 3, items: { $ref: '#/components/schemas/RestaurantSummary' } }
+
+    Taxonomies:
+      type: object
+      properties:
+        cuisines: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string }, family: { type: string }, parent_id: { type: [string, 'null'] }, hue: { type: integer }, icon: { type: string } } } }
+        occasions: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string }, kind: { type: string } } } }
+        amenities: { type: array, items: { type: object, properties: { id: { type: string }, label: { type: string } } } }
+        certifiers: { type: array, items: { $ref: '#/components/schemas/Certifier' } }
+
+    CollectionSummary:
+      type: object
+      required: [slug, title, criteria, count]
+      properties:
+        slug: { type: string }
+        title: { type: string }
+        criteria: { type: string, description: Critères explicites de la sélection. }
+        count: { type: integer }
+        cover: { $ref: '#/components/schemas/Media' }
+        sponsor_name: { type: [string, 'null'], description: 'Contenu de marque, affiché comme tel.' }
+
+    Collection:
+      allOf:
+        - $ref: '#/components/schemas/CollectionSummary'
+        - type: object
+          properties:
+            intro: { type: string }
+            restaurants: { type: array, items: { $ref: '#/components/schemas/RestaurantSummary' } }
+            map_url: { type: string, format: uri, description: Ouvre la carte filtrée sur la collection. }
+
+    ContributionCreate:
+      type: object
+      required: [kind, payload]
+      properties:
+        kind: { $ref: '#/components/schemas/ContributionKind' }
+        restaurant_id: { type: string, format: uuid, description: Obligatoire sauf pour une nouvelle adresse. }
+        payload: { type: object, additionalProperties: true }
+        halal_source: { type: string, maxLength: 300, description: 'D''où vient l''information halal (vitrine, échange avec le gérant…).' }
+        message: { type: string, maxLength: 2000 }
+
+    ContributionReceipt:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/ContributionStatus' }
+        receipt_token: { type: string, description: 'Renvoyé à la création seulement, pour un invité.' }
+        message: { type: string, example: Merci ! Ton signalement est en file de vérification ; rien n'est publié sans contrôle. }
+
+    Contribution:
+      allOf:
+        - $ref: '#/components/schemas/ContributionCreate'
+        - type: object
+          required: [id, status, created_at]
+          properties:
+            id: { type: string, format: uuid }
+            status: { $ref: '#/components/schemas/ContributionStatus' }
+            created_at: { type: string, format: date-time }
+            history:
+              type: array
+              items: { type: object, properties: { at: { type: string, format: date-time }, status: { $ref: '#/components/schemas/ContributionStatus' }, note: { type: string } } }
+
+    ChangeProposal:
+      type: object
+      required: [id, changes, requires, status]
+      properties:
+        id: { type: string, format: uuid }
+        contribution_id: { type: string, format: uuid }
+        restaurant_id: { type: string, format: uuid }
+        changes: { type: object, additionalProperties: true }
+        requires: { type: string, enum: [restaurant.edit, halal.review] }
+        status: { type: string, enum: [pending, applied, discarded] }
+
+    Me:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        display_name: { type: [string, 'null'] }
+        locale: { type: string }
+        preferences:
+          type: object
+          properties:
+            navigation_app: { type: string, enum: [apple, google, waze, citymapper, ask] }
+            theme: { type: string, enum: [system, light, dark] }
+            default_halal_min: { type: [string, 'null'] }
+        consents: { type: object, additionalProperties: { type: boolean } }
+
+    UserCollection:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        count: { type: integer }
+        share_url: { type: [string, 'null'], format: uri }
+
+    DeletionPlan:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+            required: [what, action, why]
+            properties:
+              what: { type: string }
+              action: { type: string, enum: [delete, anonymize, retain] }
+              why: { type: string }
+              retain_days: { type: integer }
+      example:
+        steps:
+          - { what: Favoris et collections personnelles, action: delete, why: 'Données de confort, sans obligation de conservation.' }
+          - { what: Transactions de fidélité (8), action: retain, why: Rapprochement avec les partenaires et obligations comptables ; rattachées à un identifiant aléatoire., retain_days: 3650 }
+
+    LoyaltyCard:
+      type: object
+      required: [card_id, balance, program]
+      properties:
+        card_id: { type: string }
+        active: { type: boolean }
+        balance: { type: integer }
+        next_reward: { type: [object, 'null'], properties: { reward_id: { type: string }, label: { type: string }, threshold: { type: integer }, progress: { type: number } } }
+        vouchers: { type: array, items: { $ref: '#/components/schemas/Voucher' } }
+        program:
+          type: object
+          required: [status, provisional]
+          properties:
+            status: { type: string, enum: [disabled, pilot, live] }
+            provisional: { type: boolean, description: Paramètres non validés ; l'application l'affiche. }
+            earn: { type: object, additionalProperties: true }
+            qr_step_seconds: { type: integer }
+            rewards: { type: array, items: { type: object, properties: { id: { type: string }, threshold: { type: integer }, label: { type: string }, funded_by: { type: string, enum: [partner, yallayum, shared] }, validity_days: { type: integer } } } }
+        partners_url: { type: string, format: uri }
+
+    LoyaltyTransaction:
+      type: object
+      required: [id, kind, points, at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [earn, redeem, reversal, adjustment] }
+        points: { type: integer }
+        partner_name: { type: string }
+        at: { type: string, format: date-time }
+        reverses_id: { type: string, format: uuid }
+        reason: { type: string }
+
+    Voucher:
+      type: object
+      required: [id, reward_id, issued_at, expires_at, state]
+      properties:
+        id: { type: string }
+        reward_id: { type: string }
+        issued_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+        state: { type: string, enum: [available, used, expired] }
+
+    ScanRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, pattern: '^YY1\.[^.]+\.\d+\.[^.]+$', description: Jeton du QR tournant du client. }
+        amount_cents: { type: integer, minimum: 0, description: Requis si le programme crédite au montant. }
+
+    ScanResult:
+      type: object
+      required: [status, transaction]
+      properties:
+        status: { type: string, enum: [credited, duplicate] }
+        transaction: { $ref: '#/components/schemas/LoyaltyTransaction' }
+
+    ScanRejected:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [reason]
+          properties:
+            reason: { type: string, enum: [program_disabled, partner_inactive, invalid_token, expired_token, cooldown, daily_cap, amount_required, amount_too_low] }
+
+    HalalClaim:
+      type: object
+      required: [id, kind, scope, method, evidence_date, review_status]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { $ref: '#/components/schemas/HalalClaimKind' }
+        scope: { $ref: '#/components/schemas/HalalScope' }
+        scope_note: { type: string }
+        certifier_id: { type: string }
+        certificate_ref: { type: string }
+        method: { $ref: '#/components/schemas/EvidenceMethod' }
+        evidence_date: { type: string, format: date }
+        valid_until: { type: string, format: date }
+        review_status: { type: string, enum: [pending, approved, rejected, revoked] }
+        reviewed_at: { type: string, format: date-time }
+        under_review: { type: boolean }
+        evidence_count: { type: integer }
+
+    HalalClaimInput:
+      type: object
+      required: [kind, scope, method, evidence_date]
+      properties:
+        kind: { $ref: '#/components/schemas/HalalClaimKind' }
+        scope: { $ref: '#/components/schemas/HalalScope' }
+        scope_note: { type: string, maxLength: 300 }
+        certifier_id: { type: string, description: Obligatoire pour une certification. }
+        certificate_ref: { type: string }
+        method: { $ref: '#/components/schemas/EvidenceMethod' }
+        evidence_date: { type: string, format: date }
+        valid_until: { type: string, format: date, description: Obligatoire pour qu'une certification soit affichable. }
+
+    AdminRestaurantInput:
+      type: object
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        brand_id: { type: [string, 'null'], format: uuid }
+        description: { type: string }
+        operating: { $ref: '#/components/schemas/OperatingStatus' }
+        temporarily_closed_until: { type: [string, 'null'], format: date }
+        successor_id: { type: [string, 'null'], format: uuid }
+        location: { $ref: '#/components/schemas/LatLng' }
+        address: { $ref: '#/components/schemas/Address' }
+        timezone: { type: string }
+        cuisines: { type: array, items: { type: string } }
+        occasions: { type: array, items: { type: object, properties: { id: { type: string }, strength: { type: integer, enum: [1, 2] } } } }
+        amenities: { type: array, items: { type: string } }
+        alcohol: { $ref: '#/components/schemas/AlcoholPolicy' }
+        price_level: { type: [integer, 'null'] }
+        hours: { type: object, additionalProperties: true }
+        contact: { type: object, additionalProperties: true }
+        editorial_pick: { type: boolean }
+
+    AdminRestaurant:
+      allOf:
+        - $ref: '#/components/schemas/AdminRestaurantInput'
+        - type: object
+          required: [id, version, publication, operating]
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: integer }
+            publication: { $ref: '#/components/schemas/PublicationStatus' }
+            halal: { $ref: '#/components/schemas/HalalStatus' }
+            completeness: { type: number, minimum: 0, maximum: 1 }
+            allowed_transitions: { type: array, items: { $ref: '#/components/schemas/PublicationStatus' } }
+            open_tasks: { type: integer }
+            updated_at: { type: string, format: date-time }
+            published_at: { type: [string, 'null'], format: date-time }
+
+    VersionConflict:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [current_version, conflicts, auto_merged]
+          properties:
+            current_version: { type: integer }
+            conflicts: { type: array, items: { type: string }, description: 'Champs modifiés des deux côtés, à arbitrer.' }
+            auto_merged: { type: array, items: { type: string }, description: Champs repris de l'autre modification. }
+            merged: { type: object, additionalProperties: true, description: Proposition de fusion à relire puis renvoyer avec le nouvel If-Match. }
+
+    ImportReport:
+      type: object
+      properties:
+        import_id: { type: string, format: uuid }
+        dry_run: { type: boolean }
+        rows: { type: integer }
+        accepted: { type: integer }
+        to_review: { type: integer }
+        rejected: { type: integer }
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              row: { type: integer }
+              legacy_ref: { type: string }
+              severity: { type: string, enum: [blocking, review, info] }
+              code: { type: string, enum: [geocode_low_score, geocode_offset, outside_city, possible_duplicate, unknown_cuisine, unreadable_hours, halal_mention_mapped, media_rights_pending] }
+              message: { type: string }
+      example:
+        import_id: 1d2c3b4a-5e6f-4a7b-8c9d-0e1f2a3b4c5d
+        dry_run: true
+        rows: 1043
+        accepted: 978
+        to_review: 52
+        rejected: 13
+        issues:
+          - { row: 18, legacy_ref: YY-0018, severity: review, code: geocode_offset, message: 'Écart de 112 m entre la BAN et les coordonnées historiques.' }
+          - { row: 77, legacy_ref: YY-0077, severity: info, code: halal_mention_mapped, message: '« Certifié halal par le restaurateur 29/06/2025 » repris comme déclaration du restaurant datée.' }
+
+    AuditEntry:
+      type: object
+      properties:
+        id: { type: integer }
+        at: { type: string, format: date-time }
+        actor_id: { type: [string, 'null'], format: uuid }
+        actor_role: { type: [string, 'null'] }
+        action: { type: string, example: publication.suspended }
+        entity: { type: string }
+        entity_id: { type: string }
+        reason: { type: [string, 'null'] }
+        before: { type: [object, 'null'] }
+        after: { type: [object, 'null'] }
+        hash: { type: string, description: Empreinte chaînée (SHA-256) de l'entrée. }
+
+    Dashboard:
+      type: object
+      properties:
+        restaurants: { type: object, properties: { discoverable: { type: integer }, pending: { type: integer }, suspended: { type: integer } } }
+        quality: { type: object, properties: { without_photo: { type: integer }, hours_to_check: { type: integer }, halal_unconfirmed: { type: integer }, duplicates: { type: integer } } }
+        queues: { type: object, properties: { contributions: { type: integer }, halal_reverification: { type: integer }, media_rights: { type: integer } } }
+        coverage: { type: array, items: { type: object, properties: { city: { type: string }, discoverable: { type: integer } } } }
+        zero_result_searches: { type: array, items: { type: object, properties: { query: { type: string }, count: { type: integer } } } }
+
+  examples:
+    RestaurantLesBraises:
+      summary: Fiche certifiée (données fictives)
+      value:
+        id: 3f1c2d4e-7a1b-4c9d-9e2f-0a1b2c3d4e5f
+        slug: les-braises-de-belleville
+        name: Les Braises de Belleville
+        description: Grillades au charbon de bois, pain cuit à la commande et sauce blanche maison. Comptoir ou à emporter.
+        cuisines: [turque, grillades]
+        occasions: [{ id: street, strength: 2 }, { id: amis, strength: 1 }]
+        location: { lat: 48.8722, lng: 2.3768 }
+        address: { street: 14 rue de Belleville, postcode: '75020', city: Paris, district: Paris 20e, neighbourhood: Belleville, country: FR }
+        timezone: Europe/Paris
+        operating: operating
+        price_level: 1
+        price: { level: 1, min: 9, max: 14, observed_at: '2026-09-12' }
+        distance_m: 420
+        halal:
+          level: certified
+          label: Certifié par Organisme Alpha (fictif)
+          explanation: Un organisme de certification atteste cet établissement. Nous avons contrôlé le certificat et sa date de validité ; l'organisme reste responsable de ses contrôles.
+          certifier: { id: alpha, name: Organisme Alpha (fictif), short_name: Alpha }
+          scope: whole_menu
+          method: certificate_check
+          last_checked_at: '2026-09-02'
+          valid_until: '2027-08-31'
+          freshness: fresh
+          under_review: false
+        open: { state: open, confidence: confirmed, closes_at: '02:00', closing_soon: false, label: Ouvert · jusqu'à 02:00 }
+        amenities: [sur_place, emporter, groupes]
+        alcohol: not_served
+        hours:
+          weekly: [{ day: 5, opens: '18:00', closes: '02:00' }, { day: 6, opens: '18:00', closes: '02:00' }]
+          upcoming_exceptions: [{ date: '2026-11-11', label: Jour férié, text: Fermé }]
+          verified_at: '2026-09-02'
+          source: team_phone
+        contact: { phone: '+33100000000', instagram: '@lesbraises.fictif' }
+        media: [{ id: 0b9a8c7d-6e5f-4a3b-2c1d-0e9f8a7b6c5d, kind: illustration, subject: generic, alt: Illustration générique de grillades, width: 1200, height: 900 }]
+        loyalty_partner: null
+        editorial_pick: true
+        sponsored: false
+        reasons: [{ signal: proximity, text: 'À 400 m de toi, à vol d''oiseau' }, { signal: freshness, text: Info halal vérifiée il y a 1 mois }]
+        similar: []
+        share_url: https://yallayum.app/r/les-braises-de-belleville
+
+    SearchOpenNow:
+      summary: « Ouvert maintenant » à 00:30, un résultat sûr, un non confirmé
+      value:
+        items:
+          - id: 3f1c2d4e-7a1b-4c9d-9e2f-0a1b2c3d4e5f
+            slug: les-braises-de-belleville
+            name: Les Braises de Belleville
+            cuisines: [turque, grillades]
+            location: { lat: 48.8722, lng: 2.3768 }
+            address: { street: 14 rue de Belleville, postcode: '75020', city: Paris, district: Paris 20e, country: FR }
+            price_level: 1
+            distance_m: 420
+            halal: { level: certified, label: Certifié par Organisme Alpha (fictif), freshness: fresh, under_review: false }
+            open: { state: open, confidence: confirmed, closes_at: '02:00', closing_soon: false, label: Ouvert · jusqu'à 02:00 }
+            sponsored: false
+        uncertain:
+          - id: 7c6b5a4d-3e2f-4a1b-9c8d-7e6f5a4b3c2d
+            slug: kebab-du-canal
+            name: Kebab du Canal
+            cuisines: [turque, sandwich]
+            location: { lat: 48.8711, lng: 2.3655 }
+            address: { street: 3 quai de Test, postcode: '75010', city: Paris, district: Paris 10e, country: FR }
+            price_level: 1
+            distance_m: 980
+            halal: { level: declared, label: Déclaré par le restaurant, freshness: fresh, under_review: false }
+            open: { state: open, confidence: stale, closes_at: '03:00', label: Ouvert · jusqu'à 03:00 · à confirmer }
+            sponsored: false
+        area_empty: false
+        next_cursor: null
+
+    SearchZero:
+      summary: Aucun résultat, corrections chiffrées
+      value:
+        items: []
+        uncertain: []
+        area_empty: false
+        diagnosis:
+          impossible: false
+          fixes:
+            - { kind: expand, label: Élargir la zone, count: 6 }
+            - { kind: remove, key: openNow, label: Retirer « Ouvert maintenant », count: 3 }
+        next_cursor: null

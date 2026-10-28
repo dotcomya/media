@@ -1,0 +1,51 @@
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+const { chromium } = createRequire(import.meta.url)('playwright');
+const pack = readFileSync(new URL('../.cache/mappack.js', import.meta.url), 'utf8');
+const browser = await chromium.launch();
+const run = async (prefix, opts, steps) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', timezoneId: 'Europe/Paris', ...opts });
+  await ctx.addInitScript(pack);
+  await ctx.addInitScript(() => localStorage.setItem('yy:onboarded', 'true'));
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('http://localhost:5173/');
+  await page.waitForTimeout(3000);
+  await steps(page, async (name) => { await page.waitForTimeout(800); await page.screenshot({ path: `e2e/screens/${prefix}-${name}.png` }); });
+  if (errors.length) console.log(prefix, errors);
+  await ctx.close();
+};
+await run('u', {}, async (page, shot) => {
+  await page.locator('.result').first().click();
+  await page.waitForTimeout(900);
+  await page.locator('.page-scroll').evaluate((el) => el.scrollTo(0, 700));
+  await shot('1-fiche');
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await page.getByRole('button', { name: /Filtres/ }).click();
+  await shot('2-filtres');
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await page.locator('.tab', { hasText: 'Collections' }).click();
+  await shot('3-collections');
+  await page.locator('.coll-card').first().click();
+  await shot('4-collection');
+  await page.getByRole('button', { name: 'Retour' }).click();
+  await page.locator('.tab', { hasText: 'Avantages' }).click();
+  await shot('5-avantages');
+  await page.locator('.tab', { hasText: 'Profil' }).click();
+  await shot('6-profil');
+});
+await run('d', { colorScheme: 'dark' }, async (page, shot) => {
+  await shot('1-carte-sombre');
+  await page.locator('.result').first().click();
+  await shot('2-fiche-sombre');
+});
+await run('a', {}, async (page, shot) => {
+  await page.evaluate(() => { localStorage.setItem('yy:env', JSON.stringify({ textScale: 2, gps: 'real', network: 'online', reducedMotion: true, theme: 'system' })); });
+  await page.reload();
+  await page.waitForTimeout(3000);
+  await shot('1-texte-200');
+  await page.locator('.result').first().click();
+  await shot('2-fiche-200');
+});
+await browser.close();

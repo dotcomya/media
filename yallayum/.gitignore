@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-artifact/
+.cache/
+e2e/screens/
+*.log
