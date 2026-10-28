@@ -15,7 +15,8 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const { chromium } = createRequire(import.meta.url)('playwright');
-const PORT = 5180;
+// Port tiré au hasard : un serveur de test resté ouvert ne bloque pas la recette suivante.
+const PORT = 5180 + Math.floor(Math.random() * 100);
 const BASE = `http://localhost:${PORT}/`;
 const PACK = new URL('../.cache/mappack.js', import.meta.url);
 const only = process.argv.slice(2);
@@ -28,6 +29,7 @@ const server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], { 
 await new Promise((resolve, reject) => {
   const t = setTimeout(() => reject(new Error('Le serveur de développement ne démarre pas')), 30_000);
   server.stdout.on('data', (d) => String(d).includes('Local') && (clearTimeout(t), resolve()));
+  server.stderr.on('data', (d) => process.stderr.write(d));
 });
 
 const browser = await chromium.launch();
