@@ -7,7 +7,7 @@ import { useState } from 'preact/hooks';
 import { can } from '../domain/rbac';
 import type { AuditEntry } from '../domain/publication';
 import { Icon } from '../ui/Icon';
-import { ACTORS } from './model';
+import { actorLabel } from './model';
 import { Denied, Empty, PageHead, fmtDateTime, useActor, useData } from './ui';
 
 const ENTITY_LABELS: Record<AuditEntry['entity'], string> = {
@@ -18,14 +18,6 @@ const ENTITY_LABELS: Record<AuditEntry['entity'], string> = {
   user: 'Utilisateur',
   content: 'Contenu',
 };
-
-function actorLabel(id: string): string {
-  const a = Object.values(ACTORS).find((x) => x.id === id);
-  if (a) return a.name;
-  if (id === 'u-karim-onglet-2') return 'Karim · autre poste';
-  if (id === 'systeme') return 'Système';
-  return id;
-}
 
 export function Audit() {
   const audit = useData((d) => d.audit);

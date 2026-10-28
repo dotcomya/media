@@ -943,8 +943,15 @@ h3 {
 .bsheet-head h2 {
   font: 750 1.25rem/1.15 var(--font-display);
   letter-spacing: -0.01em;
-  flex: 1 1 160px;
-  min-width: 0;
+  /* Les boutons ne passent à la ligne qu'en très grande police (8rem grandit avec le texte). */
+  flex: 1 1 0;
+  min-width: 8rem;
+}
+
+.head-actions {
+  display: flex;
+  gap: 8px;
+  flex: none;
 }
 
 .bsheet-head .sub {

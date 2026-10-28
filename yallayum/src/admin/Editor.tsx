@@ -17,7 +17,7 @@ import { normalize } from '../domain/text';
 import type { BBox, HoursSource, OperatingStatus, PriceLevel, PublicationStatus, Restaurant, SpecialDay, Weekday, WeeklyRange } from '../domain/types';
 import { Icon } from '../ui/Icon';
 import { Illustration, OpenLabel, TrustBadge, hueOf } from '../ui/bits';
-import { auditEntry, data, getPath, go, nowIso, restaurant, setPath, toast, todayIso, updateRestaurant, type AdminRestaurant } from './model';
+import { actorLabel, auditEntry, data, getPath, go, nowIso, restaurant, setPath, toast, todayIso, updateRestaurant, type AdminRestaurant } from './model';
 import { Dialog, Field, HoursPill, OperatingPill, PageHead, PublicationPill, ReasonDialog, useActor, useData, useUi } from './ui';
 
 /** Champs éditables, comparés un à un lors d'une fusion. */
@@ -778,7 +778,7 @@ function ConflictDialog({
       }
     >
       <p class="sub">
-        Version {current.version} enregistrée {lastAudit ? `par ${lastAudit.actorId} le ${new Date(lastAudit.at).toLocaleString('fr-FR')}` : 'entre-temps'}. Rien n’a été écrasé.
+        Version {current.version} enregistrée {lastAudit ? `par ${actorLabel(lastAudit.actorId)} le ${new Date(lastAudit.at).toLocaleString('fr-FR')}` : 'entre-temps'}. Rien n’a été écrasé.
       </p>
       {merge.theirs.length > 0 && (
         <div class="notice info">

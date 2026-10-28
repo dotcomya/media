@@ -176,6 +176,15 @@ export const ACTORS: Record<Role, Actor & { name: string }> = {
   },
 };
 
+/** Nom lisible d'un identifiant d'acteur (journal, fusions, historiques). */
+export function actorLabel(id: string): string {
+  const a = Object.values(ACTORS).find((x) => x.id === id);
+  if (a) return a.name;
+  if (id === 'u-karim-onglet-2') return 'Karim · autre poste';
+  if (id === 'systeme') return 'Système';
+  return id;
+}
+
 export function actorFor(ui: Pick<UiState, 'role' | 'mfa'>): Actor & { name: string } {
   const a = ACTORS[ui.role];
   return { ...a, mfa: ui.role === 'restaurateur' ? false : ui.mfa };

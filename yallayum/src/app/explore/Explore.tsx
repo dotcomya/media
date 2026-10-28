@@ -240,6 +240,18 @@ function Carousel() {
   const originIsUser = useStore(store, (s) => s.originIsUser);
   const strip = useRef<HTMLDivElement>(null);
   const fromScroll = useRef(false);
+  const seen = useRef(new Set<string>());
+
+  // Impression : la carte reste au centre une seconde, comptée une fois par ouverture du carrousel.
+  useEffect(() => {
+    if (!selectedId || seen.current.has(selectedId)) return;
+    const t = setTimeout(() => {
+      seen.current.add(selectedId);
+      const i = response.results.findIndex((r) => r.restaurant.id === selectedId);
+      track('restaurant_impression', { restaurant_id: selectedId, position: i + 1, sponsored: response.results[i]?.sponsored ?? false, source: 'carousel' });
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [selectedId]);
 
   // Le marqueur choisi sur la carte amène sa carte au centre.
   useEffect(() => {

@@ -21,7 +21,7 @@ const SAMPLE = [
   HEADER,
   'YY-1001;Le Jardin d’Ifriqiya;;8 rue de la Fontaine-au-Roi;75011;Paris;48.8689;2.3712;01 99 00 61 20;tunisienne;famille|cosy;€€;Couscous au poisson le vendredi, brik maison et thé aux pignons.;"mar 12:00-14:30,19:00-22:30; mer 12:00-14:30,19:00-22:30; sam 19:00-23:30";Certifié halal par le restaurateur;29/06/2025',
   'YY-1002;Grill Express Pantin;;21 avenue Jean-Lolive;93500;Pantin;;;01 99 00 61 21;grillades;street;€;Brochettes et frites, service rapide au comptoir.;lun 11:30-23:00;;',
-  'YY-1003;Burger Atlantique;;3 quai de la Fosse;44000;Nantes;47.2125;-1.5600;01 99 00 61 22;burger;amis;€;Smash burgers et milkshakes.;;Certifié halal par le restaurateur;12/03/2024',
+  'YY-1003;Burger Atlantique;;3 quai de la Fosse;44000;Nantes;47.2125;-1.5600;01 99 00 61 22;burger;amis;€;Smash burgers et milkshakes.;;Certifié halal par le restaurateur;12/03/2026',
   'YY-1004;Taco Sol;;7 calle Mayor;28013;Madrid;40.4168;-3.7038;;latino;;€€;;;;',
   'YY-1005;Les Braises Belleville;;48 boulevard de Belleville;75020;Paris;48.87137;2.37752;01 99 00 10 70;turque|grillades;amis;€;Grillades au charbon.;;Certifié halal par le restaurateur;02/02/2025',
   'YY-1006;Saveurs de Lahore;;14 rue Cail;75010;Paris;48.8838;2.3598;;pakistanaise;;€;Karahi et nihari le week-end.;;Organisme Alpha;10/01/2026',

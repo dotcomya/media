@@ -22,14 +22,25 @@ const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'profile', label: 'Profil', icon: 'user' },
 ];
 
+// Thème posé par l'hébergeur (artefact) : à respecter en mode « système ».
+const HOST_THEME = document.documentElement.dataset.theme;
+
 function useDark(theme: 'system' | 'light' | 'dark') {
   const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : undefined;
-  const [sys, setSys] = useState(!!mq?.matches);
+  const read = () => {
+    const attr = document.documentElement.dataset.theme;
+    return attr ? attr === 'dark' : !!mq?.matches;
+  };
+  const [sys, setSys] = useState(read);
   useEffect(() => {
-    if (!mq) return;
-    const on = () => setSys(mq.matches);
-    mq.addEventListener('change', on);
-    return () => mq.removeEventListener('change', on);
+    const on = () => setSys(read());
+    mq?.addEventListener('change', on);
+    const mo = new MutationObserver(on);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => {
+      mq?.removeEventListener('change', on);
+      mo.disconnect();
+    };
   }, []);
   return theme === 'system' ? sys : theme === 'dark';
 }
@@ -48,8 +59,9 @@ export function App() {
   // Thème, taille du texte, animations : appliqués à la racine.
   useEffect(() => {
     const root = document.documentElement;
-    if (env.theme === 'system') delete root.dataset.theme;
-    else root.dataset.theme = env.theme;
+    if (env.theme !== 'system') root.dataset.theme = env.theme;
+    else if (HOST_THEME) root.dataset.theme = HOST_THEME;
+    else delete root.dataset.theme;
     root.style.fontSize = `${16 * env.textScale}px`;
     root.classList.toggle('reduce-motion', env.reducedMotion);
   }, [env.theme, env.textScale, env.reducedMotion]);

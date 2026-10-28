@@ -136,6 +136,10 @@
   color: var(--ok);
 }
 
+.a-mfa-short {
+  display: none;
+}
+
 .a-actor {
   font-size: 0.875rem;
   color: var(--ink-2);
@@ -323,7 +327,7 @@
 }
 
 .pill .glyph {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   line-height: 1;
 }
 
@@ -560,6 +564,7 @@
 }
 
 .a-filters .input {
+  flex: 1 1 170px;
   width: auto;
   min-height: 42px;
   padding: 8px 12px;
@@ -682,11 +687,15 @@
 }
 
 .data .actions-cell {
-  white-space: nowrap;
+  min-width: 132px;
+}
+
+.data .actions-cell .btn {
+  width: 100%;
 }
 
 .data .actions-cell .btn + .btn {
-  margin-left: 6px;
+  margin-top: 6px;
 }
 
 .data del {
@@ -701,6 +710,10 @@
 
 .detail-row td {
   background: var(--surface-2);
+}
+
+.data td > .btn-ghost {
+  white-space: nowrap;
 }
 
 .th-sort {
@@ -1619,9 +1632,33 @@ label.check input {
 }
 
 @media (max-width: 640px) {
+  .a-top {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .a-top > .grow {
+    display: none;
+  }
+  .a-role {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .a-role select {
+    flex: 1;
+    min-width: 0;
+  }
+  .a-side {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 120px);
+  }
+  .editor-bar {
+    top: 106px;
+  }
   .a-brand-sub,
   .a-mfa-label {
     display: none;
+  }
+  .a-mfa-short {
+    display: inline;
   }
   .a-brand .wordmark {
     font-size: 22px;

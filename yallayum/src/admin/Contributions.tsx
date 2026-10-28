@@ -22,6 +22,7 @@ import { cuisine } from '../domain/taxonomy';
 import { Icon } from '../ui/Icon';
 import { display, PendingBanner } from './Editor';
 import {
+  actorLabel,
   auditEntry,
   commit,
   data,
@@ -305,7 +306,7 @@ function Detail({ c, proposal }: { c: Contribution; proposal?: ProposalRecord })
         {c.history.map((h, i) => (
           <li key={i}>
             <strong>{CONTRIBUTION_STATUS_LABELS[h.status]}</strong> · {new Date(h.at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
-            {h.actorId ? ` · ${h.actorId}` : ''}
+            {h.actorId ? ` · ${actorLabel(h.actorId)}` : ''}
             {h.note ? ` — ${h.note}` : ''}
           </li>
         ))}

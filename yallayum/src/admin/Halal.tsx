@@ -8,6 +8,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { formatDate, formatIn } from '../domain/format';
 import { claimValidUntil, deriveHalalStatus, isClaimActive, METHOD_LABELS, SCOPE_LABELS, TRUST_LEVELS } from '../domain/halal';
 import { addDays, daysBetween } from '../domain/hours';
+import { isDiscoverable } from '../domain/publication';
 import { can } from '../domain/rbac';
 import type { EvidenceMethod, HalalClaim, HalalClaimKind, HalalScope } from '../domain/types';
 import { Icon } from '../ui/Icon';
@@ -56,14 +57,15 @@ export function runDailyCheck(actor: Actor): { created: number; known: number } 
   const tasks = [...d.tasks];
   const entries = [];
   let known = 0;
-  for (const r of d.restaurants) {
+  // Une fiche fermée ou retirée n'a pas besoin de revérification.
+  for (const r of d.restaurants.filter(isDiscoverable)) {
     for (const c of r.halalClaims) {
       if (c.reviewStatus !== 'approved') continue;
       const until = claimValidUntil(c);
       if (!until) continue;
       let reason: ReviewTask['reason'] | undefined;
       if (until < today) reason = c.kind === 'certification' ? 'certification_expired' : 'evidence_expired';
-      else if (r.publication === 'published' && daysBetween(today, until) <= 60) reason = 'expiring_soon';
+      else if (daysBetween(today, until) <= 60) reason = 'expiring_soon';
       if (!reason) continue;
       if (tasks.some((t) => t.claimId === c.id && t.reason === reason)) {
         known++;
@@ -539,7 +541,7 @@ function AddEvidence({ r, onDone }: { r: AdminRestaurant; onDone: () => void }) 
       {hashing && <p class="sub">Calcul de l’empreinte…</p>}
       {doc && (
         <p class="sub mono">
-          <Icon name="lock" size={12} /> {doc.name} · {(doc.size / 1024).toFixed(0)} Ko · SHA-256 {doc.sha.slice(0, 24)}… · stockée en privé
+          <Icon name="lock" size={12} /> {doc.name} · {doc.size < 1024 ? `${doc.size} o` : `${Math.round(doc.size / 1024)} Ko`} · SHA-256 {doc.sha.slice(0, 24)}… · stockée en privé
         </p>
       )}
       <label class="check">

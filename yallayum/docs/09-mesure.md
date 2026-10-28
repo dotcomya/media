@@ -86,7 +86,7 @@ Déclencheurs tels qu'implémentés dans le prototype (`src/app/*`). Toutes les 
 | Un lien profond ouvrait la fiche sans émettre `restaurant_opened` | Les intentions venues d'un lien partagé ne comptaient pas dans la North Star | `restaurant_opened` émis avec `source = deeplink` après résolution du lien (fiche, ancien lien, déménagement) |
 | Le partage d'une collection mettait l'identifiant de collection dans `restaurant_id` | Pollution des comptes par restaurant | `share_clicked` v2 avec `collection_id` ; les requêtes ci-dessous excluent `target = collection` des calculs par restaurant |
 | « Tout effacer » envoyait `filter = cuisines` faute de valeur dédiée | Surestimation des retraits de cuisine | `filter_applied` v2 avec la valeur `all` |
-| `restaurant_impression` n'était émis que par « Surprends-moi » | Pas de taux de clic par position | Observateur de visibilité dans la liste (50 % visible pendant 1 s, une fois par réponse) ; reste à l'ajouter au carrousel |
+| `restaurant_impression` n'était émis que par « Surprends-moi » | Pas de taux de clic par position | Observateur de visibilité dans la liste (50 % visible pendant 1 s, une fois par réponse) et dans le carrousel (carte centrée pendant 1 s) |
 
 ### 3.3 Événements proposés
 

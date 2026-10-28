@@ -119,6 +119,7 @@ export function Admin() {
           <span class={`a-mfa${mfa ? ' on' : ''}`} title="Sans MFA, les droits sensibles (publier, valider le halal, importer, annuler…) sont refusés.">
             <Icon name="lock" size={16} />
             <span class="a-mfa-label">Session MFA</span>
+            <span class="a-mfa-short" aria-hidden="true">MFA</span>
             <Switch checked={mfa} onChange={(v) => ui.set({ mfa: v })} label="Session MFA" />
           </span>
         )}

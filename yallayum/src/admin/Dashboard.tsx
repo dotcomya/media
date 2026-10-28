@@ -1,7 +1,7 @@
 // Tableau de bord : l'état du catalogue en un coup d'œil. Chaque chiffre
 // porte sa définition et ouvre la liste qui le compose.
 
-import { PUBLICATION_LABELS } from '../domain/publication';
+import { isDiscoverable, PUBLICATION_LABELS } from '../domain/publication';
 import type { PublicationStatus } from '../domain/types';
 import { Icon } from '../ui/Icon';
 import { duplicatePairs, HALAL_QUEUES, QUALITY, ROUTE_INTENTS_EXAMPLE, ZERO_RESULT_EXAMPLE, type QualityKey } from './metrics';
@@ -30,7 +30,7 @@ export function Dashboard() {
   const dups = duplicatePairs(restaurants);
 
   const cities = Object.entries(
-    published.reduce<Record<string, number>>((acc, r) => {
+    published.filter(isDiscoverable).reduce<Record<string, number>>((acc, r) => {
       acc[r.address.city] = (acc[r.address.city] ?? 0) + 1;
       return acc;
     }, {}),

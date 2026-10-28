@@ -229,23 +229,25 @@ export function ResultsSheet({ height, hidden, onVisible }: Props) {
             {title}
             <span class="sub">{subtitle}</span>
           </h2>
-          {count > 1 && (
-            <button type="button" class="select-pill" onClick={cycleSort} aria-label={`Trier par : ${SORT_LABELS[sort]}. Changer`}>
-              <Icon name="sliders" size={15} />
-              {SORT_LABELS[sort]}
-            </button>
-          )}
-          {snap === 'full' ? (
-            <button type="button" class="select-pill" onClick={() => store.set({ sheet: 'half' })}>
-              <Icon name="map" size={15} />
-              Carte
-            </button>
-          ) : (
-            <button type="button" class="select-pill" onClick={() => store.set({ sheet: 'full' })} aria-label="Afficher la liste en plein écran">
-              <Icon name="list" size={15} />
-              Liste
-            </button>
-          )}
+          <div class="head-actions">
+            {count > 1 && (
+              <button type="button" class="select-pill" onClick={cycleSort} aria-label={`Trier par : ${SORT_LABELS[sort]}. Changer`}>
+                <Icon name="sliders" size={15} />
+                {SORT_LABELS[sort]}
+              </button>
+            )}
+            {snap === 'full' ? (
+              <button type="button" class="select-pill" onClick={() => store.set({ sheet: 'half' })}>
+                <Icon name="map" size={15} />
+                Carte
+              </button>
+            ) : (
+              <button type="button" class="select-pill" onClick={() => store.set({ sheet: 'full' })} aria-label="Afficher la liste en plein écran">
+                <Icon name="list" size={15} />
+                Liste
+              </button>
+            )}
+          </div>
         </div>
         <div ref={body} class="bsheet-body" style={{ overflowY: snap === 'full' ? 'auto' : 'hidden' }}>
           {keys.length > 0 && (
