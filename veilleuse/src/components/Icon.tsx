@@ -20,6 +20,15 @@ const PATHS = {
   ),
   next: <path d="m9 5 7 7-7 7" />,
   back: <path d="m15 5-7 7 7 7" />,
+  play: <path class="f" d="M8 5.5v13l10.5-6.5Z" />,
+  stop: <rect class="f" x="6.5" y="6.5" width="11" height="11" rx="2.5" />,
+  // Courbe de croissance : deux axes et une courbe qui monte.
+  growth: (
+    <>
+      <path d="M4 4v16h16" />
+      <path d="M7.5 15.5c2.5-.5 4-2.5 5.5-4.5s3-3.5 5.5-4" />
+    </>
+  ),
   chart: <path d="M5 20v-8M12 20V5M19 20v-5" />,
   copy: (
     <>

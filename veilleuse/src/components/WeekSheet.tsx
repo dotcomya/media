@@ -24,7 +24,7 @@ function Cell({ value, max }: { value: number; max: number }) {
 
 /** Les 7 derniers jours, pour les rendez-vous : moyennes, pauses entre repas, et le détail jour par jour. */
 export function WeekSheet({ onClose }: { onClose: () => void }) {
-  const { entries, settings } = useAppState();
+  const { entries, profile } = useAppState();
   const today = startOfDay(Date.now());
   const { days, average, gaps } = useMemo(() => weekStats(entries, today), [entries, today]);
   const withMilk = days.some((d) => d.ml > 0);
@@ -34,7 +34,7 @@ export function WeekSheet({ onClose }: { onClose: () => void }) {
 
   const send = async () => {
     try {
-      const text = weekSummaryText(entries, today, settings.babyName.trim());
+      const text = weekSummaryText(entries, today, profile.babyName.trim());
       if ((await shareText('Bilan des 7 derniers jours', text)) === 'copied') showToast('Bilan copié, prêt à coller');
     } catch {
       showToast('Partage indisponible');

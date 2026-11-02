@@ -3,15 +3,15 @@
 // démarrage, toutes les 20 s quand l'app est ouverte, au retour du réseau et après chaque saisie.
 
 import * as db from '../db';
-import type { Entry } from '../model';
+import type { Item } from '../model';
 import { newerRemote } from './merge';
-import { pullEntries, pushEntries, syncAvailable } from './remote';
+import { pullItems, pushItems, syncAvailable } from './remote';
 
 export type SyncStatus = 'off' | 'syncing' | 'ok' | 'offline' | 'error';
 
 export interface SyncHooks {
-  /** Saisies reçues de l'autre téléphone (déjà écrites en local). */
-  onChanges: (entries: Entry[]) => void;
+  /** Saisies, pesées ou profil reçus de l'autre téléphone (déjà écrits en local). */
+  onChanges: (items: Item[]) => void;
   onStatus: (status: SyncStatus, family: string | null, lastSyncAt: number | null) => void;
 }
 
@@ -76,27 +76,27 @@ async function run(): Promise<void> {
     // 1. Envoyer ce qui a changé ici.
     const outbox = await db.getOutbox();
     if (Object.keys(outbox).length) {
-      const all = new Map((await db.allEntries()).map((e) => [e.id, e]));
+      const all = new Map((await db.allItems()).map((item) => [item.id, item]));
       const toSend = Object.keys(outbox).flatMap((id) => all.get(id) ?? []);
-      for (let i = 0; i < toSend.length; i += PAGE) await pushEntries(family, toSend.slice(i, i + PAGE));
+      for (let i = 0; i < toSend.length; i += PAGE) await pushItems(family, toSend.slice(i, i + PAGE));
       await db.clearOutbox(outbox);
     }
 
     // 2. Recevoir ce qui a changé ailleurs.
     let since = state.cursor ? new Date(Date.parse(state.cursor) - OVERLAP_MS).toISOString() : null;
     let latest = state.cursor;
-    const received: Entry[] = [];
+    const received: Item[] = [];
     for (;;) {
-      const page = await pullEntries(family, since, PAGE);
-      received.push(...page.entries);
+      const page = await pullItems(family, since, PAGE);
+      received.push(...page.items);
       if (page.last && (!latest || page.last > latest)) latest = page.last;
-      if (page.entries.length < PAGE) break;
+      if (page.items.length < PAGE) break;
       since = page.last;
     }
-    const local = new Map((await db.allEntries()).map((e) => [e.id, e]));
+    const local = new Map((await db.allItems()).map((item) => [item.id, item]));
     const changed = newerRemote(local, received);
     if (changed.length) {
-      await db.putEntries(changed);
+      await db.putItems(changed);
       hooks?.onChanges(changed);
     }
     if (latest !== state.cursor && state.family === family) {
@@ -115,7 +115,7 @@ async function run(): Promise<void> {
 export async function joinFamily(family: string): Promise<void> {
   state = { family, cursor: null };
   await db.saveSyncState(state);
-  await db.queueAll(await db.allEntries());
+  await db.queueAll(await db.allItems());
   await syncNow();
 }
 

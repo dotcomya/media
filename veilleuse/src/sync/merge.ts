@@ -1,13 +1,13 @@
-import type { Entry } from '../model';
+import type { Item } from '../model';
 
 /**
- * Saisies reçues à garder : nouvelles, ou plus récentes que la version locale.
+ * Éléments reçus à garder : nouveaux, ou plus récents que la version locale.
  * La dernière modification gagne (updatedAt), suppressions comprises.
  */
-export function newerRemote(local: Map<string, Entry>, remote: Entry[]): Entry[] {
-  return remote.filter((entry) => {
-    const mine = local.get(entry.id);
-    return !mine || entry.updatedAt > mine.updatedAt;
+export function newerRemote<T extends Item>(local: Map<string, Item>, remote: T[]): T[] {
+  return remote.filter((item) => {
+    const mine = local.get(item.id);
+    return !mine || item.updatedAt > mine.updatedAt;
   });
 }
 

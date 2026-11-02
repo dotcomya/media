@@ -3,7 +3,7 @@ import { alarmUrl, openAlarm } from '../lib/alarm';
 import { formatClock, formatIn, formatSpan } from '../lib/format';
 import { dayStats, nextFeedByEntry } from '../lib/summary';
 import { MINUTE } from '../lib/time';
-import { TAGS, isFeed, type Entry } from '../model';
+import { TAGS, feedBadge, isFeed, type Entry } from '../model';
 import { updateSettings, useAppState } from '../store';
 import { useDay } from '../useDay';
 import { AlarmSheet } from './AlarmSheet';
@@ -21,15 +21,21 @@ import { ToastSlot } from './Toast';
  * Une ligne = un moment avec bébé : l'heure, ce qui s'est passé, et l'heure du
  * prochain repas à ce moment-là (dernière tétée ou dernier biberon + 2 h 30).
  */
-export function DayPage({ onOpenSettings, onOpenWeek }: { onOpenSettings: () => void; onOpenWeek: () => void }) {
+interface Props {
+  onOpenSettings: () => void;
+  onOpenWeek: () => void;
+  onOpenWeight: () => void;
+}
+
+export function DayPage({ onOpenSettings, onOpenWeek, onOpenWeight }: Props) {
   const day = useDay();
-  const { settings, sync } = useAppState();
+  const { settings, sync, profile } = useAppState();
   const [editing, setEditing] = useState<Entry | null>(null);
   // Heure pour laquelle afficher le guide de l'alarme (premier réglage), sinon null.
   const [guideAt, setGuideAt] = useState<number | null>(null);
   // Un minuteur lancé plus tôt tourne encore : on montre comment l'arrêter avant d'en lancer un autre.
   const [conflict, setConflict] = useState<{ previous: number; at: number } | null>(null);
-  const interval = settings.feedIntervalMin * MINUTE;
+  const interval = profile.feedIntervalMin * MINUTE;
   const nextById = useMemo(() => nextFeedByEntry(day.entries, interval), [day.entries, interval]);
   const stats = useMemo(() => dayStats(day.entries, day.day), [day.entries, day.day]);
   // La ligne la plus récente, tous jours confondus : c'est elle qui dit quand nourrir bébé maintenant.
@@ -93,6 +99,9 @@ export function DayPage({ onOpenSettings, onOpenWeek }: { onOpenSettings: () => 
               {formatClock(alarmAt)}
             </button>
           ))}
+        <button type="button" class="head-icon" aria-label="Courbe de poids" onClick={onOpenWeight}>
+          <Icon name="growth" size={18} />
+        </button>
         <button type="button" class="head-icon" aria-label="Réglages" onClick={onOpenSettings}>
           <Icon name="settings" size={18} />
           {/* Partage actif : point vert ; serveur injoignable : point jaune (détail dans Réglages). */}
@@ -132,6 +141,7 @@ export function DayPage({ onOpenSettings, onOpenWeek }: { onOpenSettings: () => 
                       <span key={tag} class="slot">
                         {entry.tags.includes(tag) && <Emoji tag={tag} />}
                         {tag === 'bottle' && entry.ml && <small class="slot-ml">{entry.ml}</small>}
+                        {tag === 'feed' && feedBadge(entry) && <small class="slot-ml">{feedBadge(entry)}</small>}
                       </span>
                     ))}
                   </span>

@@ -28,13 +28,28 @@ Le code vit dans le dossier `veilleuse/` (ancien nom de travail).
 - **La liste du jour**, en trois colonnes : **Heure**, **Quoi** (les emojis,
   chacun toujours à la même place), **Prochain repas**.
 - **Prochain repas** = dernière tétée ou dernier biberon jusqu'à cette ligne
-  + 2 h 30 par défaut (2 h à 4 h, réglable dans Réglages, sur chaque téléphone). La ligne la plus récente est mise en avant avec « dans 1 h 10 », en
-  rouge si l'heure est passée.
+  + 2 h 30 par défaut (2 h à 4 h, réglable dans Réglages, partagé entre les deux
+  téléphones). La ligne la plus récente est mise en avant avec « dans 1 h 10 »,
+  en rouge si l'heure est passée.
 - **Saisir** (en bas) : on coche ce qui vient de se passer (pipi et caca
   ensemble : on coche les deux), puis **Valider**. **Biberon** : un curseur de
   10 en 10 ml (10 à 250 ml), réglé sur le dernier volume donné ; le volume
   s'affiche ensuite sous le 🍼. **Heure** : l'encart à gauche de Valider dit
   « Maintenant » ; en cas de saisie en retard, on le touche pour choisir l'heure.
+- **Tétée** : en la cochant, une ligne apparaît : **Gauche**, **Droit** (l'un,
+  l'autre ou les deux, facultatif) et **▶ Chrono**. L'encart devient « Début ».
+  Soit on valide tout de suite, soit on lance le chrono : la zone de saisie
+  affiche alors le temps qui passe (calculé depuis l'heure de début enregistrée,
+  il reste juste si l'app est fermée), le sein se change en un appui, et
+  **Terminer** ajoute la tétée à son heure de début avec sa durée (« GD 14′ »
+  sous le 🤱). Le prochain repas compte depuis le début de la tétée. Commencée
+  avant d'ouvrir l'app ? On recule « Début » (−5 min…) avant de lancer le chrono.
+- **📈 Courbe de poids** (icône en haut) : les courbes de poids de l'OMS
+  (normes de croissance 2006, filles ou garçons) en semaines d'âge, avec les
+  3e, 15e, 50e, 85e et 97e percentiles, et les pesées de bébé par-dessus.
+  « Ajouter un poids » : le poids (4,25 ou 4250) et la date. Chaque pesée
+  affiche l'âge et son percentile ; on la touche pour la corriger. La date de
+  naissance et le sexe sont demandés une fois (ou dans Réglages → Bébé).
 - **⏰ Réveil, systématique** : chaque tétée ou biberon validé lance un minuteur
   iPhone jusqu'au prochain repas. Le bouton « ⏰ Réveil 21:06 » en haut le lance
   aussi à la main ; on peut couper le réveil automatique dans Réglages. Si un
@@ -55,9 +70,10 @@ Le code vit dans le dossier `veilleuse/` (ancien nom de travail).
   « −15 min », « −30 min », « −1 h », cumulables), avec la roue native du
   téléphone en dernier recours (« Choisir… »). Un oubli se saisit maintenant,
   puis on recule l'heure.
-- **Réglages** : partager le résumé d'aujourd'hui (pour le pédiatre ou la
-  sage-femme), export CSV de toutes les données (séparateur `;`, s'ouvre
-  directement dans Excel en français), prénom, thème.
+- **Réglages** : bébé (prénom, date de naissance, fille ou garçon : partagés
+  entre les deux téléphones), partager le résumé d'aujourd'hui (pour le pédiatre
+  ou la sage-femme), export CSV de toutes les données, pesées comprises
+  (séparateur `;`, s'ouvre directement dans Excel en français), thème.
 - Mode sombre chaud par défaut, mode clair dans Réglages ; prénom du bébé
   facultatif ; vibration à chaque saisie sur Android (Safari iOS ne la gère pas).
 
@@ -123,6 +139,13 @@ Mise en place, une seule fois :
 Déjà fait pour Nous 3 : projet `veilleuse` (Irlande), schéma exécuté, clé
 publique dans `.env.production`. Elle n'a rien de secret : elle finit de toute
 façon dans le JavaScript publié ; ce sont les règles RLS qui protègent les données.
+
+La table n'a que des colonnes simples (`at`, `tags`, `ml`…) : les détails
+ajoutés depuis voyagent dans la liste `tags` sous forme de jetons `clé:valeur`
+(`side:left`, `min:14` pour une tétée ; `weight` + `g:4250` pour une pesée ;
+`profile` + `born:`, `sex:`, `name:`, `every:` pour le bébé, une seule ligne par
+famille). Aucune modification du schéma n'a donc été nécessaire
+(voir `src/sync/rows.ts`).
 
 À savoir : un projet Supabase gratuit est mis en pause après 7 jours sans
 aucune connexion ; l'usage quotidien de l'app suffit à l'éviter.
@@ -231,18 +254,31 @@ Ouvrir le site dans Chrome, puis menu **⋮ → Installer l'application** (ou
 Stockage local IndexedDB (base `veilleuse`, via [`idb`](https://github.com/jakearchibald/idb)),
 avec demande de stockage persistant (`navigator.storage.persist()`).
 
-**Store `events`**, clé `id`, index `at` et `updatedAt`. Une saisie :
+**Store `events`**, clé `id`, index `at` et `updatedAt` : tout ce qui se
+synchronise. Une saisie :
 
 | Champ | Type | Rôle |
 |---|---|---|
 | `id` | UUID v4 | identifiant stable, prêt pour une synchro |
-| `at` | ms epoch | heure de la saisie |
+| `at` | ms epoch | heure de la saisie (début, pour une tétée) |
 | `tags` | `('feed' \| 'bottle' \| 'pee' \| 'poop')[]` | ce qui s'est passé : tétée, biberon, pipi, caca |
+| `ml` | nombre ? | biberon : volume |
+| `sides` | `('left' \| 'right')[]` ? | tétée : sein(s) |
+| `durationMin` | nombre ? | tétée chronométrée : durée |
 | `createdAt`, `updatedAt` | ms epoch | traçabilité, résolution de conflits |
 | `deletedAt` | ms epoch \| `null` | suppression logique |
 
-**Store `kv`** : `settings` (prénom). Le thème est gardé dans `localStorage`
-pour s'appliquer avant le premier affichage.
+Dans le même store : les **pesées** (`kind: 'weight'`, `at`, `grams`) et le
+**profil** du bébé (`kind: 'profile'`, `babyName`, `birthDate`, `sex`,
+`feedIntervalMin`), avec les mêmes champs de suivi.
+
+**Store `kv`** : `settings` (réglages de ce téléphone : réveil, dernier volume,
+chrono en cours…), file d'envoi et repère de synchronisation. Le thème est gardé
+dans `localStorage` pour s'appliquer avant le premier affichage.
+
+Courbes de l'OMS : `src/lib/whoWeight.ts` (paramètres L, M, S par semaine,
+générés par `scripts/who.mjs` à partir du fichier `weianthro.txt` de WHO Anthro)
+et `src/lib/growth.ts` (percentiles par la méthode LMS).
 
 Les données de la première version (tétées chronométrées, biberons en ml,
 couches) sont converties automatiquement à l'ouverture (base en version 2) :
@@ -310,7 +346,10 @@ veilleuse/
 
 ## Vérifications effectuées
 
-- 31 tests unitaires (`npm test`) : résumé journalier (bornes de minuit,
+- 42 tests unitaires (`npm test`) : courbes OMS (valeurs publiées à la
+  naissance, à 13 semaines et à 1 an), percentile d'un poids, âge en semaines,
+  saisie d'un poids ; aller-retour serveur des tétées (sein, durée), pesées et
+  profil ; résumé journalier (bornes de minuit,
   saisies supprimées, jour de 25 h du passage à l'heure d'hiver), bilan du jour
   et des 7 jours (moyennes, pauses entre repas), prochain repas ligne par ligne
   (y compris d'un jour à l'autre, intervalle réglable), conversion des données

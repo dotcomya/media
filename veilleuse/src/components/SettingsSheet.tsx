@@ -1,19 +1,21 @@
 import { useState } from 'preact/hooks';
-import { allEntries } from '../db';
+import { allItems } from '../db';
 import { toCsv } from '../lib/csv';
 import { daySummaryText, shareFile, shareText } from '../lib/share';
 import { MINUTE, startOfDay } from '../lib/time';
 import { formatSpan } from '../lib/format';
-import { FEED_INTERVALS_MIN } from '../model';
+import { FEED_INTERVALS_MIN, SEX_LABELS, isEntry, type Sex, type Weight } from '../model';
+import { toDateValue } from '../lib/growth';
 import { getTheme, setTheme, type Theme } from '../lib/theme';
-import { showToast, updateSettings, useAppState } from '../store';
+import { showToast, updateProfile, updateSettings, useAppState } from '../store';
 import { Icon } from './Icon';
 import { LogoMark, Wordmark } from './Logo';
 import { SharingSection } from './SharingSection';
 import { Sheet } from './Sheet';
 
 async function exportCsv(): Promise<void> {
-  const csv = toCsv(await allEntries());
+  const items = await allItems();
+  const csv = toCsv(items.filter(isEntry), items.filter((item): item is Weight => item.kind === 'weight'));
   const date = new Date().toISOString().slice(0, 10);
   const file = new File([csv], `nous3-${date}.csv`, { type: 'text/csv' });
   const result = await shareFile(file);
@@ -25,8 +27,14 @@ async function shareToday(entries: Parameters<typeof daySummaryText>[0], babyNam
   if (result === 'copied') showToast('Résumé copié, prêt à coller');
 }
 
-export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; onOpenWeek: () => void }) {
-  const { settings, entries, persisted, sync } = useAppState();
+interface Props {
+  onClose: () => void;
+  onOpenWeek: () => void;
+  onOpenWeight: () => void;
+}
+
+export function SettingsSheet({ onClose, onOpenWeek, onOpenWeight }: Props) {
+  const { settings, entries, persisted, sync, profile } = useAppState();
   const [theme, setThemeState] = useState(getTheme);
   const chooseTheme = (value: Theme) => {
     setTheme(value);
@@ -43,18 +51,22 @@ export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; on
         </div>
       </div>
 
-      <label class="field">
-        <span class="field-label">Prénom du bébé (facultatif)</span>
+      <div class="field">
+        <span class="field-label">Bébé</span>
         <input
           class="input"
           type="text"
-          value={settings.babyName}
-          placeholder="Prénom"
+          key={profile.babyName}
+          defaultValue={profile.babyName}
+          placeholder="Prénom (facultatif)"
+          aria-label="Prénom du bébé"
           autocomplete="off"
           enterkeyhint="done"
-          onInput={(e) => updateSettings({ babyName: e.currentTarget.value })}
+          onChange={(e) => updateProfile({ babyName: e.currentTarget.value.trim() })}
         />
-      </label>
+        <BabyFields />
+        {sync.family && <p class="hint">Partagé avec le téléphone de l’autre parent.</p>}
+      </div>
 
       <div class="field">
         <span class="field-label">Affichage</span>
@@ -77,9 +89,9 @@ export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; on
             <button
               type="button"
               key={min}
-              class={`chip${settings.feedIntervalMin === min ? ' on' : ''}`}
-              aria-pressed={settings.feedIntervalMin === min}
-              onClick={() => updateSettings({ feedIntervalMin: min })}
+              class={`chip${profile.feedIntervalMin === min ? ' on' : ''}`}
+              aria-pressed={profile.feedIntervalMin === min}
+              onClick={() => updateProfile({ feedIntervalMin: min })}
             >
               {formatSpan(min * MINUTE)}
             </button>
@@ -87,7 +99,6 @@ export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; on
         </div>
         <p class="hint">
           Sert à l'heure du prochain repas et au réveil.
-          {sync.family ? ' Choisissez la même durée sur le téléphone de l’autre parent.' : ''}
         </p>
       </div>
 
@@ -130,10 +141,14 @@ export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; on
           <Icon name="chart" />
           Bilan des 7 derniers jours
         </button>
+        <button type="button" class="action" onClick={onOpenWeight}>
+          <Icon name="growth" />
+          Courbe de poids
+        </button>
         <button
           type="button"
           class="action"
-          onClick={() => shareToday(entries, settings.babyName.trim()).catch(() => showToast('Partage indisponible'))}
+          onClick={() => shareToday(entries, profile.babyName.trim()).catch(() => showToast('Partage indisponible'))}
         >
           <Icon name="share" />
           Partager le résumé d'aujourd'hui
@@ -155,5 +170,39 @@ export function SettingsSheet({ onClose, onOpenWeek }: { onClose: () => void; on
         </p>
       </div>
     </Sheet>
+  );
+}
+
+/** Date de naissance et sexe : pour placer bébé sur les courbes de poids de l'OMS. */
+export function BabyFields() {
+  const { profile } = useAppState();
+  const today = toDateValue(Date.now());
+  return (
+    <>
+      <label class="date-field">
+        <span>Né(e) le</span>
+        <input
+          class="input"
+          type="date"
+          max={today}
+          value={profile.birthDate ?? ''}
+          aria-label="Date de naissance"
+          onChange={(e) => e.currentTarget.value && updateProfile({ birthDate: e.currentTarget.value })}
+        />
+      </label>
+      <div class="chips cols-2" role="group" aria-label="Sexe (les courbes de l'OMS diffèrent)">
+        {(['girl', 'boy'] as Sex[]).map((sex) => (
+          <button
+            type="button"
+            key={sex}
+            class={`chip${profile.sex === sex ? ' on' : ''}`}
+            aria-pressed={profile.sex === sex}
+            onClick={() => updateProfile({ sex })}
+          >
+            {SEX_LABELS[sex]}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }

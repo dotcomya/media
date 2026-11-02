@@ -11,7 +11,22 @@ export const TAG_EMOJI: Record<Tag, string> = { feed: '🤱', bottle: '🍼', pe
 export const FEED_TAGS: readonly Tag[] = ['feed', 'bottle'];
 export const isFeed = (entry: Pick<Entry, 'tags'>): boolean => entry.tags.some((tag) => FEED_TAGS.includes(tag));
 
-export interface Entry {
+export const SIDES = ['left', 'right'] as const;
+/** Sein donné pendant une tétée. */
+export type Side = (typeof SIDES)[number];
+export const SIDE_LABELS: Record<Side, string> = { left: 'Gauche', right: 'Droit' };
+export const SIDE_SHORT: Record<Side, string> = { left: 'G', right: 'D' };
+
+/** Détails facultatifs d'une tétée. */
+export interface FeedDetails {
+  sides?: Side[];
+  /** Tétée chronométrée : durée en minutes. */
+  durationMin?: number;
+}
+
+export interface Entry extends FeedDetails {
+  /** Les saisies n'ont pas de « kind » (contrairement aux poids et au profil, rangés au même endroit). */
+  kind?: undefined;
   id: string;
   /** Heure de la saisie, en ms depuis l'epoch. */
   at: number;
@@ -24,7 +39,52 @@ export interface Entry {
   deletedAt: number | null;
 }
 
+/** Une pesée. */
+export interface Weight {
+  kind: 'weight';
+  id: string;
+  /** Date de la pesée, en ms depuis l'epoch. */
+  at: number;
+  grams: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: number | null;
+}
+
+export type Sex = 'girl' | 'boy';
+export const SEX_LABELS: Record<Sex, string> = { girl: 'Fille', boy: 'Garçon' };
+
+/** Le bébé, partagé entre les deux téléphones : prénom, naissance, sexe (pour les courbes), rythme des repas. */
+export interface Profile {
+  kind: 'profile';
+  id: typeof PROFILE_ID;
+  babyName: string;
+  /** « 2026-10-01 » ; null tant qu'elle n'est pas renseignée. */
+  birthDate: string | null;
+  sex: Sex | null;
+  /** Temps entre deux repas, en minutes : sert à afficher le prochain repas et à régler le réveil. */
+  feedIntervalMin: number;
+  createdAt: number;
+  updatedAt: number;
+  deletedAt: null;
+}
+
+export const PROFILE_ID = 'profile' as const;
+
+/** Tout ce qui est enregistré et synchronisé. */
+export type Item = Entry | Weight | Profile;
+export const isEntry = (item: Item): item is Entry => item.kind === undefined;
+
+/** Tétée en cours, chronométrée sur ce téléphone. */
+export interface ActiveFeed {
+  startedAt: number;
+  sides: Side[];
+  /** Autres étiquettes cochées avec la tétée (ex. pipi). */
+  tags: Tag[];
+}
+
 export interface Settings {
+  /** Ancien emplacement du prénom, repris tant que le profil partagé n'existe pas. */
   babyName: string;
   /** Le raccourci « Réveil tétée » est créé : l'app le lance directement. */
   alarmReady: boolean;
@@ -32,10 +92,11 @@ export interface Settings {
   autoAlarm: boolean;
   /** Volume proposé par défaut pour le prochain biberon. */
   lastBottleMl: number;
-  /** Temps entre deux repas, en minutes : sert à afficher le prochain repas et à régler le réveil. */
+  /** Ancien emplacement du temps entre deux repas (voir Profile). */
   feedIntervalMin: number;
   /** Fin du dernier minuteur lancé depuis ce téléphone (l'app ne peut pas l'arrêter elle-même). */
   timerUntil: number | null;
+  activeFeed: ActiveFeed | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -45,7 +106,26 @@ export const DEFAULT_SETTINGS: Settings = {
   lastBottleMl: 90,
   feedIntervalMin: 150,
   timerUntil: null,
+  activeFeed: null,
 };
+
+/** Profil effectif : celui enregistré, sinon les anciens réglages de ce téléphone. */
+export function profileFrom(saved: Profile | null, settings: Settings): Profile {
+  return (
+    saved ?? {
+      kind: 'profile',
+      id: PROFILE_ID,
+      babyName: settings.babyName,
+      birthDate: null,
+      sex: null,
+      feedIntervalMin: settings.feedIntervalMin,
+      createdAt: 0,
+      // 0 : n'importe quel profil reçu de l'autre téléphone l'emporte.
+      updatedAt: 0,
+      deletedAt: null,
+    }
+  );
+}
 
 /** Choix proposés pour le temps entre deux repas, en minutes. */
 export const FEED_INTERVALS_MIN = [120, 150, 180, 210, 240];
@@ -69,20 +149,45 @@ export const sortTags = (tags: Iterable<Tag>): Tag[] => {
   return TAGS.filter((tag) => set.has(tag));
 };
 
-/** Garde le volume seulement pour un biberon. */
-export function withVolume<T extends Pick<Entry, 'tags'>>(entry: T, ml: number | undefined): T & { ml?: number } {
-  const { ml: _previous, ...rest } = entry as T & { ml?: number };
-  return entry.tags.includes('bottle') && ml ? { ...(rest as T), ml } : (rest as T);
+export const sortSides = (sides: Iterable<Side>): Side[] => {
+  const set = new Set(sides);
+  return SIDES.filter((side) => set.has(side));
+};
+
+/** Garde le volume seulement pour un biberon, le sein et la durée seulement pour une tétée. */
+export function tidyEntry(entry: Entry): Entry {
+  const { ml, sides, durationMin, ...rest } = entry;
+  const result: Entry = rest;
+  if (entry.tags.includes('bottle') && ml) result.ml = ml;
+  if (entry.tags.includes('feed')) {
+    const kept = sortSides(sides ?? []);
+    if (kept.length) result.sides = kept;
+    if (durationMin && durationMin > 0) result.durationMin = Math.round(durationMin);
+  }
+  return result;
 }
 
-export function createEntry(tags: Iterable<Tag>, at: number, ml?: number, now = Date.now()): Entry {
-  return withVolume({ id: uuid(), at, tags: sortTags(tags), createdAt: now, updatedAt: now, deletedAt: null }, ml);
+export function createEntry(tags: Iterable<Tag>, at: number, ml?: number, now = Date.now(), feed: FeedDetails = {}): Entry {
+  return tidyEntry({ id: uuid(), at, tags: sortTags(tags), ml, ...feed, createdAt: now, updatedAt: now, deletedAt: null });
 }
 
-/** « Tétée, biberon 90 ml, pipi » */
-export function describeEntry(entry: Pick<Entry, 'tags' | 'ml'>): string {
+/** « G 12′ » sous l'emoji de la tétée ; vide sans détail. */
+export function feedBadge(entry: FeedDetails): string {
+  const sides = (entry.sides ?? []).map((side) => SIDE_SHORT[side]).join('');
+  return [sides, entry.durationMin ? `${entry.durationMin}′` : ''].filter(Boolean).join(' ');
+}
+
+/** « Tétée (gauche, 12 min), biberon 90 ml, pipi » */
+export function describeEntry(entry: Pick<Entry, 'tags' | 'ml' | 'sides' | 'durationMin'>): string {
+  const feed = () => {
+    const sides = (entry.sides ?? []).map((side) => SIDE_LABELS[side].toLowerCase()).join(' et ');
+    const details = [sides, entry.durationMin ? `${entry.durationMin} min` : ''].filter(Boolean).join(', ');
+    return details ? `tétée (${details})` : 'tétée';
+  };
   const text = entry.tags
-    .map((tag) => (tag === 'bottle' && entry.ml ? `biberon ${entry.ml} ml` : TAG_LABELS[tag].toLowerCase()))
+    .map((tag) =>
+      tag === 'feed' ? feed() : tag === 'bottle' && entry.ml ? `biberon ${entry.ml} ml` : TAG_LABELS[tag].toLowerCase(),
+    )
     .join(', ');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
@@ -116,5 +221,5 @@ export function fromLegacy(record: Record<string, unknown>): Entry | null {
     updatedAt: Number(record.updatedAt ?? record.at),
     deletedAt: record.deletedAt == null ? null : Number(record.deletedAt),
   };
-  return withVolume(entry, typeof record.ml === 'number' ? record.ml : undefined);
+  return tidyEntry({ ...entry, ml: typeof record.ml === 'number' ? record.ml : undefined });
 }

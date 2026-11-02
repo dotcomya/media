@@ -48,7 +48,7 @@ function CopyName() {
 
 /** Repli si la variable reste introuvable : une durée fixe, celle réglée entre deux repas. */
 function FixedDuration() {
-  const { feedIntervalMin } = useAppState().settings;
+  const { feedIntervalMin } = useAppState().profile;
   return (
     <p class="guide-tip">
       Introuvable ? Tapez <strong>{feedIntervalMin}</strong> à la place : le réveil sonnera{' '}

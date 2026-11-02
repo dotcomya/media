@@ -1,10 +1,12 @@
 import { useState } from 'preact/hooks';
 import { formatClock } from '../lib/format';
 import { vibrate } from '../lib/haptics';
-import { TAGS, type Entry, type Tag } from '../model';
-import { addEntry, useAppState } from '../store';
+import { TAGS, type Entry, type Side, type Tag } from '../model';
+import { addEntry, startFeed, useAppState } from '../store';
+import { FeedTimer } from './FeedTimer';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
+import { SidePicker } from './SidePicker';
 import { TagButton } from './Tag';
 import { TimeChips } from './TimeChips';
 import { VolumePicker } from './VolumePicker';
@@ -15,8 +17,9 @@ interface Props {
 }
 
 /**
- * On coche ce qui vient de se passer (et le volume d'un biberon), puis « Valider » ajoute
- * la ligne, à l'heure actuelle ou à l'heure choisie dans le petit encart « Heure ».
+ * On coche ce qui vient de se passer (le volume d'un biberon, le sein d'une tétée), puis
+ * « Valider » ajoute la ligne, à l'heure actuelle ou à l'heure choisie dans le petit encart
+ * « Heure ». Pour une tétée, « Chrono » lance plutôt un chronomètre jusqu'à « Terminer ».
  */
 export function Composer({ onLogged }: Props) {
   const { settings } = useAppState();
@@ -25,19 +28,33 @@ export function Composer({ onLogged }: Props) {
   // Heure choisie pour une saisie en retard ; null = maintenant.
   const [at, setAt] = useState<number | null>(null);
   const [choosingTime, setChoosingTime] = useState(false);
+  const [sides, setSides] = useState<Side[]>([]);
   const bottle = selected.includes('bottle');
+  const feed = selected.includes('feed');
 
   const toggle = (tag: Tag) => {
     vibrate(10);
     if (tag === 'bottle' && !bottle) setMl(settings.lastBottleMl);
+    if (tag === 'feed') setSides([]);
     setSelected((tags) => (tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]));
   };
-  const validate = () => {
-    const entry = addEntry(selected, bottle ? ml : undefined, at ?? Date.now());
+  const reset = () => {
     setSelected([]);
+    setSides([]);
     setAt(null);
+  };
+  const validate = () => {
+    const entry = addEntry(selected, { ml: bottle ? ml : undefined, sides: feed ? sides : undefined }, at ?? Date.now());
+    reset();
     onLogged(entry);
   };
+  // Le chrono part de l'heure choisie : une tétée commencée il y a 5 min affiche déjà 05:00.
+  const chrono = () => {
+    startFeed(selected, sides, at ?? Date.now());
+    reset();
+  };
+
+  if (settings.activeFeed) return <FeedTimer active={settings.activeFeed} onLogged={onLogged} />;
 
   return (
     <section class="composer" aria-label="Ajouter">
@@ -46,10 +63,19 @@ export function Composer({ onLogged }: Props) {
           <TagButton key={tag} tag={tag} shape="cell" on={selected.includes(tag)} onClick={() => toggle(tag)} />
         ))}
       </div>
+      {feed && (
+        <div class="feed-row">
+          <SidePicker sides={sides} onChange={setSides} />
+          <button type="button" class="chrono" onClick={chrono}>
+            <Icon name="play" size={18} />
+            Chrono
+          </button>
+        </div>
+      )}
       {bottle && <VolumePicker ml={ml} onChange={setMl} />}
       <div class="composer-actions">
         <button type="button" class={`when${at === null ? '' : ' is-set'}`} onClick={() => setChoosingTime(true)}>
-          <small>Heure</small>
+          <small>{feed ? 'Début' : 'Heure'}</small>
           <strong>{at === null ? 'Maintenant' : formatClock(at)}</strong>
         </button>
         <button type="button" class="action action-primary action-validate" disabled={!selected.length} onClick={validate}>
@@ -59,7 +85,7 @@ export function Composer({ onLogged }: Props) {
       </div>
       {choosingTime && (
         <Sheet
-          title="Heure de la saisie"
+          title={feed ? 'Début de la tétée' : 'Heure de la saisie'}
           onClose={() => setChoosingTime(false)}
           footer={
             <button type="button" class="action action-primary" onClick={() => setChoosingTime(false)}>

@@ -1,8 +1,9 @@
 import { openDB, type DBSchema } from 'idb';
-import { DEFAULT_SETTINGS, createEntry, fromLegacy, type Entry, type Settings } from './model';
+import { DEFAULT_SETTINGS, createEntry, fromLegacy, isEntry, type Entry, type Item, type Profile, type Settings, type Weight } from './model';
 
 interface Schema extends DBSchema {
-  events: { key: string; value: Entry; indexes: { at: number; updatedAt: number } };
+  // Saisies, pesées et profil du bébé : tout ce qui se synchronise, dans un seul magasin.
+  events: { key: string; value: Item; indexes: { at: number; updatedAt: number } };
   kv: { key: string; value: unknown };
 }
 
@@ -38,38 +39,44 @@ const getDb = () => (dbPromise ??= openDB<Schema>('veilleuse', 2, {
 
 export interface Snapshot {
   entries: Entry[];
+  weights: Weight[];
+  savedProfile: Profile | null;
   settings: Settings;
 }
 
 /** Charge tout : quelques milliers de saisies au plus, cela tient sans peine en mémoire. */
 export async function loadAll(): Promise<Snapshot> {
   const db = await getDb();
-  const [entries, settings] = await Promise.all([db.getAllFromIndex('events', 'at'), db.get('kv', 'settings')]);
+  const [items, settings] = await Promise.all([db.getAll('events'), db.get('kv', 'settings')]);
+  const live = items.filter((item) => item.deletedAt === null);
+  const byTime = (a: { at: number }, b: { at: number }) => a.at - b.at;
   return {
-    entries: entries.filter((e) => e.deletedAt === null),
+    entries: live.filter(isEntry).sort(byTime),
+    weights: live.filter((item): item is Weight => item.kind === 'weight').sort(byTime),
+    savedProfile: items.find((item): item is Profile => item.kind === 'profile') ?? null,
     settings: { ...DEFAULT_SETTINGS, ...(settings as Partial<Settings> | undefined) },
   };
 }
 
 /**
- * Écrit une saisie (création, modification ou suppression logique). Avec `outbox`,
- * la note aussi, dans la même transaction, comme « à envoyer » à l'autre téléphone.
+ * Écrit une saisie, une pesée ou le profil (création, modification ou suppression logique).
+ * Avec `outbox`, la note aussi, dans la même transaction, comme « à envoyer » à l'autre téléphone.
  */
-export async function putEntry(entry: Entry, outbox = false): Promise<void> {
+export async function putItem(item: Item, outbox = false): Promise<void> {
   const tx = (await getDb()).transaction(['events', 'kv'], 'readwrite');
-  const writes: Promise<unknown>[] = [tx.objectStore('events').put(entry)];
+  const writes: Promise<unknown>[] = [tx.objectStore('events').put(item)];
   if (outbox) {
     const kv = tx.objectStore('kv');
     const pending = ((await kv.get('outbox')) as Outbox | undefined) ?? {};
-    writes.push(kv.put({ ...pending, [entry.id]: entry.updatedAt }, 'outbox'));
+    writes.push(kv.put({ ...pending, [item.id]: item.updatedAt }, 'outbox'));
   }
   await Promise.all([...writes, tx.done]);
 }
 
-/** Saisies reçues de l'autre téléphone. */
-export async function putEntries(entries: Entry[]): Promise<void> {
+/** Éléments reçus de l'autre téléphone. */
+export async function putItems(items: Item[]): Promise<void> {
   const tx = (await getDb()).transaction('events', 'readwrite');
-  await Promise.all([...entries.map((e) => tx.store.put(e)), tx.done]);
+  await Promise.all([...items.map((item) => tx.store.put(item)), tx.done]);
 }
 
 /** Saisies à envoyer : id → updatedAt de la version à envoyer. */
@@ -79,11 +86,11 @@ export async function getOutbox(): Promise<Outbox> {
   return (((await getDb()).get('kv', 'outbox')) as Promise<Outbox | undefined>).then((o) => o ?? {});
 }
 
-/** Met toutes ces saisies dans la file d'envoi (au moment de rejoindre un partage). */
-export async function queueAll(entries: Entry[]): Promise<void> {
+/** Met tous ces éléments dans la file d'envoi (au moment de rejoindre un partage). */
+export async function queueAll(items: Item[]): Promise<void> {
   const tx = (await getDb()).transaction('kv', 'readwrite');
   const pending = ((await tx.store.get('outbox')) as Outbox | undefined) ?? {};
-  for (const e of entries) pending[e.id] = e.updatedAt;
+  for (const item of items) pending[item.id] = item.updatedAt;
   await Promise.all([tx.store.put(pending, 'outbox'), tx.done]);
 }
 
@@ -111,9 +118,9 @@ export async function saveSyncState(state: SyncState): Promise<void> {
   await (await getDb()).put('kv', state, 'sync');
 }
 
-/** Toutes les saisies, y compris supprimées : pour l'export. */
-export async function allEntries(): Promise<Entry[]> {
-  return (await getDb()).getAllFromIndex('events', 'at');
+/** Tout, y compris supprimé : pour la synchronisation et l'export. */
+export async function allItems(): Promise<Item[]> {
+  return (await getDb()).getAll('events');
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {

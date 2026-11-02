@@ -763,6 +763,310 @@ a.action {
   color: var(--danger);
 }
 
+/* --- Tétée : sein et chrono ------------------------------------------- */
+
+.feed-row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.sides {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.side {
+  min-height: 46px;
+  border: 2px solid color-mix(in srgb, var(--feed) 35%, var(--line));
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.side.on {
+  border-color: var(--feed);
+  background: color-mix(in srgb, var(--feed) 24%, var(--surface));
+}
+
+.chrono {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 2px solid var(--feed);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--feed);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.chrono:active {
+  background: var(--accent-soft);
+}
+
+/* Tétée en cours : le temps qui passe, le sein, puis Terminer. */
+.feed-timer-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border: 2px solid var(--feed);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--feed) 12%, var(--surface));
+}
+
+.feed-timer-clock {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.feed-timer-clock small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-timer-clock strong {
+  font-family: var(--font-round);
+  font-size: 2.1rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.feed-timer .sides {
+  flex: none;
+  width: 150px;
+}
+
+.feed-timer-hint {
+  margin: 0;
+}
+
+.feed-timer-cancel {
+  flex: none;
+  min-width: 96px;
+}
+
+.feed-timer .action-validate {
+  flex: 1;
+}
+
+/* --- Courbe de poids --------------------------------------------------- */
+
+.date-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-field > span {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.date-field .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.weight-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 4px;
+}
+
+.weight-now strong {
+  font-family: var(--font-round);
+  font-size: 1.6rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.weight-now span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.weight-chart {
+  width: 100%;
+  margin: 0 0 4px;
+}
+
+.weight-chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.chart-grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.chart-grid text,
+.chart-labels text {
+  fill: var(--muted);
+  font-size: 10.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-grid .chart-unit {
+  font-weight: 800;
+}
+
+/* Courbes de référence en retrait (sauge du logo), bébé par-dessus à la couleur de l'app. */
+.who-band {
+  fill: var(--brand-sage);
+}
+
+.who-band-outer {
+  opacity: 0.1;
+}
+
+.who-band-inner {
+  opacity: 0.2;
+}
+
+.who-line {
+  fill: none;
+  stroke: var(--brand-sage);
+  stroke-width: 1;
+  opacity: 0.75;
+}
+
+.who-line.is-outer {
+  stroke-dasharray: 3 3;
+}
+
+.who-line.is-median {
+  stroke-width: 2;
+  opacity: 1;
+}
+
+.baby-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.baby-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.baby-dot.is-selected {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.baby-hit {
+  fill: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.baby-hit:focus-visible {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.who-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.weight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.weight-row + .weight-row {
+  border-top: 1px solid var(--line);
+}
+
+.weight-row:active {
+  background: var(--surface);
+}
+
+.weight-date,
+.weight-kg {
+  display: flex;
+  flex-direction: column;
+  font-weight: 750;
+}
+
+.weight-kg {
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.weight-date small,
+.weight-kg small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.weight-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weight-input .input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.weight-input > span {
+  color: var(--muted);
+  font-weight: 750;
+}
+
 /* --- 7 derniers jours ------------------------------------------------- */
 
 .kpis {
@@ -1424,7 +1728,7 @@ a.action {
   align-items: center;
   gap: 12px;
   padding: 2px 6px 2px 12px;
-  border: 2px solid color-mix(in srgb, var(--bottle) 45%, var(--line));
+  border: 2px solid color-mix(in srgb, var(--tone, var(--bottle)) 45%, var(--line));
   border-radius: var(--radius);
   background: var(--surface);
 }
@@ -1458,13 +1762,13 @@ a.action {
 .volume input::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(to right, var(--bottle) var(--fill), var(--line) var(--fill));
+  background: linear-gradient(to right, var(--tone, var(--bottle)) var(--fill), var(--line) var(--fill));
 }
 
 .volume input::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: linear-gradient(to right, var(--bottle) var(--fill), var(--line) var(--fill));
+  background: linear-gradient(to right, var(--tone, var(--bottle)) var(--fill), var(--line) var(--fill));
 }
 
 .volume input::-webkit-slider-thumb {
@@ -1473,7 +1777,7 @@ a.action {
   margin-top: -11px;
   border: 3px solid var(--bg);
   border-radius: 50%;
-  background: var(--bottle);
+  background: var(--tone, var(--bottle));
   box-shadow: 0 2px 8px var(--shadow);
   -webkit-appearance: none;
   appearance: none;
@@ -1484,7 +1788,7 @@ a.action {
   height: 24px;
   border: 3px solid var(--bg);
   border-radius: 50%;
-  background: var(--bottle);
+  background: var(--tone, var(--bottle));
 }
 
 /* Heure de la saisie (encart à gauche de Valider) : maintenant, ou une heure passée. */
@@ -1538,9 +1842,10 @@ a.action {
 
 .slot-ml {
   position: absolute;
+  white-space: nowrap;
   bottom: -6px;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   color: var(--muted);
   font-size: 0.62rem;
   font-weight: 800;

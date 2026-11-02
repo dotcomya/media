@@ -1,7 +1,8 @@
 -- Veilleuse : base de synchronisation entre les téléphones des parents.
 -- À coller une fois dans Supabase → SQL Editor → Run.
 --
--- Une ligne = une saisie. Le code famille, envoyé par l'app dans l'en-tête « x-family »,
+-- Une ligne = une saisie, une pesée ou le profil du bébé (genre et détails dans « tags »,
+-- sous forme de jetons « clé:valeur » : voir src/sync/rows.ts). Le code famille, envoyé par l'app dans l'en-tête « x-family »,
 -- limite chaque téléphone aux lignes de sa famille (Row Level Security).
 
 create table if not exists public.veilleuse_entries (
