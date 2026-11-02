@@ -1,0 +1,35 @@
+{
+  "name": "yallayum",
+  "private": true,
+  "version": "0.1.0",
+  "description": "YallaYum — le GPS de la restauration halal : prototype mobile, back-office, socle métier, schéma de données et dossier produit.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:sql": "bash db/run-tests.sh",
+    "test:e2e": "node e2e/run.mjs",
+    "tiles": "node scripts/tiles.mjs",
+    "build:artifact": "vite build --mode artifact && node scripts/artifact.mjs"
+  },
+  "dependencies": {
+    "maplibre-gl": "5.24.0",
+    "preact": "11.0.1",
+    "qrcode-generator": "2.0.4",
+    "supercluster": "9.1.0"
+  },
+  "devDependencies": {
+    "@mapbox/vector-tile": "3.0.0",
+    "@types/supercluster": "7.1.3",
+    "pbf": "5.1.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "vt-pbf": "3.1.3"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

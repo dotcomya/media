@@ -1,0 +1,18 @@
+import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
+const { chromium } = createRequire(import.meta.url)('playwright');
+const pack = readFileSync(new URL('../.cache/mappack.js', import.meta.url), 'utf8');
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', timezoneId: 'Europe/Paris' });
+await ctx.addInitScript(pack);
+const page = await ctx.newPage();
+page.on('console', (m) => console.log('console', m.type(), m.text().slice(0, 300)));
+page.on('pageerror', (e) => console.log('pageerror', e.message));
+page.on('requestfailed', (r) => console.log('failed', r.url().slice(0, 120), r.failure()?.errorText));
+await page.goto('http://localhost:5173/');
+await page.waitForTimeout(2500);
+console.log(await page.evaluate(() => ({ pack: !!window.__YY_MAP__, canvas: document.querySelector('.maplibregl-canvas')?.getBoundingClientRect().toJSON(), map: document.querySelector('.map')?.getBoundingClientRect().toJSON(), markers: document.querySelectorAll('.marker-wrap').length })));
+await page.getByText('Plus tard').click();
+await page.waitForTimeout(3000);
+await page.screenshot({ path: 'e2e/screens/debug.png' });
+await browser.close();

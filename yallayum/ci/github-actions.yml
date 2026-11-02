@@ -1,0 +1,66 @@
+# Intégration continue proposée pour YallaYum (non activée).
+# Pour l'activer : copier ce fichier dans .github/workflows/yallayum.yml du
+# dépôt qui héberge le projet. Voir docs/11-recette.md, § 5.
+name: yallayum
+
+on:
+  push:
+    paths: ['yallayum/**']
+  pull_request:
+    paths: ['yallayum/**']
+
+defaults:
+  run:
+    working-directory: yallayum
+
+jobs:
+  socle:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: yallayum/.nvmrc
+          cache: npm
+          cache-dependency-path: yallayum/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit -p .
+      - run: npm test
+
+  base-de-donnees:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL 16 + PostGIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-16 postgresql-16-postgis-3
+      # Le script crée son propre cluster jetable avec les binaires du système.
+      - run: bash db/run-tests.sh
+
+  bout-en-bout:
+    runs-on: ubuntu-24.04
+    needs: socle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: yallayum/.nvmrc
+          cache: npm
+          cache-dependency-path: yallayum/package-lock.json
+      - run: npm ci
+      # Playwright n'est pas une dépendance du projet : installé pour la recette seulement.
+      - run: npm install --no-save playwright && npx playwright install --with-deps chromium
+      - name: Tuiles de démonstration (cache)
+        uses: actions/cache@v4
+        with:
+          path: yallayum/.cache
+          key: tuiles-${{ hashFiles('yallayum/scripts/tiles.mjs') }}
+      - run: npm run tiles && node scripts/pack.mjs
+      - run: npm run test:e2e
+      - run: npm run build && npm run build:artifact
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: captures
+          path: yallayum/e2e/screens
